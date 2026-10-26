@@ -67,6 +67,7 @@ class HumanApprovalService:
                     intent.fingerprint = fingerprint_of(step.tool_name, step.args)
                     intent.status = IntentStatus.AUTHORIZED
                     intent.authorized = True
+                    intent.ever_authorized = True
         return transition(run, RunStatus.EXECUTING)
 
     def reject(self, run: WorkflowRun, actor: str, plan_hash: str, reason: str = "") -> WorkflowRun:

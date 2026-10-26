@@ -19,11 +19,17 @@ _WS_SECRET = re.compile(
 )
 
 
+# Standalone secret-looking values anywhere (e.g. after "header value"):
+# tokens containing SECRET / API-KEY markers are never diagnostic context.
+_VALUE_TOKEN = re.compile(r"\b\S*(?:SECRET|API[-_]?KEY|ACCESS[-_]?TOKEN)\S*\b", re.IGNORECASE)
+
+
 def redact(text: str) -> str:
     """Remove secret-looking values from a string."""
     out = _SECRET_VALUE.sub("[REDACTED]", text)
     out = _KV_SECRET.sub(r"\1[REDACTED]", out)
-    return _WS_SECRET.sub(r"\1[REDACTED]", out)
+    out = _WS_SECRET.sub(r"\1[REDACTED]", out)
+    return _VALUE_TOKEN.sub("[REDACTED]", out)
 
 
 def redact_any(value: Any) -> Any:

@@ -17,6 +17,10 @@ class Verifier:
         self._ledger = ledger
         self._expected_total = expected_total
 
+    # Legal intent lifecycle transitions. CANCELLED and CONFLICT are
+    # terminal for sync purposes and can never become COMMITTED silently.
+    _SYNC_ALLOWED = frozenset({"AUTHORIZED"})
+
     def sync_intents(self, run: WorkflowRun) -> None:
         """Reflect ledger commits into intent statuses (evidence, not claims)."""
         if self._ledger is None:
@@ -24,6 +28,8 @@ class Verifier:
         from trustflow.domain.models import IntentStatus
 
         for intent in run.intents:
+            if intent.status.value not in self._SYNC_ALLOWED:
+                continue
             if self._ledger.find_by_key(intent.intent_id) is not None:
                 intent.status = IntentStatus.COMMITTED
 
@@ -62,12 +68,23 @@ class Verifier:
         for step in plan.steps:
             if step.tool_name == "simulate_transfer":
                 res = by_id.get(step.step_id)
-                # Authoritative identity comes from the approved execution
-                # snapshot (the plan passed in), never from tool results.
+                # Authoritative identity comes from the canonical run-owned
+                # intent record, never from tool results or plan claims.
                 key = step.operation_id
+                intent = next(
+                    (i for i in run.intents
+                     if i.intent_id == (step.intent_id or step.operation_id)),
+                    None,
+                )
+                lifecycle_ok = bool(
+                    intent is not None
+                    and intent.status.value in ("AUTHORIZED", "COMMITTED")
+                )
                 tx = self._ledger.find_by_key(key) if self._ledger is not None else None
                 ok = bool(
-                    tx is not None
+                    lifecycle_ok
+                    and tx is not None
+                    and tx.idempotency_key == (intent.intent_id if intent else "")
                     and res is not None
                     and res.idempotency_key == key
                     and res.status == StepStatus.SUCCEEDED
@@ -93,6 +110,32 @@ class Verifier:
 
             for intent in run.intents:
                 if intent.status in (IntentStatus.CANCELLED, IntentStatus.PROPOSED):
+                    # PROPOSED/CANCELLED can never launder ledger evidence:
+                    # a tx under such an intent is an integrity conflict, and
+                    # a formerly authorized cancellation needs explicit
+                    # authorized cancellation evidence (status alone is not).
+                    stray = [t for t in self._ledger.transactions
+                             if t.idempotency_key == intent.intent_id]
+                    evidence = [c for c in run.cancellations
+                                if c.get("intent_id") == intent.intent_id]
+                    if stray:
+                        checks.append(VerificationCheck(
+                            name=f"intent_integrity:{intent.intent_id}", passed=False,
+                            detail="Ledger tx exists for non-executable intent"))
+                        issues.append(
+                            f"Intent {intent.intent_id} has ledger evidence in "
+                            f"lifecycle {intent.status}; integrity conflict"
+                        )
+                    elif intent.status == IntentStatus.CANCELLED \
+                            and intent.ever_authorized and not evidence:
+                        checks.append(VerificationCheck(
+                            name=f"intent_cancellation:{intent.intent_id}",
+                            passed=False,
+                            detail="Cancelled authorized intent lacks evidence"))
+                        issues.append(
+                            f"Intent {intent.intent_id} was cancelled without "
+                            "authorized cancellation evidence"
+                        )
                     continue
                 if intent.status == IntentStatus.CONFLICT:
                     checks.append(VerificationCheck(

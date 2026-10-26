@@ -205,6 +205,7 @@ class IntentRecord(BaseModel):
     fingerprint: str = ""  # fingerprint of the authorized payload
     status: IntentStatus = IntentStatus.PROPOSED
     authorized: bool = False
+    ever_authorized: bool = False  # cancellation of such intents needs evidence
 
 
 class WorkflowRun(BaseModel):
@@ -221,6 +222,9 @@ class WorkflowRun(BaseModel):
     operations: list[dict] = Field(default_factory=list)
     # Authoritative stable payment intents (round-2 manifest).
     intents: list[IntentRecord] = Field(default_factory=list)
+    # Explicit authorized cancellation evidence. M1 creates none through
+    # planning omissions; only a future documented cancellation workflow may.
+    cancellations: list[dict] = Field(default_factory=list)
     # Isolated deep snapshot taken at approval time; execution uses this.
     approved_plan_snapshot: Plan | None = None
     approved_hash: str = ""

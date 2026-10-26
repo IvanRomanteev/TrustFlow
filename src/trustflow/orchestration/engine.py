@@ -107,26 +107,64 @@ def assign_operation_ids(run: WorkflowRun, plan: Plan,
 
     unmatched = [i for i in run.intents
                  if i.intent_id not in matched and i.status != IntentStatus.CANCELLED]
-    committed_unmatched = [i for i in unmatched if i.status == IntentStatus.COMMITTED]
-    if remaining and committed_unmatched:
-        for intent in committed_unmatched:
-            intent.status = IntentStatus.CONFLICT
-        raise IntentConflictError(
-            "intent_conflict: a committed payment intent was changed by a revision"
-        )
-    new_steps = list(remaining)
-    if remaining and unmatched:
-        if len(remaining) == 1 and len(unmatched) == 1:
-            intent = unmatched[0]  # unambiguous modification of uncommitted intent
-            intent.proposed_payload = json.loads(json.dumps(remaining[0].args))
+
+    def route(payload: dict) -> tuple:
+        return (payload.get("from_account"), payload.get("to_account"))
+
+    def intent_route(intent) -> tuple:
+        payload = intent.authorized_payload or intent.proposed_payload
+        return route(payload)
+
+    # Route-grouped matching: a differing step can only modify an intent on
+    # the same route; a committed intent on that route makes it a conflict.
+    new_steps = []
+    consumed: set[str] = set()
+    steps_by_route: dict[tuple, list] = {}
+    for step in remaining:
+        steps_by_route.setdefault(route(step.args), []).append(step)
+    intents_by_route: dict[tuple, list] = {}
+    for intent in unmatched:
+        intents_by_route.setdefault(intent_route(intent), []).append(intent)
+    for group_route, group_steps in steps_by_route.items():
+        group_intents = intents_by_route.get(group_route, [])
+        if not group_intents:
+            new_steps.extend(group_steps)
+            continue
+        if any(i.status == IntentStatus.COMMITTED for i in group_intents):
+            for intent in group_intents:
+                if intent.status == IntentStatus.COMMITTED:
+                    intent.status = IntentStatus.CONFLICT
+            raise IntentConflictError(
+                "intent_conflict: a committed payment intent was changed by a revision"
+            )
+        if len(group_steps) == 1 and len(group_intents) == 1:
+            intent = group_intents[0]
+            intent.proposed_payload = json.loads(json.dumps(group_steps[0].args))
             intent.status = IntentStatus.PROPOSED
             intent.authorized = False
-            assign(remaining[0], intent)
-            new_steps = []
+            assign(group_steps[0], intent)
+            consumed.add(intent.intent_id)
         else:
             raise IntentConflictError(
                 "intent_conflict: ambiguous ID-less revision cannot be matched safely"
             )
+    # Single-intent legacy case: one differing step, one uncommitted intent
+    # overall (route may have changed as part of the modification).
+    if new_steps and len(new_steps) == len(remaining) and len(unmatched) == 1 \
+            and not consumed:
+        intent = unmatched[0]
+        if intent.status == IntentStatus.COMMITTED and len(remaining) == 1:
+            intent.status = IntentStatus.CONFLICT
+            raise IntentConflictError(
+                "intent_conflict: a committed payment intent was changed by a revision"
+            )
+        if intent.status != IntentStatus.COMMITTED and len(remaining) == 1:
+            intent.proposed_payload = json.loads(json.dumps(remaining[0].args))
+            intent.status = IntentStatus.PROPOSED
+            intent.authorized = False
+            assign(remaining[0], intent)
+            consumed.add(intent.intent_id)
+            new_steps = []
     for step in new_steps:  # genuinely new business intents
         intent = IntentRecord(
             intent_id=f"op_{uuid.uuid4().hex[:16]}",
@@ -139,16 +177,29 @@ def assign_operation_ids(run: WorkflowRun, plan: Plan,
             status=IntentStatus.AUTHORIZED if new_intents_authorized
             else IntentStatus.PROPOSED,
             authorized=bool(new_intents_authorized),
+            ever_authorized=bool(new_intents_authorized),
         )
         run.intents.append(intent)
         assign(step, intent)
-    # Unreferenced uncommitted intents are explicitly cancelled by omission.
+    # Omission policy (never infer cancellation consent from an LLM revision):
+    # COMMITTED is preserved; AUTHORIZED remains an outstanding obligation
+    # and is an explicit conflict; only never-authorized PROPOSED intents
+    # may be withdrawn by omission.
     for intent in run.intents:
-        if intent.intent_id not in matched and intent.status not in (
-            IntentStatus.COMMITTED, IntentStatus.CANCELLED, IntentStatus.CONFLICT,
-        ):
+        if intent.intent_id in matched or intent.intent_id in consumed:
+            continue
+        if intent.status == IntentStatus.COMMITTED:
+            continue
+        if intent.status == IntentStatus.PROPOSED and not intent.ever_authorized:
             intent.status = IntentStatus.CANCELLED
             intent.authorized = False
+            continue
+        if intent.status in (IntentStatus.CANCELLED, IntentStatus.CONFLICT):
+            continue
+        raise IntentConflictError(
+            "intent_conflict: an authorized intent was omitted from a revision; "
+            "cancellation requires explicit authorized cancellation evidence"
+        )
     # Legacy mirror for older readers of run.operations.
     run.operations = [
         {"operation_id": i.intent_id, "fingerprint": i.fingerprint,

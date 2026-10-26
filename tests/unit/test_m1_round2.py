@@ -85,10 +85,15 @@ async def test_n1_revision_only_second_payment_pays_second():
     # Bob 100 committed must be preserved; Ops intent is modified-uncommitted
     # (999999 -> 200) so it needs authorization OR executes as its own intent,
     # but Bob must not be paid again and Ops must not inherit Bob's identity.
+    # Precise allowed outcome: Bob preserved, Ops (modified uncommitted)
+    # goes through approval, then pays exactly once. Generic FAILED fails here.
+    assert run.status == RunStatus.AWAITING_APPROVAL
+    engine.approvals.approve(run, "mgr", run.plan.plan_hash)
+    run = await engine.resume_after_approval(run)
+    assert run.status == RunStatus.COMPLETED
     recipients = [(tx.to_account, tx.amount) for tx in registry.ledger.transactions]
-    assert ("acc_bob", 100.0) in recipients
     assert recipients.count(("acc_bob", 100.0)) == 1
-    assert run.status != RunStatus.COMPLETED or ("acc_ops", 200.0) in recipients
+    assert recipients.count(("acc_ops", 200.0)) == 1
 
 
 # N1 canonical probe: commit Bob, fail Ops via verifier, revision = [Ops only]
@@ -116,11 +121,14 @@ async def test_n2_inserted_payment_does_not_duplicate_committed():
     run = await engine.create_workflow(WorkflowGoal(title="pay", description="pay"))
     recipients = [(tx.to_account, tx.amount) for tx in registry.ledger.transactions]
     assert recipients.count(("acc_bob", 100.0)) == 1
-    # Ops is a NEW intent: must not execute without authorization.
-    if run.status == RunStatus.COMPLETED:
-        assert ("acc_ops", 50.0) not in recipients
-    else:
-        assert run.status == RunStatus.AWAITING_APPROVAL
+    # Ops is a NEW intent: approve it and assert correct single execution.
+    assert run.status == RunStatus.AWAITING_APPROVAL
+    engine.approvals.approve(run, "mgr", run.plan.plan_hash)
+    run = await engine.resume_after_approval(run)
+    assert run.status == RunStatus.COMPLETED
+    recipients = [(tx.to_account, tx.amount) for tx in registry.ledger.transactions]
+    assert recipients.count(("acc_bob", 100.0)) == 1
+    assert recipients.count(("acc_ops", 50.0)) == 1
 
 
 # N3 / F: changed committed intent -> explicit conflict, no silent rewrite
@@ -143,29 +151,36 @@ async def test_n3_changed_committed_is_conflict_not_completed(changed):
 @pytest.mark.asyncio
 async def test_g_changed_uncommitted_not_old_payload():
     provider = Seq([[_t(999999.0)], [_t(150.0)]])
-    engine, registry = _engine(fake=provider, settings=Settings(max_retries=2))
+    engine, registry = _engine(fake=provider, settings=Settings(
+        max_retries=2, high_risk_threshold=2000000.0))
     run = await engine.create_workflow(WorkflowGoal(title="pay", description="pay"))
-    # 999999 fails (insufficient); revision changes to 150 = modified uncommitted
-    # intent: requires authorization, or completes only by paying 150 once
-    # after approval flow. It must never pay a stale different amount silently
-    # without the run passing through AWAITING_APPROVAL or conflict.
-    assert _amounts(registry) in ([], [150.0])
-    if _amounts(registry) == [150.0]:
-        assert run.status == RunStatus.COMPLETED
+    # Modified uncommitted intent (999999 -> 150) must go through explicit
+    # authorization, then execute exactly one payment with the NEW payload.
+    assert run.status == RunStatus.AWAITING_APPROVAL
+    assert _amounts(registry) == []
+    engine.approvals.approve(run, "mgr", run.plan.plan_hash)
+    run = await engine.resume_after_approval(run)
+    assert run.status == RunStatus.COMPLETED
+    assert _amounts(registry) == [150.0]
+    assert registry.ledger.get_balance("acc_bob").balance == 1350.0
 
 
-# E: two identical payments, only one completed -> coverage forbids COMPLETED
+# E: two identical payments, second pending and omitted in revision
 @pytest.mark.asyncio
 async def test_e_identical_coverage_blocks_completion():
-    provider = Seq([[_t(10.0), _t(10.0)], [_t(10.0)]])
-    engine, registry = _engine(fake=provider)
-    _fail_once(engine)
+    provider = Seq([
+        [_t(1000.0, frm="acc_bob", to="acc_alice"),
+         _t(1000.0, frm="acc_bob", to="acc_ops")],
+        [_t(1000.0, frm="acc_bob", to="acc_alice")],
+    ])
+    engine, registry = _engine(fake=provider, settings=Settings(
+        max_retries=2, high_risk_threshold=2000000.0))
     run = await engine.create_workflow(WorkflowGoal(title="pay", description="pay"))
-    # v1 pays both (2 tx). Revision drops one: coverage still satisfied by
-    # manifest evidence, so completion with exactly 2 is acceptable; the
-    # forbidden outcome is a third duplicate or claiming one tx covers both.
-    assert len(registry.ledger.transactions) == 2
-    assert run.status == RunStatus.COMPLETED
+    # First identical-route payment commits; second is pending and omitted.
+    # One transaction must never cover both intents; no COMPLETED allowed.
+    assert run.status != RunStatus.COMPLETED
+    assert len(registry.ledger.transactions) == 1
+    assert registry.ledger.transactions[0].to_account == "acc_alice"
 
 
 # I: ambiguous ID-less revision fails closed
