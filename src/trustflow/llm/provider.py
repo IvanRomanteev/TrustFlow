@@ -36,6 +36,7 @@ PLAN_SCHEMA: dict[str, Any] = {
                     "currency": {"type": "string"},
                     "from_currency": {"type": "string"},
                     "to_currency": {"type": "string"},
+                    "limit": {"type": "integer"},
                     "rationale": {"type": "string"},
                 },
                 # All fields required (strict-subset style): the model emits
@@ -43,7 +44,7 @@ PLAN_SCHEMA: dict[str, Any] = {
                 # models drop the extras per tool.
                 "required": ["tool_name", "account_id", "from_account",
                              "to_account", "amount", "currency",
-                             "from_currency", "to_currency", "rationale"],
+                             "from_currency", "to_currency", "limit", "rationale"],
             },
         }
     },
@@ -55,11 +56,11 @@ REVIEW_SCHEMA: dict[str, Any] = {
     "additionalProperties": False,
     "properties": {
         "verdict": {"type": "string", "enum": ["PASS", "FAIL"]},
-        "confidence": {"type": "number"},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
         "issues": {"type": "array", "items": {"type": "string"}},
         "summary": {"type": "string"},
     },
-    "required": ["verdict", "issues"],
+    "required": ["verdict", "confidence", "issues", "summary"],
 }
 
 TOOLS_HINT = "Only use tools: get_balance, list_transactions, simulate_transfer, fx_quote."
@@ -227,7 +228,10 @@ class MetaResponsesProvider:
                                     "repair" if repair_feedback else "plan")
         steps = parsed.get("steps")
         if not isinstance(steps, list):
-            raise LLMResponseError("Live plan response missing steps list")
+            # Incurred usage travels with the error so it is never lost.
+            raise LLMResponseError(
+                "Live plan response missing steps list", record=record
+            )
         return steps, record
 
     def semantic_review(self, payload):

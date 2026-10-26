@@ -26,6 +26,7 @@ def estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
 
 class LLMCallRecord(BaseModel):
     purpose: str  # plan | repair | semantic_review
+    attempt: int = 0  # per-purpose attempt number, assigned by the tracker
     model: str
     workflow_id: str | None = None
     request_id: str | None = None
@@ -66,6 +67,8 @@ class UsageTracker:
         """Always preserve the incurred record; flag (and signal) over-budget."""
         if rec.workflow_id is None:
             rec.workflow_id = self.workflow_id
+        if rec.attempt == 0:
+            rec.attempt = 1 + sum(1 for r in self.records if r.purpose == rec.purpose)
         rec.usage_unknown = rec.input_tokens is None or rec.output_tokens is None
         rec.estimated_cost_usd = estimate_cost(
             rec.model, rec.input_tokens or 0, rec.output_tokens or 0

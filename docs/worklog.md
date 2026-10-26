@@ -27,4 +27,18 @@ schema covers fx fields; errors/audit payloads are recursively sanitized;
 approved plans execute from an isolated deep snapshot; the verifier matches
 complete operations against the ledger itself.
 Offline only: 75 tests, ruff and mypy clean. No paid API calls were made.
+Second review reproduced three P1 and six P2 findings on that candidate.
+
+## M1 remediation (this candidate, after 15833ea)
+Payment-intent manifest separate from payload matching (changed-payload
+re-plans keep the committed intent; new intents need explicit approval),
+exact approved-snapshot binding rejected before mutation, authoritative
+operation identity in verification, atomic semantic-attempt accounting
+(initial call included, default max 3), claimed concurrent reconciliation,
+provider/local schema alignment, usage preserved through all validation
+failures with input-aware reservations, semantic sanitization, full
+tool-schema parity (incl. limit), and resolved-error clearing with audit
+history preserved. 14 behavioral probes in
+`tests/unit/test_m1_remediation.py` failed on 15833ea (12) before the fix;
+full suite is now 89 tests, ruff/mypy clean, offline only.
 Status: candidate for independent re-review (not self-accepted).

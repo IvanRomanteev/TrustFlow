@@ -245,7 +245,9 @@ async def test_over_budget_response_remains_in_accounting():
             return steps, LLMCallRecord(purpose="plan", model="muse-wonder-1.0",
                                         input_tokens=9000, output_tokens=9000)
 
-    s = Settings(max_retries=0, token_budget_per_workflow=100,
+    # Budget admits the conservative reserve (est. input + output cap)
+    # but not the provider's actual reported usage.
+    s = Settings(max_retries=0, token_budget_per_workflow=1000,
                  max_output_tokens=50)
     engine, _ = _engine(fake=BigUsage(), settings=s)
     run = await engine.create_workflow(WorkflowGoal(title="Check", description="balance"))
