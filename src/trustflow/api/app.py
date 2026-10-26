@@ -9,12 +9,13 @@ from pydantic import BaseModel, Field
 from trustflow.agents.approval import HumanApprovalService
 from trustflow.agents.executor import Executor
 from trustflow.agents.planner import Planner
+from trustflow.agents.semantic import SemanticReviewer
 from trustflow.agents.verifier import Verifier
 from trustflow.audit.logger import AuditLogger
 from trustflow.core.errors import ApprovalError, TrustFlowError
 from trustflow.core.settings import Settings, get_settings
 from trustflow.domain.models import WorkflowGoal, WorkflowRun
-from trustflow.llm.provider import FakeLLMProvider
+from trustflow.llm.provider import build_provider
 from trustflow.orchestration.engine import RunRepository, WorkflowEngine
 from trustflow.policies.policy_engine import PolicyEngine
 from trustflow.tools.registry import ToolRegistry
@@ -42,12 +43,16 @@ class Container:
         self.audit = AuditLogger()
         self.repo = RunRepository()
         self.approvals = HumanApprovalService()
-        planner = Planner(FakeLLMProvider(), self.policy)
+        # Explicit fake/live switch; live without MODEL_API_KEY raises here.
+        provider = build_provider(settings)
+        self.llm_mode = settings.llm_mode
+        planner = Planner(provider, self.policy)
         executor = Executor(self.registry, settings)
         verifier = Verifier(self.registry.ledger, self.registry.ledger.total_balance())
+        semantic = SemanticReviewer(provider, self.registry.ledger)
         self.engine = WorkflowEngine(
             planner, executor, verifier, self.policy, self.approvals,
-            self.audit, self.repo, settings,
+            self.audit, self.repo, settings, semantic=semantic,
         )
 
 
@@ -66,8 +71,15 @@ def create_app(container: Container | None = None) -> FastAPI:
         return box
 
     @app.get("/health")
-    def health() -> dict:
-        return {"status": "ok", "synthetic_only": True}
+    def health(c: Annotated[Container, Depends(dep)]) -> dict:
+        return {
+            "status": "ok",
+            "synthetic_only": True,
+            "llm_mode": c.llm_mode,
+            "planning_model": c.settings.planning_model,
+            "review_model": c.settings.review_model,
+            "fast_model": c.settings.fast_model,
+        }
 
     @app.get("/tools")
     def tools(c: Annotated[Container, Depends(dep)]) -> dict:
