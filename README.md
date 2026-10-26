@@ -1,7 +1,6 @@
 # TrustFlow
 
-Self-verifying multi-agent workflows for the **Meta Global AI Developer Hackathon 2026**
-(Build for Your World, Indie Developer track).
+Self-verifying multi-agent workflows for the **Meta Global AI Developer Hackathon 2026**.
 
 TrustFlow runs a `Planner -> Human Approval -> Executor -> Verifier` loop over
 **synthetic financial data only**. No real money, no real banking APIs, no secrets
