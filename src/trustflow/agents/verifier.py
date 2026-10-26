@@ -47,22 +47,31 @@ class Verifier:
             if not conserved:
                 issues.append("Synthetic ledger total changed unexpectedly")
 
-        # A transfer step must carry an idempotency key and a tx id.
+        # Transfers are verified against the ledger itself, never against
+        # tx ids or success fields claimed only by tool results.
         for step in plan.steps:
             if step.tool_name == "simulate_transfer":
                 res = by_id.get(step.step_id)
-                ok = bool(res and res.idempotency_key and res.data.get("tx_id"))
-                checks.append(VerificationCheck(name=f"transfer_idempotent:{step.step_id}",
-                                                passed=ok))
+                key = (res.idempotency_key if res else "") or step.operation_id
+                tx = self._ledger.find_by_key(key) if self._ledger is not None else None
+                ok = bool(
+                    tx is not None
+                    and res is not None
+                    and res.status == StepStatus.SUCCEEDED
+                    and tx.from_account == step.args.get("from_account")
+                    and tx.to_account == step.args.get("to_account")
+                    and float(tx.amount) == float(step.args.get("amount", -1))
+                    and tx.currency == step.args.get("currency", "USD")
+                    and res.data.get("tx_id") == tx.tx_id
+                )
+                checks.append(VerificationCheck(
+                    name=f"transfer_ledger_match:{step.step_id}", passed=ok,
+                    detail=f"key={key} ledger_tx={tx.tx_id if tx else None}"))
                 if not ok:
-                    issues.append(f"Transfer {step.step_id} missing idempotent tx evidence")
-                elif res is not None and float(res.data.get("amount", -1)) != float(
-                    step.args.get("amount", -2)
-                ):
-                    checks.append(VerificationCheck(
-                        name=f"transfer_amount:{step.step_id}", passed=False,
-                        detail="Executed amount differs from approved plan amount"))
-                    issues.append(f"Transfer {step.step_id} amount mismatch vs plan")
+                    issues.append(
+                        f"Transfer {step.step_id} does not match an independently "
+                        "read ledger transaction for its approved operation"
+                    )
 
         return VerificationReport(passed=all(c.passed for c in checks), checks=checks,
                                   issues=issues)

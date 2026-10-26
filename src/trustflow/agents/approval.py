@@ -48,6 +48,9 @@ class HumanApprovalService:
                 reason=reason,
             )
         )
+        # Isolated snapshot: later mutation of run.plan cannot alter what
+        # was approved (deep copy covers nested args dicts).
+        run.approved_plan_snapshot = run.plan.model_copy(deep=True)
         return transition(run, RunStatus.EXECUTING)
 
     def reject(self, run: WorkflowRun, actor: str, plan_hash: str, reason: str = "") -> WorkflowRun:
@@ -72,11 +75,12 @@ class HumanApprovalService:
         return transition(run, RunStatus.REJECTED)
 
     def is_approved(self, run: WorkflowRun) -> bool:
-        if run.plan is None:
-            return False
+        candidates = [p for p in (run.approved_plan_snapshot, run.plan) if p is not None]
         return any(
             r.decision == ApprovalDecision.APPROVED
-            and r.plan_hash == run.plan.plan_hash
-            and r.plan_version == run.plan.version
+            and any(
+                r.plan_hash == plan.plan_hash and r.plan_version == plan.version
+                for plan in candidates
+            )
             for r in run.approvals
         )

@@ -54,13 +54,30 @@ class SyntheticLedger:
         """Return an already-committed tx for a key (timeout reconciliation)."""
         return self._by_idempotency.get(idempotency_key)
 
+    def find_by_key(self, idempotency_key: str) -> LedgerTransaction | None:
+        return self._by_idempotency.get(idempotency_key)
+
     def transfer(
         self, from_account: str, to_account: str, amount: float, idempotency_key: str,
         currency: str = "USD",
     ) -> LedgerTransaction:
-        """Idempotent: replaying the same key returns the original tx, no double debit."""
+        """Idempotent: same key + same payload returns the original tx.
+        Same key with conflicting payload fails explicitly (no silent reuse)."""
         if idempotency_key in self._by_idempotency:
-            return self._by_idempotency[idempotency_key]
+            existing = self._by_idempotency[idempotency_key]
+            if (
+                existing.from_account != from_account
+                or existing.to_account != to_account
+                or existing.amount != amount
+                or existing.currency != currency
+            ):
+                from trustflow.core.errors import ConflictingOperationError
+
+                raise ConflictingOperationError(
+                    f"Operation {idempotency_key} was already committed with "
+                    "different accounts/amount/currency"
+                )
+            return existing
         if self.fail_next_transfer:
             self.fail_next_transfer = False
             raise RuntimeError("Simulated transfer failure (injected)")

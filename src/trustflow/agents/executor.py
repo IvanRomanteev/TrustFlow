@@ -1,11 +1,18 @@
-"""Executor: runs steps once. Committed transfers are never repeated."""
+"""Executor: reads always refresh; mutations reconcile against the ledger.
+
+A timeout never declares a definitive mutation failure while its worker can
+still commit: the step becomes UNCERTAIN, the worker task is tracked, and no
+conflicting replacement runs until reconciliation resolves the outcome.
+"""
 
 import asyncio
+import copy
 import hashlib
 import json
 
+from trustflow.core.logging import sanitize_error
 from trustflow.core.settings import Settings
-from trustflow.domain.models import Plan, StepResult, StepStatus, WorkflowRun
+from trustflow.domain.models import Plan, PlanStep, StepResult, StepStatus, WorkflowRun
 from trustflow.tools.registry import ToolRegistry
 
 
@@ -15,61 +22,153 @@ def logical_key(run_id: str, step_tool: str, args: dict) -> str:
     return f"{run_id}:{step_tool}:{digest}"
 
 
-def operation_key(step_operation_id: str, fallback: str) -> str:
-    return step_operation_id or fallback
+def payload_matches(step: PlanStep, tx) -> bool:
+    return (
+        tx.from_account == step.args.get("from_account")
+        and tx.to_account == step.args.get("to_account")
+        and float(tx.amount) == float(step.args.get("amount", -1))
+        and tx.currency == step.args.get("currency", "USD")
+    )
 
 
 class Executor:
     def __init__(self, registry: ToolRegistry, settings: Settings | None = None) -> None:
         self._registry = registry
         self._settings = settings or Settings()
+        self._pending: dict[str, asyncio.Task] = {}
+
+    def _key(self, run: WorkflowRun, step: PlanStep) -> str:
+        return step.operation_id or logical_key(run.run_id, step.tool_name, step.args)
+
+    async def _invoke(self, step: PlanStep, args: dict, key: str) -> StepResult:
+        task = asyncio.ensure_future(
+            asyncio.to_thread(self._registry.invoke, step.tool_name, args, key)
+        )
+        # Every worker is tracked: cancelling an await never stops a thread.
+        self._pending[key] = task
+        try:
+            outcome = await asyncio.wait_for(
+                asyncio.shield(task), timeout=self._settings.step_timeout_seconds
+            )
+            return StepResult(
+                step_id=step.step_id, tool_name=step.tool_name,
+                status=StepStatus.SUCCEEDED if outcome.ok else StepStatus.FAILED,
+                data=outcome.data, error=outcome.error, idempotency_key=key,
+            )
+        except TimeoutError:
+            # Worker may still finish/commit. Track it; do not fail definitively.
+            return StepResult(
+                step_id=step.step_id, tool_name=step.tool_name,
+                status=StepStatus.UNCERTAIN,
+                error="Timed out; outcome uncertain, worker still tracked",
+                idempotency_key=key,
+            )
+        except Exception as exc:
+            committed = (
+                self._registry.committed(key)
+                if step.tool_name == "simulate_transfer" else None
+            )
+            if committed is not None and payload_matches(step, committed):
+                return StepResult(
+                    step_id=step.step_id, tool_name=step.tool_name,
+                    status=StepStatus.SUCCEEDED,
+                    data={**committed.model_dump(), "reconciled_from_ledger": True},
+                    idempotency_key=key,
+                )
+            return StepResult(
+                step_id=step.step_id, tool_name=step.tool_name,
+                status=StepStatus.FAILED, error=sanitize_error(str(exc)),
+                idempotency_key=key,
+            )
+        finally:
+            if task.done():
+                self._pending.pop(key, None)
 
     async def execute(self, run: WorkflowRun, plan: Plan) -> list[StepResult]:
-        done = {r.step_id: r for r in run.step_results if r.status == StepStatus.SUCCEEDED}
-        # A transfer committed under any earlier plan version also blocks replays
-        # whose step_id changed after re-planning (matched by operation key).
-        done_ops = {
-            r.idempotency_key for r in run.step_results if r.status == StepStatus.SUCCEEDED
-        }
-        results: list[StepResult] = list(run.step_results)
+        results: list[StepResult] = []
         for step in plan.steps:
-            key = operation_key(
-                step.operation_id, logical_key(run.run_id, step.tool_name, step.args)
-            )
-            if step.step_id in done or key in done_ops:
-                continue
-            args = dict(step.args)
+            args = copy.deepcopy(step.args)  # approved snapshot stays untouched
+            key = self._key(run, step)
             if step.tool_name == "simulate_transfer":
-                args["idempotency_key"] = key
-            try:
-                outcome = await asyncio.wait_for(
-                    asyncio.to_thread(self._registry.invoke, step.tool_name, args, key),
-                    timeout=self._settings.step_timeout_seconds,
-                )
-                result = StepResult(
-                    step_id=step.step_id, tool_name=step.tool_name,
-                    status=StepStatus.SUCCEEDED if outcome.ok else StepStatus.FAILED,
-                    data=outcome.data, error=outcome.error, idempotency_key=key,
-                )
-            except Exception as exc:
-                # Timeout after a successful mutation: the worker thread may have
-                # committed. Reconcile against the ledger before failing the step.
-                committed = (
-                    self._registry.committed(key)
-                    if step.tool_name == "simulate_transfer" else None
-                )
+                committed = self._registry.committed(key)
                 if committed is not None:
-                    result = StepResult(
+                    if payload_matches(step, committed):
+                        results.append(StepResult(
+                            step_id=step.step_id, tool_name=step.tool_name,
+                            status=StepStatus.SUCCEEDED,
+                            data={**committed.model_dump(),
+                                  "reconciled_from_ledger": True},
+                            idempotency_key=key,
+                        ))
+                    else:
+                        results.append(StepResult(
+                            step_id=step.step_id, tool_name=step.tool_name,
+                            status=StepStatus.FAILED,
+                            error="Committed operation conflicts with plan payload",
+                            idempotency_key=key,
+                        ))
+                    continue
+                if key in self._pending and not self._pending[key].done():
+                    results.append(StepResult(
                         step_id=step.step_id, tool_name=step.tool_name,
-                        status=StepStatus.SUCCEEDED,
-                        data={**committed.model_dump(), "reconciled_after_timeout": True},
+                        status=StepStatus.UNCERTAIN,
+                        error="Worker still in flight; replacement blocked",
                         idempotency_key=key,
-                    )
-                else:
-                    result = StepResult(
-                        step_id=step.step_id, tool_name=step.tool_name,
-                        status=StepStatus.FAILED, error=str(exc)[:500],
-                        idempotency_key=key,
-                    )
-            results = [r for r in results if r.step_id != step.step_id] + [result]
+                    ))
+                    continue
+                args["idempotency_key"] = key
+            results.append(await self._invoke(step, args, key))
         return results
+
+    async def reconcile(self, run: WorkflowRun, plan: Plan) -> list[StepResult]:
+        """Resolve UNCERTAIN steps from tracked workers / the ledger only."""
+        await asyncio.sleep(0)  # let worker-completion callbacks run
+        updated: list[StepResult] = []
+        by_id = {r.step_id: r for r in run.step_results}
+        for step in plan.steps:
+            current = by_id.get(step.step_id)
+            if current is None or current.status != StepStatus.UNCERTAIN:
+                if current is not None:
+                    if (
+                        step.tool_name != "simulate_transfer"
+                        and current.status == StepStatus.FAILED
+                    ):
+                        # Reads carry no mutation risk: refresh them fresh
+                        # instead of reusing a stale timed-out result.
+                        updated.append(
+                            await self._invoke(step, copy.deepcopy(step.args),
+                                               self._key(run, step))
+                        )
+                    else:
+                        updated.append(current)
+                continue
+            key = self._key(run, step)
+            committed = self._registry.committed(key)
+            task = self._pending.get(key)
+            if committed is not None and payload_matches(step, committed):
+                updated.append(StepResult(
+                    step_id=step.step_id, tool_name=step.tool_name,
+                    status=StepStatus.SUCCEEDED,
+                    data={**committed.model_dump(), "reconciled_from_ledger": True},
+                    idempotency_key=key,
+                ))
+                if task is not None and task.done():
+                    self._pending.pop(key, None)
+            elif task is not None and task.done():
+                self._pending.pop(key, None)
+                try:
+                    outcome = task.result()
+                    updated.append(StepResult(
+                        step_id=step.step_id, tool_name=step.tool_name,
+                        status=StepStatus.SUCCEEDED if outcome.ok else StepStatus.FAILED,
+                        data=outcome.data, error=outcome.error, idempotency_key=key,
+                    ))
+                except Exception as exc:
+                    updated.append(StepResult(
+                        step_id=step.step_id, tool_name=step.tool_name,
+                        status=StepStatus.FAILED, error=sanitize_error(str(exc)),
+                        idempotency_key=key,
+                    ))
+            else:
+                updated.append(current)  # still unresolved
+        return updated

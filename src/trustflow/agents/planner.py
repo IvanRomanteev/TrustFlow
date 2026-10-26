@@ -1,13 +1,17 @@
-"""Planner: goal -> validated Plan. At most one repair, then fail closed."""
+"""Planner: goal -> validated Plan. At most one repair, then fail closed.
+
+Usage is attributed at call time through the per-workflow tracker passed by
+the engine; there is no shared pending-usage queue to leak between runs.
+"""
 
 from typing import Any
 
 from pydantic import BaseModel
 
-from trustflow.core.errors import PlanValidationError
+from trustflow.core.errors import LLMResponseError, PlanValidationError
 from trustflow.domain.models import Plan, PlanStep, WorkflowGoal
 from trustflow.llm.provider import LLMProvider
-from trustflow.llm.usage import LLMCallRecord
+from trustflow.llm.usage import UsageTracker
 from trustflow.policies.policy_engine import PolicyEngine
 from trustflow.tools.ledger import (
     FxQuoteArgs,
@@ -36,8 +40,10 @@ def validate_steps(raw_steps: Any) -> list[PlanStep]:
         tool = str(raw.get("tool_name", ""))
         if tool not in ARG_MODELS:
             raise PlanValidationError(f"Unknown tool in plan: {tool or '<empty>'}")
+        # operation_id is backend-owned; any model-supplied value is discarded.
         raw_args = {k: v for k, v in raw.items()
-                    if k not in ("tool_name", "rationale") and v is not None}
+                    if k not in ("tool_name", "rationale", "operation_id")
+                    and v is not None and v != ""}
         try:
             parsed = ARG_MODELS[tool].model_validate(raw_args)
         except Exception as exc:
@@ -59,23 +65,35 @@ def validate_steps(raw_steps: Any) -> list[PlanStep]:
 
 
 class Planner:
-    def __init__(self, llm: LLMProvider, policy: PolicyEngine | None = None) -> None:
+    def __init__(self, llm: LLMProvider, policy: PolicyEngine | None = None,
+                 max_output_tokens: int = 1200) -> None:
         self._llm = llm
         self._policy = policy or PolicyEngine()
-        self.calls: list[LLMCallRecord] = []
+        self._reserve_tokens = max_output_tokens
 
-    def create_plan(self, goal: WorkflowGoal, version: int = 1) -> Plan:
-        raw, record = self._llm.propose_plan(goal.title, goal.description)
-        self.calls.append(record)
+    def _propose(self, goal: WorkflowGoal, tracker: UsageTracker | None,
+                 feedback: str | None = None):
+        if tracker is not None:
+            tracker.reserve(self._reserve_tokens)  # conservative pre-call check
+        try:
+            raw, record = self._llm.propose_plan(goal.title, goal.description,
+                                                 repair_feedback=feedback)
+        except LLMResponseError as exc:
+            if tracker is not None and exc.record is not None:
+                tracker.record(exc.record)  # type: ignore[arg-type]
+            raise
+        if tracker is not None:
+            tracker.record(record)
+        return raw
+
+    def create_plan(self, goal: WorkflowGoal, version: int = 1,
+                    tracker: UsageTracker | None = None) -> Plan:
+        raw = self._propose(goal, tracker)
         try:
             steps = validate_steps(raw)
         except PlanValidationError as first_error:
-            # Exactly one schema-repair attempt, then fail closed.
-            raw, record = self._llm.propose_plan(
-                goal.title, goal.description, repair_feedback=str(first_error)
-            )
-            self.calls.append(record)
-            steps = validate_steps(raw)
+            raw = self._propose(goal, tracker, feedback=str(first_error))
+            steps = validate_steps(raw)  # second failure propagates: fail closed
         for idx, step in enumerate(steps):
             step.step_id = f"v{version}-step-{idx + 1}"
         plan = Plan(goal_title=goal.title, version=version, steps=steps)

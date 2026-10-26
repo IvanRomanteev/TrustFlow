@@ -2,19 +2,32 @@
 
 from typing import Any
 
+from pydantic import BaseModel, Field
+
+from trustflow.core.errors import LLMResponseError
 from trustflow.domain.models import Plan, SemanticReview, WorkflowGoal
 from trustflow.llm.provider import LLMProvider
-from trustflow.llm.usage import LLMCallRecord
+from trustflow.llm.usage import UsageTracker
 from trustflow.tools.ledger import SyntheticLedger
+
+
+class SemanticReviewInput(BaseModel):
+    """Explicit validation contract for model review output."""
+
+    verdict: str = Field(pattern="^(PASS|FAIL)$")
+    confidence: float = Field(ge=0.0, le=1.0)
+    issues: list[str] = Field(default_factory=list)
+    summary: str = ""
 
 
 class SemanticReviewer:
     """Reviews goal vs approved plan vs independently obtained ledger evidence."""
 
-    def __init__(self, llm: LLMProvider, ledger: SyntheticLedger) -> None:
+    def __init__(self, llm: LLMProvider, ledger: SyntheticLedger,
+                 max_output_tokens: int = 1200) -> None:
         self._llm = llm
         self._ledger = ledger
-        self.calls: list[LLMCallRecord] = []
+        self._reserve_tokens = max_output_tokens
 
     def evidence(self, plan: Plan) -> dict[str, Any]:
         """Evidence read directly from the ledger, not from executor output."""
@@ -36,7 +49,8 @@ class SemanticReviewer:
         unique = {t["tx_id"]: t for t in transactions}
         return {"balances": balances, "transactions": list(unique.values())}
 
-    def review(self, goal: WorkflowGoal, plan: Plan) -> SemanticReview:
+    def review(self, goal: WorkflowGoal, plan: Plan,
+               tracker: UsageTracker | None = None) -> SemanticReview:
         payload = {
             "goal": {"title": goal.title, "description": goal.description},
             "plan_steps": [
@@ -44,12 +58,23 @@ class SemanticReviewer:
             ],
             "evidence": self.evidence(plan),
         }
-        raw, record = self._llm.semantic_review(payload)
-        self.calls.append(record)
+        if tracker is not None:
+            tracker.reserve(self._reserve_tokens)
+        try:
+            raw, record = self._llm.semantic_review(payload)
+        except LLMResponseError as exc:
+            if tracker is not None and exc.record is not None:
+                tracker.record(exc.record)  # type: ignore[arg-type]
+            raise
+        if tracker is not None:
+            tracker.record(record)
+        try:
+            parsed = SemanticReviewInput.model_validate(raw)
+        except Exception as exc:
+            raise LLMResponseError(
+                f"Malformed semantic review output: {exc}", record=record
+            ) from exc
         return SemanticReview(
-            verdict=str(raw.get("verdict", "FAIL")),
-            confidence=float(raw.get("confidence", 0) or 0),
-            issues=[str(i) for i in raw.get("issues", [])],
-            summary=str(raw.get("summary", "")),
-            model=record.model,
+            verdict=parsed.verdict, confidence=parsed.confidence,
+            issues=parsed.issues, summary=parsed.summary, model=record.model,
         )
