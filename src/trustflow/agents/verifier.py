@@ -52,11 +52,14 @@ class Verifier:
         for step in plan.steps:
             if step.tool_name == "simulate_transfer":
                 res = by_id.get(step.step_id)
-                key = (res.idempotency_key if res else "") or step.operation_id
+                # Authoritative identity comes from the approved execution
+                # snapshot (the plan passed in), never from tool results.
+                key = step.operation_id
                 tx = self._ledger.find_by_key(key) if self._ledger is not None else None
                 ok = bool(
                     tx is not None
                     and res is not None
+                    and res.idempotency_key == key
                     and res.status == StepStatus.SUCCEEDED
                     and tx.from_account == step.args.get("from_account")
                     and tx.to_account == step.args.get("to_account")

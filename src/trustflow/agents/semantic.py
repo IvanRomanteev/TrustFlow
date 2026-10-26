@@ -59,7 +59,10 @@ class SemanticReviewer:
             "evidence": self.evidence(plan),
         }
         if tracker is not None:
-            tracker.reserve(self._reserve_tokens)
+            import json as _json
+
+            estimated_input = len(_json.dumps(payload, default=str)) // 4 + 128
+            tracker.reserve(estimated_input + self._reserve_tokens)
         try:
             raw, record = self._llm.semantic_review(payload)
         except LLMResponseError as exc:
@@ -74,7 +77,10 @@ class SemanticReviewer:
             raise LLMResponseError(
                 f"Malformed semantic review output: {exc}", record=record
             ) from exc
+        from trustflow.core.logging import redact
+
         return SemanticReview(
             verdict=parsed.verdict, confidence=parsed.confidence,
-            issues=parsed.issues, summary=parsed.summary, model=record.model,
+            issues=[redact(str(i)) for i in parsed.issues],
+            summary=redact(parsed.summary), model=record.model,
         )

@@ -74,7 +74,10 @@ class Planner:
     def _propose(self, goal: WorkflowGoal, tracker: UsageTracker | None,
                  feedback: str | None = None):
         if tracker is not None:
-            tracker.reserve(self._reserve_tokens)  # conservative pre-call check
+            # Reserve estimated input (~4 chars/token + prompt overhead)
+            # plus the full allowed output before every attempt.
+            estimated_input = (len(goal.title) + len(goal.description)) // 4 + 256
+            tracker.reserve(estimated_input + self._reserve_tokens)
         try:
             raw, record = self._llm.propose_plan(goal.title, goal.description,
                                                  repair_feedback=feedback)

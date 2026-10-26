@@ -51,6 +51,15 @@ class HumanApprovalService:
         # Isolated snapshot: later mutation of run.plan cannot alter what
         # was approved (deep copy covers nested args dicts).
         run.approved_plan_snapshot = run.plan.model_copy(deep=True)
+        run.approved_hash = plan_hash
+        # Approving authorizes exactly the snapshot's payment intents.
+        snapshot_ops = {
+            s.operation_id for s in run.approved_plan_snapshot.steps
+            if s.tool_name == "simulate_transfer"
+        }
+        for entry in run.operations:
+            if entry.get("operation_id") in snapshot_ops:
+                entry["authorized"] = True
         return transition(run, RunStatus.EXECUTING)
 
     def reject(self, run: WorkflowRun, actor: str, plan_hash: str, reason: str = "") -> WorkflowRun:
@@ -75,12 +84,13 @@ class HumanApprovalService:
         return transition(run, RunStatus.REJECTED)
 
     def is_approved(self, run: WorkflowRun) -> bool:
-        candidates = [p for p in (run.approved_plan_snapshot, run.plan) if p is not None]
+        """Only the exact approved snapshot counts; run.plan alone never does."""
+        snapshot = run.approved_plan_snapshot
+        if snapshot is None or not run.approved_hash:
+            return False
         return any(
             r.decision == ApprovalDecision.APPROVED
-            and any(
-                r.plan_hash == plan.plan_hash and r.plan_version == plan.version
-                for plan in candidates
-            )
+            and r.plan_hash == run.approved_hash == snapshot.plan_hash
+            and r.plan_version == snapshot.version
             for r in run.approvals
         )

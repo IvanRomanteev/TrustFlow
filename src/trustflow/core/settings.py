@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     llm_backoff_seconds: float = 0.5
     max_output_tokens: int = 1200
     token_budget_per_workflow: int = 20000
+    # Total semantic-review attempts per workflow, INCLUDING the initial call.
+    semantic_max_attempts: int = 3
     high_risk_threshold: float = 1000.0
     max_steps: int = 20
     max_retries: int = 2

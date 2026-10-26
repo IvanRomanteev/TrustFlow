@@ -90,6 +90,33 @@ class Executor:
             args = copy.deepcopy(step.args)  # approved snapshot stays untouched
             key = self._key(run, step)
             if step.tool_name == "simulate_transfer":
+                # Mutation boundary: only an authorized manifest intent whose
+                # payload fingerprint still matches, inside the exact approved
+                # snapshot (when one exists), may ever reach the ledger.
+                entry = next(
+                    (op for op in run.operations
+                     if op.get("operation_id") == step.operation_id),
+                    None,
+                )
+                from trustflow.orchestration.engine import payload_fingerprint
+
+                boundary_ok = bool(
+                    entry is not None
+                    and entry.get("authorized", False)
+                    and entry.get("fingerprint") == payload_fingerprint(step)
+                    and (
+                        not run.approved_hash
+                        or plan.plan_hash == run.approved_hash
+                    )
+                )
+                if not boundary_ok:
+                    results.append(StepResult(
+                        step_id=step.step_id, tool_name=step.tool_name,
+                        status=StepStatus.FAILED,
+                        error="Operation not authorized at mutation boundary",
+                        idempotency_key=key,
+                    ))
+                    continue
                 committed = self._registry.committed(key)
                 if committed is not None:
                     if payload_matches(step, committed):

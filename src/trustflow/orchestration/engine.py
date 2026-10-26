@@ -6,6 +6,7 @@ executes tools, creates transfers, or triggers mutation-producing re-plans.
 
 import hashlib
 import json
+import threading
 import uuid
 
 from trustflow.agents.approval import HumanApprovalService
@@ -14,11 +15,7 @@ from trustflow.agents.planner import Planner
 from trustflow.agents.semantic import SemanticReviewer
 from trustflow.agents.verifier import Verifier
 from trustflow.audit.logger import AuditLogger
-from trustflow.core.errors import (
-    ApprovalRequiredError,
-    ConflictingOperationError,
-    TrustFlowError,
-)
+from trustflow.core.errors import ApprovalRequiredError, TrustFlowError
 from trustflow.core.logging import sanitize_error
 from trustflow.core.settings import Settings
 from trustflow.domain.models import (
@@ -58,46 +55,51 @@ def payload_fingerprint(step) -> str:
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
-def assign_operation_ids(run: WorkflowRun, plan: Plan) -> Plan:
-    """Backend-owned payment-intent identities.
+def assign_operation_ids(run: WorkflowRun, plan: Plan,
+                         new_intents_authorized: bool = True) -> Plan:
+    """Authoritative backend-owned payment-intent manifest.
 
-    Identity is a fresh UUID per authorized intent, retained across retries
-    and revisions by matching (payload fingerprint, occurrence ordinal) in
-    the run registry. It is never derived from route/amount/version/position
-    alone, and never assigned by the LLM. Reuse with a conflicting payload
-    registered under the same identity fails explicitly.
+    The manifest (run.operations, in intent order) is the source of truth,
+    separate from payload matching. The Nth mutating intent of any revision
+    maps to the Nth manifest intent: its identity AND its originally
+    authorized payload are preserved, so a re-plan proposing 101 for a
+    committed 100 can never create a second payment. Mutating intents beyond
+    the manifest are new business operations: they are registered as
+    unauthorized and require explicit approval before execution.
     """
-    ordinals: dict[str, int] = {}
-    by_id = {op["operation_id"]: op for op in run.operations}
+    manifest = [op for op in run.operations if op.get("tool_name") == "simulate_transfer"]
+    position = 0
     for step in plan.steps:
         if step.tool_name != "simulate_transfer":
             continue
-        fingerprint = payload_fingerprint(step)
-        ordinal = ordinals.get(fingerprint, 0)
-        ordinals[fingerprint] = ordinal + 1
-        if step.operation_id and step.operation_id in by_id:
-            registered = by_id[step.operation_id]
-            if registered["fingerprint"] != fingerprint:
-                raise ConflictingOperationError(
-                    f"Operation {step.operation_id} reused with conflicting payload"
-                )
-            continue
-        match = next(
-            (op for op in run.operations
-             if op["fingerprint"] == fingerprint and op["ordinal"] == ordinal),
-            None,
-        )
-        if match is not None:
-            step.operation_id = match["operation_id"]
+        if position < len(manifest):
+            entry = manifest[position]
+            step.operation_id = entry["operation_id"]
+            # Preserve the authorized intent payload exactly (deep copy).
+            step.args = json.loads(json.dumps(entry["payload"]))
         else:
             step.operation_id = f"op_{uuid.uuid4().hex[:16]}"
-            run.operations.append({
+            entry = {
                 "operation_id": step.operation_id,
-                "fingerprint": fingerprint,
-                "ordinal": ordinal,
+                "fingerprint": payload_fingerprint(step),
+                "ordinal": position,
                 "tool_name": step.tool_name,
-            })
+                "payload": json.loads(json.dumps(step.args)),
+                "authorized": bool(new_intents_authorized),
+            }
+            run.operations.append(entry)
+            manifest.append(entry)
+        position += 1
     return plan
+
+
+def has_unauthorized_intents(run: WorkflowRun, plan: Plan) -> bool:
+    by_id = {op["operation_id"]: op for op in run.operations}
+    return any(
+        step.tool_name == "simulate_transfer"
+        and not by_id.get(step.operation_id, {}).get("authorized", False)
+        for step in plan.steps
+    )
 
 
 class WorkflowEngine:
@@ -123,6 +125,8 @@ class WorkflowEngine:
         self.settings = settings or Settings()
         self.semantic = semantic
         self._trackers: dict[str, UsageTracker] = {}
+        self._claim_lock = threading.Lock()
+        self._inflight: set[str] = set()
 
     def _tracker(self, run: WorkflowRun) -> UsageTracker:
         if run.run_id not in self._trackers:
@@ -175,29 +179,54 @@ class WorkflowEngine:
         return await self._execute_and_verify(run)
 
     async def resume_after_approval(self, run: WorkflowRun) -> WorkflowRun:
-        if run.status != RunStatus.EXECUTING or not self.approvals.is_approved(run):
-            raise ApprovalRequiredError("Workflow has no valid approval for its current plan")
+        # Exact-snapshot binding: only the approved snapshot may execute,
+        # and its digest must match the approval record exactly.
+        snapshot = run.approved_plan_snapshot
+        if (
+            run.status != RunStatus.EXECUTING
+            or snapshot is None
+            or not run.approved_hash
+            or snapshot.plan_hash != run.approved_hash
+            or not self.approvals.is_approved(run)
+        ):
+            raise ApprovalRequiredError(
+                "Workflow has no intact approved snapshot for execution"
+            )
         self.audit.log(run.run_id, "system", "execution_resumed", {})
         return await self._execute_and_verify(run)
 
     async def reconcile(self, run: WorkflowRun) -> WorkflowRun:
-        """Resolve uncertain outcomes without any new tool execution."""
-        if run.status != RunStatus.EXECUTION_UNCERTAIN:
-            return run
-        plan = self._execution_plan(run)
-        run.step_results = await self.executor.reconcile(run, plan)
-        if any(r.status == StepStatus.UNCERTAIN for r in run.step_results):
-            return self.repo.save(run)  # still unresolved; replacements blocked
-        transition(run, RunStatus.VERIFYING)
-        return await self._verify_loop(run, plan)
+        """Resolve uncertain outcomes. Concurrent callers get the current
+        state back (defined response), never a transition exception."""
+        with self._claim_lock:
+            if run.status != RunStatus.EXECUTION_UNCERTAIN or run.run_id in self._inflight:
+                return run
+            self._inflight.add(run.run_id)
+        try:
+            plan = self._execution_plan(run)
+            run.step_results = await self.executor.reconcile(run, plan)
+            if any(r.status == StepStatus.UNCERTAIN for r in run.step_results):
+                return self.repo.save(run)
+            transition(run, RunStatus.VERIFYING)
+            return await self._verify_loop(run, plan)
+        finally:
+            with self._claim_lock:
+                self._inflight.discard(run.run_id)
 
     async def retry_verification(self, run: WorkflowRun) -> WorkflowRun:
-        """Verification-only recovery: no tools, no transfers, no re-planning."""
-        if run.status != RunStatus.VERIFICATION_PENDING:
-            return run
-        transition(run, RunStatus.VERIFYING)
-        plan = self._execution_plan(run)
-        return await self._verify_loop(run, plan, semantic_only_retry=True)
+        """Verification-only recovery: no tools, no transfers, no re-planning.
+        Concurrent retries are claimed atomically; others get current state."""
+        with self._claim_lock:
+            if run.status != RunStatus.VERIFICATION_PENDING or run.run_id in self._inflight:
+                return run
+            self._inflight.add(run.run_id)
+        try:
+            transition(run, RunStatus.VERIFYING)
+            plan = self._execution_plan(run)
+            return await self._verify_loop(run, plan, semantic_only_retry=True)
+        finally:
+            with self._claim_lock:
+                self._inflight.discard(run.run_id)
 
     async def _execute_and_verify(self, run: WorkflowRun) -> WorkflowRun:
         plan = self._execution_plan(run)
@@ -219,16 +248,34 @@ class WorkflowEngine:
             # semantic call, so a reviewer failure cannot strand the run.
             run.verification = report
             self.repo.save(run)
+            semantic_failed = False
             if report.passed and self.semantic is not None:
+                # Every attempt counts (initial call included), checked and
+                # incremented atomically before the provider is called.
+                with self._claim_lock:
+                    exhausted = (
+                        run.verification_attempts >= self.settings.semantic_max_attempts
+                    )
+                    if not exhausted:
+                        run.verification_attempts += 1
+                if exhausted:
+                    run.error = (
+                        "Semantic attempt limit reached. Committed transfers "
+                        "(if any) were not rolled back."
+                    )
+                    transition(run, RunStatus.FAILED)
+                    return self.repo.save(run)
                 try:
                     review = self.semantic.review(run.goal, plan,
                                                   tracker=self._tracker(run))
                     report.semantic = review
                     run.verification = report
                     if review.verdict != "PASS":
+                        semantic_failed = True
                         report.passed = False
                         report.issues.append(
-                            "Semantic review FAIL: " + "; ".join(review.issues)
+                            "Semantic review FAIL: "
+                            + sanitize_error("; ".join(review.issues))
                         )
                 except TrustFlowError as exc:
                     self._persist_usage(run)
@@ -236,30 +283,28 @@ class WorkflowEngine:
                         f"Semantic review unavailable: {exc}. "
                         "Committed transfers (if any) were not rolled back."
                     )
-                    transition(run, RunStatus.VERIFICATION_PENDING)
+                    if run.verification_attempts >= self.settings.semantic_max_attempts:
+                        transition(run, RunStatus.FAILED)
+                    else:
+                        transition(run, RunStatus.VERIFICATION_PENDING)
                     return self.repo.save(run)
                 self._persist_usage(run)
                 run.verification = report
             self.audit.log(run.run_id, "verifier", "verification_finished",
                            {"passed": report.passed, "issues": report.issues})
             if report.passed:
+                run.error = None  # resolved; history stays in the audit trail
                 transition(run, RunStatus.COMPLETED)
                 return self.repo.save(run)
-            # Semantic-origin failures recover verification-only, bounded.
-            semantic_failed = bool(
-                report.semantic is not None and report.semantic.verdict != "PASS"
-            ) or semantic_only_retry
-            if semantic_failed:
-                run.verification_attempts += 1
-                if run.verification_attempts > self.settings.max_retries:
-                    run.error = (
-                        "Semantic verification failed after bounded retries. "
-                        "Committed transfers (if any) were not rolled back: "
-                        + "; ".join(report.issues)
-                    )
+            if semantic_failed or semantic_only_retry:
+                run.error = sanitize_error(
+                    "Semantic review FAIL. Committed transfers (if any) were "
+                    "not rolled back: " + "; ".join(report.issues)
+                )
+                if run.verification_attempts >= self.settings.semantic_max_attempts:
                     transition(run, RunStatus.FAILED)
-                    return self.repo.save(run)
-                transition(run, RunStatus.VERIFICATION_PENDING)
+                else:
+                    transition(run, RunStatus.VERIFICATION_PENDING)
                 return self.repo.save(run)
             if run.attempt >= self.settings.max_retries:
                 run.error = "Retry budget exhausted: " + "; ".join(report.issues)
@@ -269,13 +314,15 @@ class WorkflowEngine:
             transition(run, RunStatus.NEEDS_REVISION)
             transition(run, RunStatus.PLANNING)
             try:
-                run.plan = assign_operation_ids(
-                    run,
-                    self.planner.create_plan(
-                        run.goal, version=plan.version + 1,
-                        tracker=self._tracker(run),
-                    ),
+                revised = self.planner.create_plan(
+                    run.goal, version=plan.version + 1,
+                    tracker=self._tracker(run),
                 )
+                # New intents in a revision are unauthorized until approved.
+                run.plan = assign_operation_ids(
+                    run, revised, new_intents_authorized=False
+                )
+                self.policy.apply(run.plan)
                 self._persist_usage(run)
             except TrustFlowError as exc:
                 run.error = sanitize_error(str(exc))
@@ -283,10 +330,13 @@ class WorkflowEngine:
                 transition(run, RunStatus.FAILED)
                 return self.repo.save(run)
             run.approved_plan_snapshot = None
+            run.approved_hash = ""
             self.audit.log(run.run_id, "planner", "plan_revised",
                            {"version": run.plan.version, "attempt": run.attempt})
             transition(run, RunStatus.PLANNED)
-            if self.policy.requires_approval(run.plan):
+            if self.policy.requires_approval(run.plan) or has_unauthorized_intents(
+                run, run.plan
+            ):
                 transition(run, RunStatus.AWAITING_APPROVAL)
                 return self.repo.save(run)
             transition(run, RunStatus.EXECUTING)

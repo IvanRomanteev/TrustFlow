@@ -198,6 +198,7 @@ class WorkflowRun(BaseModel):
     operations: list[dict] = Field(default_factory=list)
     # Isolated deep snapshot taken at approval time; execution uses this.
     approved_plan_snapshot: Plan | None = None
+    approved_hash: str = ""
     llm_calls: list[dict] = Field(default_factory=list)
     error: str | None = None
     created_at: datetime = Field(default_factory=_now)
