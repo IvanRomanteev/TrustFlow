@@ -56,3 +56,18 @@ concurrent-approval and API-secret tests; full suite 107 tests, ruff/mypy
 clean, offline/fake only. Four round-1 tests were updated to the superseding
 conflict contract (changed committed intent is no longer a silent COMPLETED).
 Status: candidate for independent re-review (not self-accepted).
+
+## M1 remediation round 3 (this candidate, after a1a2ad8)
+Round-2 audit BLOCKED with N1-N4. Cancellation by omission eliminated:
+omitted AUTHORIZED intents produce an explicit conflict and remain
+outstanding; only never-authorized PROPOSED intents may withdraw. Coverage
+never accepts a bare CANCELLED status (explicit authorized cancellation
+evidence required; no such workflow exists in M1 by design). Verification
+now uses canonical run-owned intents, rejects foreign evidence on
+PROPOSED/CANCELLED intents, and sync_intents enforces legal lifecycle
+transitions (CANCELLED/CONFLICT never become COMMITTED; late commits are
+integrity conflicts). Secret-marker values are redacted standalone.
+Adversarial tests A-L in tests/unit/test_m1_round3.py (9 red before the fix,
+including strengthened round-2 probes for N1/G/E/N2 and a real-uvicorn HTTP
+concurrency test); full suite 120 tests, ruff/mypy clean, offline only.
+Status: ready for a separate adversarial acceptance audit (not accepted).
