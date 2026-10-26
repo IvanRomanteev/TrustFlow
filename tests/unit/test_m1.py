@@ -114,9 +114,22 @@ async def test_timeout_after_mutation_reconciles():
     run = await engine.create_workflow(
         WorkflowGoal(title="Transfer 100", description="transfer 100 to bob")
     )
+    # Stabilized contract: timeout is UNCERTAIN (never definitive failure),
+    # then reconcile resolves the committed worker without duplicating it.
+    from trustflow.domain.models import RunStatus as _RS
+
+    assert run.status == _RS.EXECUTION_UNCERTAIN
+    import asyncio as _asyncio
+
+    for _ in range(100):
+        run = await engine.reconcile(run)
+        if run.status == _RS.COMPLETED:
+            break
+        await _asyncio.sleep(0.02)
+    assert run.status == _RS.COMPLETED
     assert len(registry.ledger.transactions) == 1
     transfer_results = [r for r in run.step_results if r.tool_name == "simulate_transfer"]
-    assert transfer_results and transfer_results[0].data.get("reconciled_after_timeout")
+    assert transfer_results and transfer_results[0].data.get("reconciled_from_ledger")
 
 
 def test_cost_estimates_use_official_rates():
