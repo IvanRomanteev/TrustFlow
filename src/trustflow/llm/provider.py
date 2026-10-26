@@ -36,7 +36,11 @@ PLAN_SCHEMA: dict[str, Any] = {
                     "currency": {"type": "string"},
                     "rationale": {"type": "string"},
                 },
-                "required": ["tool_name"],
+                # All fields required (strict-subset style): the model emits
+                # "" or 0 for fields a given tool does not use; Pydantic arg
+                # models drop the extras per tool.
+                "required": ["tool_name", "account_id", "from_account",
+                             "to_account", "amount", "currency", "rationale"],
             },
         }
     },
@@ -193,7 +197,13 @@ class MetaResponsesProvider:
         prompt = (
             "Plan synthetic-data tool steps as JSON for this goal. "
             f"Goal: {goal_title}. Details: {description}. {TOOLS_HINT} "
-            "Accounts: acc_alice, acc_bob, acc_ops. Currency USD."
+            "Accounts: acc_alice, acc_bob, acc_ops. Currency USD. "
+            "Every step must set every field: use account_id for "
+            "get_balance/list_transactions; from_account, to_account, amount "
+            "and currency for simulate_transfer; empty string or 0 elsewhere. "
+            'Example: {"tool_name": "simulate_transfer", "account_id": "", '
+            '"from_account": "acc_alice", "to_account": "acc_bob", '
+            '"amount": 100, "currency": "USD", "rationale": "pay"}'
         )
         if repair_feedback:
             prompt += f" Previous plan was rejected: {repair_feedback}. Fix it."
