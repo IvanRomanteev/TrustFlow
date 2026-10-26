@@ -31,3 +31,15 @@ class RetryExhaustedError(TrustFlowError):
 
 class LLMNotConfiguredError(TrustFlowError):
     """Raised when a real LLM call is attempted without configuration."""
+
+
+class LLMResponseError(TrustFlowError):
+    """Raised for malformed or failed live model responses (fail closed)."""
+
+
+class PlanValidationError(TrustFlowError):
+    """Raised when a proposed plan fails allowlist/schema/precondition checks."""
+
+
+class TokenBudgetExceededError(TrustFlowError):
+    """Raised when a workflow exceeds its application-inference token budget."""
