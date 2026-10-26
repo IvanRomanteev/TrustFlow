@@ -1,0 +1,168 @@
+"""Typed workflow state. All financial data is synthetic."""
+
+import hashlib
+import json
+import uuid
+from datetime import UTC, datetime
+from enum import StrEnum
+
+from pydantic import BaseModel, Field, computed_field
+
+
+def _now() -> datetime:
+    return datetime.now(UTC)
+
+
+def new_id() -> str:
+    return str(uuid.uuid4())
+
+
+class RunStatus(StrEnum):
+    CREATED = "CREATED"
+    PLANNING = "PLANNING"
+    PLANNED = "PLANNED"
+    AWAITING_APPROVAL = "AWAITING_APPROVAL"
+    EXECUTING = "EXECUTING"
+    VERIFYING = "VERIFYING"
+    NEEDS_REVISION = "NEEDS_REVISION"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    REJECTED = "REJECTED"
+    CANCELLED = "CANCELLED"
+
+
+class StepStatus(StrEnum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    SUCCEEDED = "SUCCEEDED"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+
+
+class RiskLevel(StrEnum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+
+
+class ApprovalDecision(StrEnum):
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+# Validated transitions: current -> allowed next states.
+TRANSITIONS: dict[RunStatus, frozenset[RunStatus]] = {
+    RunStatus.CREATED: frozenset({RunStatus.PLANNING, RunStatus.CANCELLED}),
+    RunStatus.PLANNING: frozenset({RunStatus.PLANNED, RunStatus.FAILED, RunStatus.CANCELLED}),
+    RunStatus.PLANNED: frozenset(
+        {RunStatus.AWAITING_APPROVAL, RunStatus.EXECUTING, RunStatus.CANCELLED}
+    ),
+    RunStatus.AWAITING_APPROVAL: frozenset(
+        {RunStatus.EXECUTING, RunStatus.REJECTED, RunStatus.CANCELLED}
+    ),
+    RunStatus.EXECUTING: frozenset(
+        {RunStatus.VERIFYING, RunStatus.FAILED, RunStatus.CANCELLED}
+    ),
+    RunStatus.VERIFYING: frozenset(
+        {RunStatus.COMPLETED, RunStatus.NEEDS_REVISION, RunStatus.FAILED}
+    ),
+    RunStatus.NEEDS_REVISION: frozenset(
+        {RunStatus.PLANNING, RunStatus.FAILED, RunStatus.CANCELLED}
+    ),
+    RunStatus.COMPLETED: frozenset(),
+    RunStatus.FAILED: frozenset(),
+    RunStatus.REJECTED: frozenset(),
+    RunStatus.CANCELLED: frozenset(),
+}
+
+TERMINAL: frozenset[RunStatus] = frozenset(
+    {RunStatus.COMPLETED, RunStatus.FAILED, RunStatus.REJECTED, RunStatus.CANCELLED}
+)
+
+
+class WorkflowGoal(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    description: str = Field(default="", max_length=2000)
+    requested_by: str = Field(default="demo-user", max_length=100)
+
+
+class PlanStep(BaseModel):
+    step_id: str
+    tool_name: str
+    args: dict = Field(default_factory=dict)
+    # LLM-suggested risk only; PolicyEngine overwrites with deterministic risk.
+    suggested_risk: RiskLevel = RiskLevel.LOW
+    risk: RiskLevel = RiskLevel.LOW
+    rationale: str = ""
+
+
+class Plan(BaseModel):
+    plan_id: str = Field(default_factory=new_id)
+    goal_title: str
+    version: int = 1
+    steps: list[PlanStep] = Field(default_factory=list)
+
+    def canonical(self) -> str:
+        payload = {
+            "goal_title": self.goal_title,
+            "version": self.version,
+            "steps": [
+                {"step_id": s.step_id, "tool_name": s.tool_name, "args": s.args}
+                for s in self.steps
+            ],
+        }
+        return json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def plan_hash(self) -> str:
+        """Immutable binding for approvals: hash of version + steps."""
+        return hashlib.sha256(self.canonical().encode()).hexdigest()
+
+
+class StepResult(BaseModel):
+    step_id: str
+    tool_name: str
+    status: StepStatus
+    data: dict = Field(default_factory=dict)
+    error: str | None = None
+    idempotency_key: str = ""
+
+
+class VerificationCheck(BaseModel):
+    name: str
+    passed: bool
+    detail: str = ""
+
+
+class VerificationReport(BaseModel):
+    passed: bool
+    checks: list[VerificationCheck] = Field(default_factory=list)
+    issues: list[str] = Field(default_factory=list)
+
+
+class ApprovalRecord(BaseModel):
+    plan_version: int
+    plan_hash: str
+    decision: ApprovalDecision
+    actor: str
+    reason: str = ""
+    created_at: datetime = Field(default_factory=_now)
+
+
+class WorkflowRun(BaseModel):
+    run_id: str = Field(default_factory=new_id)
+    goal: WorkflowGoal
+    status: RunStatus = RunStatus.CREATED
+    plan: Plan | None = None
+    step_results: list[StepResult] = Field(default_factory=list)
+    verification: VerificationReport | None = None
+    approvals: list[ApprovalRecord] = Field(default_factory=list)
+    attempt: int = 0
+    error: str | None = None
+    created_at: datetime = Field(default_factory=_now)
+    updated_at: datetime = Field(default_factory=_now)
+
+    @property
+    def is_terminal(self) -> bool:
+        return self.status in TERMINAL
