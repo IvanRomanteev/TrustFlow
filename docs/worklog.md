@@ -42,3 +42,17 @@ history preserved. 14 behavioral probes in
 `tests/unit/test_m1_remediation.py` failed on 15833ea (12) before the fix;
 full suite is now 89 tests, ruff/mypy clean, offline only.
 Status: candidate for independent re-review (not self-accepted).
+
+## M1 remediation round 2 (this candidate, after 0da157e)
+Adversarial self-audit BLOCKED 0da157e with N1-N6. Replaced position-based
+intent inheritance with stable backend intent IDs (IntentRecord): order-
+independent exact matching, explicit conflict for changed committed intents,
+re-authorization for modified uncommitted intents, fail-closed ambiguity,
+explicit cancellation, manifest-coverage verification before COMPLETED,
+whitespace-credential redaction, explicit unsupported-FX failure, and the
+restored low-budget exhaustion scenario. 18 round-2 probes
+(tests/unit/test_m1_round2.py; 12 failed on 0da157e) plus real-HTTP
+concurrent-approval and API-secret tests; full suite 107 tests, ruff/mypy
+clean, offline/fake only. Four round-1 tests were updated to the superseding
+conflict contract (changed committed intent is no longer a silent COMPLETED).
+Status: candidate for independent re-review (not self-accepted).

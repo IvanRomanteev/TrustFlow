@@ -78,11 +78,14 @@ def _fail_verify_once(engine):
 ])
 @pytest.mark.asyncio
 async def test_replan_changed_payload_keeps_committed_intent(second):
+    # Round-2 contract supersedes silent preservation: a changed committed
+    # intent is an explicit conflict, never a silent COMPLETED rewrite.
     provider = SequenceProvider([[_t(100.0)], [second]])
     engine, registry = _engine(fake=provider, semantic=False)
     _fail_verify_once(engine)
     run = await engine.create_workflow(WorkflowGoal(title="pay", description="pay 100"))
-    assert run.status == RunStatus.COMPLETED
+    assert run.status != RunStatus.COMPLETED
+    assert run.error and "conflict" in run.error.lower()
     amounts = [tx.amount for tx in registry.ledger.transactions]
     assert amounts == [100.0]  # never [100, 101] or a second mutated payment
 
