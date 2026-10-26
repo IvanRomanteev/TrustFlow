@@ -10,11 +10,20 @@ _KV_SECRET = re.compile(
     r"([A-Za-z_]*(?:api[_-]?key|token|secret|password)[A-Za-z_]*\s*[:=]\s*)\S+",
     re.IGNORECASE,
 )
+# Whitespace-delimited credential forms: "Authorization <v>",
+# "secret <v>", "credentials are <v>", "token: <v>".
+_WS_SECRET = re.compile(
+    r"((?:authorization|credentials?|api[_-]?key|token|secret|password)"
+    r"(?:\s+(?:is|are))?\s*[:=]?\s+)(?:\S*[0-9\-]\S*|\S{12,})",
+    re.IGNORECASE,
+)
 
 
 def redact(text: str) -> str:
     """Remove secret-looking values from a string."""
-    return _KV_SECRET.sub(r"\1[REDACTED]", _SECRET_VALUE.sub("[REDACTED]", text))
+    out = _SECRET_VALUE.sub("[REDACTED]", text)
+    out = _KV_SECRET.sub(r"\1[REDACTED]", out)
+    return _WS_SECRET.sub(r"\1[REDACTED]", out)
 
 
 def redact_any(value: Any) -> Any:

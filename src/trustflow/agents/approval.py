@@ -52,14 +52,21 @@ class HumanApprovalService:
         # was approved (deep copy covers nested args dicts).
         run.approved_plan_snapshot = run.plan.model_copy(deep=True)
         run.approved_hash = plan_hash
-        # Approving authorizes exactly the snapshot's payment intents.
-        snapshot_ops = {
-            s.operation_id for s in run.approved_plan_snapshot.steps
-            if s.tool_name == "simulate_transfer"
-        }
-        for entry in run.operations:
-            if entry.get("operation_id") in snapshot_ops:
-                entry["authorized"] = True
+        # Approving authorizes exactly the snapshot's payment intents, with
+        # the snapshot payloads as their canonical authorized payloads.
+        from trustflow.domain.models import IntentStatus
+        from trustflow.orchestration.engine import fingerprint_of
+
+        for step in run.approved_plan_snapshot.steps:
+            if step.tool_name != "simulate_transfer":
+                continue
+            for intent in run.intents:
+                if intent.intent_id == (step.intent_id or step.operation_id):
+                    intent.authorized_payload = step.model_copy(deep=True).args
+                    intent.proposed_payload = step.model_copy(deep=True).args
+                    intent.fingerprint = fingerprint_of(step.tool_name, step.args)
+                    intent.status = IntentStatus.AUTHORIZED
+                    intent.authorized = True
         return transition(run, RunStatus.EXECUTING)
 
     def reject(self, run: WorkflowRun, actor: str, plan_hash: str, reason: str = "") -> WorkflowRun:

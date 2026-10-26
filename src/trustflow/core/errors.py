@@ -55,3 +55,7 @@ class TokenBudgetExceededError(TrustFlowError):
 
 class ConflictingOperationError(TrustFlowError):
     """Raised when an operation identity is reused with different arguments."""
+
+
+class IntentConflictError(TrustFlowError):
+    """Raised when a revision changes a committed intent or is ambiguous."""

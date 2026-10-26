@@ -105,8 +105,9 @@ class WorkflowGoal(BaseModel):
 class PlanStep(BaseModel):
     step_id: str
     tool_name: str
-    # Stable identity of the logical operation across retries/re-plans.
-    # Assigned by the engine for mutating steps; never derived from step_id.
+    # Stable business-intent identity, backend-owned, independent of
+    # revision order or step index. operation_id mirrors it for the ledger.
+    intent_id: str = ""
     operation_id: str = ""
     args: dict = Field(default_factory=dict)
     # LLM-suggested risk only; PolicyEngine overwrites with deterministic risk.
@@ -129,6 +130,7 @@ class Plan(BaseModel):
                 {
                     "step_id": s.step_id,
                     "tool_name": s.tool_name,
+                    "intent_id": s.intent_id,
                     "operation_id": s.operation_id,
                     "args": s.args,
                 }
@@ -184,6 +186,27 @@ class ApprovalRecord(BaseModel):
     created_at: datetime = Field(default_factory=_now)
 
 
+class IntentStatus(StrEnum):
+    PROPOSED = "PROPOSED"      # new/modified, not yet authorized
+    AUTHORIZED = "AUTHORIZED"  # authorized payload is executable
+    COMMITTED = "COMMITTED"    # exactly one ledger tx under this intent
+    CONFLICT = "CONFLICT"      # committed intent was changed: fail closed
+    CANCELLED = "CANCELLED"    # explicitly cancelled while uncommitted
+
+
+class IntentRecord(BaseModel):
+    """Authoritative payment intent. Identity is independent of payload,
+    revision order and step position; payloads are never silently rewritten."""
+
+    intent_id: str
+    tool_name: str = "simulate_transfer"
+    authorized_payload: dict = Field(default_factory=dict)
+    proposed_payload: dict = Field(default_factory=dict)
+    fingerprint: str = ""  # fingerprint of the authorized payload
+    status: IntentStatus = IntentStatus.PROPOSED
+    authorized: bool = False
+
+
 class WorkflowRun(BaseModel):
     run_id: str = Field(default_factory=new_id)
     goal: WorkflowGoal
@@ -196,6 +219,8 @@ class WorkflowRun(BaseModel):
     verification_attempts: int = 0
     # Backend-owned operation registry: fingerprint+ordinal -> operation_id.
     operations: list[dict] = Field(default_factory=list)
+    # Authoritative stable payment intents (round-2 manifest).
+    intents: list[IntentRecord] = Field(default_factory=list)
     # Isolated deep snapshot taken at approval time; execution uses this.
     approved_plan_snapshot: Plan | None = None
     approved_hash: str = ""

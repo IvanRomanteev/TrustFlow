@@ -94,16 +94,19 @@ class Executor:
                 # payload fingerprint still matches, inside the exact approved
                 # snapshot (when one exists), may ever reach the ledger.
                 entry = next(
-                    (op for op in run.operations
-                     if op.get("operation_id") == step.operation_id),
+                    (i for i in run.intents
+                     if i.intent_id == (step.intent_id or step.operation_id)),
                     None,
                 )
-                from trustflow.orchestration.engine import payload_fingerprint
+                from trustflow.orchestration.engine import fingerprint_of
 
                 boundary_ok = bool(
                     entry is not None
-                    and entry.get("authorized", False)
-                    and entry.get("fingerprint") == payload_fingerprint(step)
+                    and entry.authorized
+                    and entry.fingerprint
+                    == fingerprint_of(step.tool_name, entry.authorized_payload)
+                    and fingerprint_of(step.tool_name, step.args)
+                    == fingerprint_of(step.tool_name, entry.authorized_payload)
                     and (
                         not run.approved_hash
                         or plan.plan_hash == run.approved_hash

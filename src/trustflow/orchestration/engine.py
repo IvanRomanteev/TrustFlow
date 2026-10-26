@@ -55,51 +55,119 @@ def payload_fingerprint(step) -> str:
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
+def fingerprint_of(tool_name: str, args: dict) -> str:
+    canonical = json.dumps(
+        {"tool": tool_name, "args": args}, sort_keys=True, default=str
+    )
+    return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def _intent_match_fp(intent) -> str:
+    payload = intent.authorized_payload if intent.authorized else intent.proposed_payload
+    return fingerprint_of(intent.tool_name, payload)
+
+
 def assign_operation_ids(run: WorkflowRun, plan: Plan,
                          new_intents_authorized: bool = True) -> Plan:
-    """Authoritative backend-owned payment-intent manifest.
+    """Stable business-intent assignment (round 2).
 
-    The manifest (run.operations, in intent order) is the source of truth,
-    separate from payload matching. The Nth mutating intent of any revision
-    maps to the Nth manifest intent: its identity AND its originally
-    authorized payload are preserved, so a re-plan proposing 101 for a
-    committed 100 can never create a second payment. Mutating intents beyond
-    the manifest are new business operations: they are registered as
-    unauthorized and require explicit approval before execution.
+    Identity is independent of revision order/step index and is never taken
+    from the LLM. Matching for ID-less revisions: exact authorized/proposed
+    payload match when unique (identical payloads match distinct intents by
+    count). A differing step against a committed intent is an explicit
+    conflict; a single differing step against a single uncommitted intent is
+    a modification requiring re-authorization; anything ambiguous fails
+    closed. Revision arguments are never overwritten with manifest payloads.
     """
-    manifest = [op for op in run.operations if op.get("tool_name") == "simulate_transfer"]
-    position = 0
-    for step in plan.steps:
-        if step.tool_name != "simulate_transfer":
-            continue
-        if position < len(manifest):
-            entry = manifest[position]
-            step.operation_id = entry["operation_id"]
-            # Preserve the authorized intent payload exactly (deep copy).
-            step.args = json.loads(json.dumps(entry["payload"]))
+    from trustflow.core.errors import IntentConflictError
+    from trustflow.domain.models import IntentRecord, IntentStatus
+
+    matched: set[str] = set()
+    mutating = [s for s in plan.steps if s.tool_name == "simulate_transfer"]
+
+    def assign(step, intent) -> None:
+        step.intent_id = intent.intent_id
+        step.operation_id = intent.intent_id
+        matched.add(intent.intent_id)
+
+    remaining = []
+    for step in mutating:  # pass 1: exact payload matches (order-independent)
+        fp = payload_fingerprint(step)
+        candidate = next(
+            (i for i in run.intents
+             if i.intent_id not in matched
+             and i.status != IntentStatus.CANCELLED
+             and _intent_match_fp(i) == fp),
+            None,
+        )
+        if candidate is not None:
+            assign(step, candidate)
         else:
-            step.operation_id = f"op_{uuid.uuid4().hex[:16]}"
-            entry = {
-                "operation_id": step.operation_id,
-                "fingerprint": payload_fingerprint(step),
-                "ordinal": position,
-                "tool_name": step.tool_name,
-                "payload": json.loads(json.dumps(step.args)),
-                "authorized": bool(new_intents_authorized),
-            }
-            run.operations.append(entry)
-            manifest.append(entry)
-        position += 1
+            remaining.append(step)
+
+    unmatched = [i for i in run.intents
+                 if i.intent_id not in matched and i.status != IntentStatus.CANCELLED]
+    committed_unmatched = [i for i in unmatched if i.status == IntentStatus.COMMITTED]
+    if remaining and committed_unmatched:
+        for intent in committed_unmatched:
+            intent.status = IntentStatus.CONFLICT
+        raise IntentConflictError(
+            "intent_conflict: a committed payment intent was changed by a revision"
+        )
+    new_steps = list(remaining)
+    if remaining and unmatched:
+        if len(remaining) == 1 and len(unmatched) == 1:
+            intent = unmatched[0]  # unambiguous modification of uncommitted intent
+            intent.proposed_payload = json.loads(json.dumps(remaining[0].args))
+            intent.status = IntentStatus.PROPOSED
+            intent.authorized = False
+            assign(remaining[0], intent)
+            new_steps = []
+        else:
+            raise IntentConflictError(
+                "intent_conflict: ambiguous ID-less revision cannot be matched safely"
+            )
+    for step in new_steps:  # genuinely new business intents
+        intent = IntentRecord(
+            intent_id=f"op_{uuid.uuid4().hex[:16]}",
+            tool_name=step.tool_name,
+            proposed_payload=json.loads(json.dumps(step.args)),
+            authorized_payload=(
+                json.loads(json.dumps(step.args)) if new_intents_authorized else {}
+            ),
+            fingerprint=payload_fingerprint(step) if new_intents_authorized else "",
+            status=IntentStatus.AUTHORIZED if new_intents_authorized
+            else IntentStatus.PROPOSED,
+            authorized=bool(new_intents_authorized),
+        )
+        run.intents.append(intent)
+        assign(step, intent)
+    # Unreferenced uncommitted intents are explicitly cancelled by omission.
+    for intent in run.intents:
+        if intent.intent_id not in matched and intent.status not in (
+            IntentStatus.COMMITTED, IntentStatus.CANCELLED, IntentStatus.CONFLICT,
+        ):
+            intent.status = IntentStatus.CANCELLED
+            intent.authorized = False
+    # Legacy mirror for older readers of run.operations.
+    run.operations = [
+        {"operation_id": i.intent_id, "fingerprint": i.fingerprint,
+         "tool_name": i.tool_name, "payload": i.authorized_payload or i.proposed_payload,
+         "authorized": i.authorized}
+        for i in run.intents
+    ]
     return plan
 
 
 def has_unauthorized_intents(run: WorkflowRun, plan: Plan) -> bool:
-    by_id = {op["operation_id"]: op for op in run.operations}
-    return any(
-        step.tool_name == "simulate_transfer"
-        and not by_id.get(step.operation_id, {}).get("authorized", False)
-        for step in plan.steps
-    )
+    by_id = {i.intent_id: i for i in run.intents}
+    for step in plan.steps:
+        if step.tool_name != "simulate_transfer":
+            continue
+        intent = by_id.get(step.intent_id or step.operation_id)
+        if intent is None or not intent.authorized:
+            return True
+    return False
 
 
 class WorkflowEngine:
@@ -141,7 +209,14 @@ class WorkflowEngine:
     def _execution_plan(self, run: WorkflowRun) -> Plan:
         source = run.approved_plan_snapshot or run.plan
         assert source is not None
-        return source.model_copy(deep=True)
+        plan = source.model_copy(deep=True)
+        # Executable arguments are the intent's canonical authorized payload.
+        by_id = {i.intent_id: i for i in run.intents}
+        for step in plan.steps:
+            intent = by_id.get(step.intent_id or step.operation_id)
+            if intent is not None and intent.authorized:
+                step.args = json.loads(json.dumps(intent.authorized_payload))
+        return plan
 
     async def create_workflow(self, goal: WorkflowGoal) -> WorkflowRun:
         run = WorkflowRun(goal=goal)
@@ -149,8 +224,11 @@ class WorkflowEngine:
         self.audit.log(run.run_id, goal.requested_by, "workflow_created", {"title": goal.title})
         transition(run, RunStatus.PLANNING)
         try:
+            planned = self.planner.create_plan(goal, version=1,
+                                               tracker=self._tracker(run))
             plan = assign_operation_ids(
-                run, self.planner.create_plan(goal, version=1, tracker=self._tracker(run))
+                run, planned,
+                new_intents_authorized=not self.policy.requires_approval(planned),
             )
         except TrustFlowError as exc:
             run.error = sanitize_error(str(exc))
@@ -243,6 +321,7 @@ class WorkflowEngine:
     async def _verify_loop(self, run: WorkflowRun, plan: Plan,
                            semantic_only_retry: bool = False) -> WorkflowRun:
         while True:
+            self.verifier.sync_intents(run)
             report = self.verifier.verify(run, plan)
             # Deterministic report + committed evidence persist BEFORE any
             # semantic call, so a reviewer failure cannot strand the run.

@@ -17,6 +17,16 @@ class Verifier:
         self._ledger = ledger
         self._expected_total = expected_total
 
+    def sync_intents(self, run: WorkflowRun) -> None:
+        """Reflect ledger commits into intent statuses (evidence, not claims)."""
+        if self._ledger is None:
+            return
+        from trustflow.domain.models import IntentStatus
+
+        for intent in run.intents:
+            if self._ledger.find_by_key(intent.intent_id) is not None:
+                intent.status = IntentStatus.COMMITTED
+
     def verify(self, run: WorkflowRun, plan: Plan) -> VerificationReport:
         checks: list[VerificationCheck] = []
         issues: list[str] = []
@@ -74,6 +84,38 @@ class Verifier:
                     issues.append(
                         f"Transfer {step.step_id} does not match an independently "
                         "read ledger transaction for its approved operation"
+                    )
+
+        # Manifest coverage: every required authorized intent must have
+        # exactly one matching committed ledger operation before COMPLETED.
+        if self._ledger is not None:
+            from trustflow.domain.models import IntentStatus
+
+            for intent in run.intents:
+                if intent.status in (IntentStatus.CANCELLED, IntentStatus.PROPOSED):
+                    continue
+                if intent.status == IntentStatus.CONFLICT:
+                    checks.append(VerificationCheck(
+                        name=f"intent_conflict:{intent.intent_id}", passed=False))
+                    issues.append(f"Intent {intent.intent_id} is in conflict")
+                    continue
+                txs = [t for t in self._ledger.transactions
+                       if t.idempotency_key == intent.intent_id]
+                payload = intent.authorized_payload
+                ok = bool(
+                    len(txs) == 1
+                    and txs[0].from_account == payload.get("from_account")
+                    and txs[0].to_account == payload.get("to_account")
+                    and float(txs[0].amount) == float(payload.get("amount", -1))
+                    and txs[0].currency == payload.get("currency", "USD")
+                )
+                checks.append(VerificationCheck(
+                    name=f"intent_coverage:{intent.intent_id}", passed=ok,
+                    detail=f"committed={len(txs)}"))
+                if not ok:
+                    issues.append(
+                        f"Intent {intent.intent_id} lacks exactly one matching "
+                        "committed operation"
                     )
 
         return VerificationReport(passed=all(c.passed for c in checks), checks=checks,
