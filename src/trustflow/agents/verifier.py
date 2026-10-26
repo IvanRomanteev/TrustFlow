@@ -56,6 +56,13 @@ class Verifier:
                                                 passed=ok))
                 if not ok:
                     issues.append(f"Transfer {step.step_id} missing idempotent tx evidence")
+                elif res is not None and float(res.data.get("amount", -1)) != float(
+                    step.args.get("amount", -2)
+                ):
+                    checks.append(VerificationCheck(
+                        name=f"transfer_amount:{step.step_id}", passed=False,
+                        detail="Executed amount differs from approved plan amount"))
+                    issues.append(f"Transfer {step.step_id} amount mismatch vs plan")
 
         return VerificationReport(passed=all(c.passed for c in checks), checks=checks,
                                   issues=issues)

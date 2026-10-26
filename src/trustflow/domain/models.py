@@ -89,6 +89,9 @@ class WorkflowGoal(BaseModel):
 class PlanStep(BaseModel):
     step_id: str
     tool_name: str
+    # Stable identity of the logical operation across retries/re-plans.
+    # Assigned by the engine for mutating steps; never derived from step_id.
+    operation_id: str = ""
     args: dict = Field(default_factory=dict)
     # LLM-suggested risk only; PolicyEngine overwrites with deterministic risk.
     suggested_risk: RiskLevel = RiskLevel.LOW
@@ -107,7 +110,12 @@ class Plan(BaseModel):
             "goal_title": self.goal_title,
             "version": self.version,
             "steps": [
-                {"step_id": s.step_id, "tool_name": s.tool_name, "args": s.args}
+                {
+                    "step_id": s.step_id,
+                    "tool_name": s.tool_name,
+                    "operation_id": s.operation_id,
+                    "args": s.args,
+                }
                 for s in self.steps
             ],
         }
@@ -135,10 +143,20 @@ class VerificationCheck(BaseModel):
     detail: str = ""
 
 
+class SemanticReview(BaseModel):
+    verdict: str = "PASS"
+    confidence: float = 0.0
+    issues: list[str] = Field(default_factory=list)
+    summary: str = ""
+    model: str = ""
+
+
 class VerificationReport(BaseModel):
     passed: bool
     checks: list[VerificationCheck] = Field(default_factory=list)
     issues: list[str] = Field(default_factory=list)
+    # Advisory only: a semantic PASS can never override a deterministic FAIL.
+    semantic: SemanticReview | None = None
 
 
 class ApprovalRecord(BaseModel):
@@ -159,6 +177,7 @@ class WorkflowRun(BaseModel):
     verification: VerificationReport | None = None
     approvals: list[ApprovalRecord] = Field(default_factory=list)
     attempt: int = 0
+    llm_calls: list[dict] = Field(default_factory=list)
     error: str | None = None
     created_at: datetime = Field(default_factory=_now)
     updated_at: datetime = Field(default_factory=_now)

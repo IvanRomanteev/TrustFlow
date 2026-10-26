@@ -113,6 +113,9 @@ class ToolRegistry:
             raise ToolValidationError(f"Invalid args for {name}: {exc}") from exc
         return tool.invoke(args, idempotency_key=idempotency_key)
 
+    def committed(self, idempotency_key: str):
+        return self.ledger.committed(idempotency_key)
+
     def tool_definitions(self) -> list[dict[str, Any]]:
         """Flat, non-recursive JSON Schemas for the Meta Model API."""
         defs: list[dict[str, Any]] = []

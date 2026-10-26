@@ -1,12 +1,21 @@
 """HumanApprovalService: approvals bound to immutable plan hash + version."""
 
+import threading
+
 from trustflow.core.errors import ApprovalError
 from trustflow.domain.models import ApprovalDecision, ApprovalRecord, RunStatus, WorkflowRun
 from trustflow.domain.state_machine import transition
 
 
 class HumanApprovalService:
-    """Only explicit, hash-matched, single-use approvals unlock execution."""
+    """Only explicit, hash-matched, single-use approvals unlock execution.
+
+    A lock makes validate+record+transition atomic in-process, so concurrent
+    or repeated approval requests cannot both succeed (replay prevention).
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
 
     def _validate(self, run: WorkflowRun, plan_hash: str) -> None:
         if run.status != RunStatus.AWAITING_APPROVAL:
@@ -20,6 +29,12 @@ class HumanApprovalService:
                 raise ApprovalError("This plan version was already decided (repeated approval)")
 
     def approve(
+        self, run: WorkflowRun, actor: str, plan_hash: str, reason: str = ""
+    ) -> WorkflowRun:
+        with self._lock:
+            return self._approve_locked(run, actor, plan_hash, reason)
+
+    def _approve_locked(
         self, run: WorkflowRun, actor: str, plan_hash: str, reason: str = ""
     ) -> WorkflowRun:
         self._validate(run, plan_hash)
@@ -36,6 +51,12 @@ class HumanApprovalService:
         return transition(run, RunStatus.EXECUTING)
 
     def reject(self, run: WorkflowRun, actor: str, plan_hash: str, reason: str = "") -> WorkflowRun:
+        with self._lock:
+            return self._reject_locked(run, actor, plan_hash, reason)
+
+    def _reject_locked(
+        self, run: WorkflowRun, actor: str, plan_hash: str, reason: str = ""
+    ) -> WorkflowRun:
         self._validate(run, plan_hash)
         assert run.plan is not None
         run.approvals.append(

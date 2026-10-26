@@ -50,6 +50,10 @@ class SyntheticLedger:
     def total_balance(self) -> float:
         return sum(a.balance for a in self.accounts.values())
 
+    def committed(self, idempotency_key: str) -> LedgerTransaction | None:
+        """Return an already-committed tx for a key (timeout reconciliation)."""
+        return self._by_idempotency.get(idempotency_key)
+
     def transfer(
         self, from_account: str, to_account: str, amount: float, idempotency_key: str,
         currency: str = "USD",

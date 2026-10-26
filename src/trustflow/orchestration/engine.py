@@ -1,19 +1,21 @@
-"""WorkflowEngine: drives Planner -> Approval -> Executor -> Verifier."""
+"""WorkflowEngine: Planner -> Approval -> Executor -> Verifier (+semantic)."""
 
 from trustflow.agents.approval import HumanApprovalService
 from trustflow.agents.executor import Executor
 from trustflow.agents.planner import Planner
+from trustflow.agents.semantic import SemanticReviewer
 from trustflow.agents.verifier import Verifier
 from trustflow.audit.logger import AuditLogger
-from trustflow.core.errors import ApprovalRequiredError
+from trustflow.core.errors import ApprovalRequiredError, TrustFlowError
 from trustflow.core.settings import Settings
-from trustflow.domain.models import RunStatus, WorkflowGoal, WorkflowRun
+from trustflow.domain.models import Plan, RunStatus, WorkflowGoal, WorkflowRun
 from trustflow.domain.state_machine import transition
+from trustflow.llm.usage import UsageTracker
 from trustflow.policies.policy_engine import PolicyEngine
 
 
 class RunRepository:
-    """In-memory run store (M0). Swap for SQLAlchemy in M1 behind this API."""
+    """In-memory run store. Swap for SQLAlchemy later behind this API."""
 
     def __init__(self) -> None:
         self._runs: dict[str, WorkflowRun] = {}
@@ -29,6 +31,19 @@ class RunRepository:
         return list(self._runs.values())
 
 
+def assign_operation_ids(run: WorkflowRun, plan: Plan) -> Plan:
+    """Stable operation identity: same logical transfer keeps one identity
+    across retries, resume and re-planning (never a new key for a new plan)."""
+    for step in plan.steps:
+        if step.tool_name == "simulate_transfer" and not step.operation_id:
+            step.operation_id = (
+                f"{run.run_id}:simulate_transfer:"
+                f"{step.args.get('from_account')}->{step.args.get('to_account')}"
+                f":{step.args.get('currency', 'USD')}"
+            )
+    return plan
+
+
 class WorkflowEngine:
     def __init__(
         self,
@@ -40,6 +55,7 @@ class WorkflowEngine:
         audit: AuditLogger | None = None,
         repo: RunRepository | None = None,
         settings: Settings | None = None,
+        semantic: SemanticReviewer | None = None,
     ) -> None:
         self.planner = planner
         self.executor = executor
@@ -49,14 +65,35 @@ class WorkflowEngine:
         self.audit = audit or AuditLogger()
         self.repo = repo or RunRepository()
         self.settings = settings or Settings()
+        self.semantic = semantic
+        self._trackers: dict[str, UsageTracker] = {}
+
+    def _tracker(self, run: WorkflowRun) -> UsageTracker:
+        if run.run_id not in self._trackers:
+            self._trackers[run.run_id] = UsageTracker(
+                self.settings.token_budget_per_workflow
+            )
+        return self._trackers[run.run_id]
+
+    def _sync_usage(self, run: WorkflowRun) -> None:
+        tracker = self._tracker(run)
+        for source in (self.planner.calls, self.semantic.calls if self.semantic else []):
+            while source:
+                tracker.record(source.pop(0))
+        run.llm_calls = [r.model_dump() for r in tracker.records]
 
     async def create_workflow(self, goal: WorkflowGoal) -> WorkflowRun:
-        """Create and advance a workflow; may return AWAITING_APPROVAL (non-terminal)."""
         run = WorkflowRun(goal=goal)
         self.repo.save(run)
         self.audit.log(run.run_id, goal.requested_by, "workflow_created", {"title": goal.title})
         transition(run, RunStatus.PLANNING)
-        plan = self.planner.create_plan(goal, version=1)
+        try:
+            plan = assign_operation_ids(run, self.planner.create_plan(goal, version=1))
+            self._sync_usage(run)
+        except TrustFlowError as exc:
+            run.error = str(exc)[:500]
+            transition(run, RunStatus.FAILED)
+            return self.repo.save(run)
         run.plan = plan
         self.audit.log(run.run_id, "planner", "plan_created",
                        {"version": plan.version, "plan_hash": plan.plan_hash,
@@ -78,7 +115,6 @@ class WorkflowEngine:
         return await self._execute_and_verify(run)
 
     async def resume_after_approval(self, run: WorkflowRun) -> WorkflowRun:
-        """Resume only from EXECUTING state entered via HumanApprovalService."""
         if run.status != RunStatus.EXECUTING or not self.approvals.is_approved(run):
             raise ApprovalRequiredError("Workflow has no valid approval for its current plan")
         self.audit.log(run.run_id, "system", "execution_resumed", {})
@@ -93,6 +129,21 @@ class WorkflowEngine:
             if run.status == RunStatus.EXECUTING:
                 transition(run, RunStatus.VERIFYING)
             report = self.verifier.verify(run, run.plan)
+            # Semantic review can only add failures; it never rescues a
+            # deterministic FAIL. Deterministic result stays authoritative.
+            if report.passed and self.semantic is not None:
+                review = self.semantic.review(run.goal, run.plan)
+                report.semantic = review
+                try:
+                    self._sync_usage(run)
+                except TrustFlowError as exc:
+                    report.passed = False
+                    report.issues.append(str(exc))
+                if review.verdict != "PASS":
+                    report.passed = False
+                    report.issues.append(
+                        "Semantic review FAIL: " + "; ".join(review.issues)
+                    )
             run.verification = report
             self.audit.log(run.run_id, "verifier", "verification_finished",
                            {"passed": report.passed, "issues": report.issues})
@@ -103,11 +154,18 @@ class WorkflowEngine:
                 run.error = "Retry budget exhausted: " + "; ".join(report.issues)
                 transition(run, RunStatus.FAILED)
                 return self.repo.save(run)
-            # Bounded recovery: replan as a new immutable version.
             run.attempt += 1
             transition(run, RunStatus.NEEDS_REVISION)
             transition(run, RunStatus.PLANNING)
-            run.plan = self.planner.create_plan(run.goal, version=run.plan.version + 1)
+            try:
+                run.plan = assign_operation_ids(
+                    run, self.planner.create_plan(run.goal, version=run.plan.version + 1)
+                )
+                self._sync_usage(run)
+            except TrustFlowError as exc:
+                run.error = str(exc)[:500]
+                transition(run, RunStatus.FAILED)
+                return self.repo.save(run)
             self.audit.log(run.run_id, "planner", "plan_revised",
                            {"version": run.plan.version, "attempt": run.attempt})
             transition(run, RunStatus.PLANNED)
