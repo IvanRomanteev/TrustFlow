@@ -2,7 +2,10 @@
 
 import os
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+SUPPORTED_LLM_MODES = frozenset({"fake", "live"})
 
 
 class Settings(BaseSettings):
@@ -12,6 +15,19 @@ class Settings(BaseSettings):
     # fake = deterministic offline (tests/demo). live = Meta Model API.
     # Live failures never fall back to fake; they fail closed.
     llm_mode: str = "fake"
+
+    @field_validator("llm_mode", mode="before")
+    @classmethod
+    def _validate_llm_mode(cls, value: object) -> str:
+        """Explicit contract: fake|live (any case). Anything else is an error,
+        never a silent Fake selection."""
+        normalized = str(value).strip().lower()
+        if normalized not in SUPPORTED_LLM_MODES:
+            raise ValueError(
+                f"Unsupported TRUSTFLOW_LLM_MODE={value!r}; expected one of "
+                f"{sorted(SUPPORTED_LLM_MODES)}"
+            )
+        return normalized
     llm_api_key: str | None = None  # legacy TRUSTFLOW_LLM_API_KEY fallback only
     llm_base_url: str = "https://api.meta.ai/v1"
     planning_model: str = "muse-wonder-1.0"

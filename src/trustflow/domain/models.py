@@ -23,7 +23,12 @@ class RunStatus(StrEnum):
     PLANNED = "PLANNED"
     AWAITING_APPROVAL = "AWAITING_APPROVAL"
     EXECUTING = "EXECUTING"
+    # A worker may still commit; no definitive failure has been declared.
+    EXECUTION_UNCERTAIN = "EXECUTION_UNCERTAIN"
     VERIFYING = "VERIFYING"
+    # Deterministic report persisted; semantic review pending/failed.
+    # Recovery is verification-only and never re-executes tools.
+    VERIFICATION_PENDING = "VERIFICATION_PENDING"
     NEEDS_REVISION = "NEEDS_REVISION"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
@@ -37,6 +42,8 @@ class StepStatus(StrEnum):
     SUCCEEDED = "SUCCEEDED"
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
+    # Timed out while a worker may still commit. Not a definitive failure.
+    UNCERTAIN = "UNCERTAIN"
 
 
 class RiskLevel(StrEnum):
@@ -61,10 +68,19 @@ TRANSITIONS: dict[RunStatus, frozenset[RunStatus]] = {
         {RunStatus.EXECUTING, RunStatus.REJECTED, RunStatus.CANCELLED}
     ),
     RunStatus.EXECUTING: frozenset(
-        {RunStatus.VERIFYING, RunStatus.FAILED, RunStatus.CANCELLED}
+        {RunStatus.VERIFYING, RunStatus.EXECUTION_UNCERTAIN,
+         RunStatus.FAILED, RunStatus.CANCELLED}
+    ),
+    RunStatus.EXECUTION_UNCERTAIN: frozenset(
+        {RunStatus.VERIFYING, RunStatus.EXECUTING, RunStatus.FAILED,
+         RunStatus.CANCELLED}
     ),
     RunStatus.VERIFYING: frozenset(
-        {RunStatus.COMPLETED, RunStatus.NEEDS_REVISION, RunStatus.FAILED}
+        {RunStatus.COMPLETED, RunStatus.NEEDS_REVISION, RunStatus.FAILED,
+         RunStatus.VERIFICATION_PENDING}
+    ),
+    RunStatus.VERIFICATION_PENDING: frozenset(
+        {RunStatus.VERIFYING, RunStatus.FAILED, RunStatus.CANCELLED}
     ),
     RunStatus.NEEDS_REVISION: frozenset(
         {RunStatus.PLANNING, RunStatus.FAILED, RunStatus.CANCELLED}
@@ -177,6 +193,11 @@ class WorkflowRun(BaseModel):
     verification: VerificationReport | None = None
     approvals: list[ApprovalRecord] = Field(default_factory=list)
     attempt: int = 0
+    verification_attempts: int = 0
+    # Backend-owned operation registry: fingerprint+ordinal -> operation_id.
+    operations: list[dict] = Field(default_factory=list)
+    # Isolated deep snapshot taken at approval time; execution uses this.
+    approved_plan_snapshot: Plan | None = None
     llm_calls: list[dict] = Field(default_factory=list)
     error: str | None = None
     created_at: datetime = Field(default_factory=_now)

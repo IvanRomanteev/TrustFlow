@@ -1,30 +1,44 @@
-"""Structured logging with secret redaction."""
+"""Structured logging with recursive secret redaction."""
 
 import logging
 import re
+from typing import Any
 
 _SECRET_KEY = re.compile(r"(api[_-]?key|token|secret|password|authorization)", re.IGNORECASE)
 _SECRET_VALUE = re.compile(r"(sk-[A-Za-z0-9_-]{8,}|Bearer\s+\S+)")
+_KV_SECRET = re.compile(
+    r"([A-Za-z_]*(?:api[_-]?key|token|secret|password)[A-Za-z_]*\s*[:=]\s*)\S+",
+    re.IGNORECASE,
+)
 
 
 def redact(text: str) -> str:
-    """Remove secret-looking values from a log line."""
-    return _SECRET_VALUE.sub("[REDACTED]", text)
+    """Remove secret-looking values from a string."""
+    return _KV_SECRET.sub(r"\1[REDACTED]", _SECRET_VALUE.sub("[REDACTED]", text))
+
+
+def redact_any(value: Any) -> Any:
+    """Recursively sanitize dicts, lists, tuples and strings. Never mutates."""
+    if isinstance(value, dict):
+        return {
+            key: ("[REDACTED]" if _SECRET_KEY.search(str(key)) else redact_any(item))
+            for key, item in value.items()
+        }
+    if isinstance(value, (list, tuple)):
+        return [redact_any(item) for item in value]
+    if isinstance(value, str):
+        return redact(value)
+    return value
 
 
 def redact_mapping(data: dict) -> dict:
-    """Return a copy with secret keys masked. Never mutates the input."""
-    out: dict = {}
-    for key, value in data.items():
-        if _SECRET_KEY.search(str(key)):
-            out[key] = "[REDACTED]"
-        elif isinstance(value, dict):
-            out[key] = redact_mapping(value)
-        elif isinstance(value, str):
-            out[key] = redact(value)
-        else:
-            out[key] = value
-    return out
+    """Backwards-compatible wrapper over redact_any for dict payloads."""
+    cleaned: dict = redact_any(data)
+    return cleaned
+
+
+def sanitize_error(text: str) -> str:
+    return redact(str(text))[:500]
 
 
 def get_logger(name: str = "trustflow") -> logging.Logger:

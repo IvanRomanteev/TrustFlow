@@ -34,13 +34,16 @@ PLAN_SCHEMA: dict[str, Any] = {
                     "to_account": {"type": "string"},
                     "amount": {"type": "number"},
                     "currency": {"type": "string"},
+                    "from_currency": {"type": "string"},
+                    "to_currency": {"type": "string"},
                     "rationale": {"type": "string"},
                 },
                 # All fields required (strict-subset style): the model emits
                 # "" or 0 for fields a given tool does not use; Pydantic arg
                 # models drop the extras per tool.
                 "required": ["tool_name", "account_id", "from_account",
-                             "to_account", "amount", "currency", "rationale"],
+                             "to_account", "amount", "currency",
+                             "from_currency", "to_currency", "rationale"],
             },
         }
     },
@@ -173,19 +176,32 @@ class MetaResponsesProvider:
                     continue
                 resp.raise_for_status()
                 data = resp.json()
-                parsed = json.loads(_extract_text(data))
-                if not isinstance(parsed, dict):
-                    raise LLMResponseError("Live response JSON was not an object")
+                # Usage is extracted BEFORE domain validation so an incurred
+                # call is accounted even when the payload is malformed.
                 usage = data.get("usage") or {}
+                in_tok = usage.get("input_tokens")
+                out_tok = usage.get("output_tokens")
                 record = LLMCallRecord(
                     purpose=purpose, model=str(payload["model"]),
                     request_id=data.get("id") or resp.headers.get("x-request-id"),
                     latency_ms=round((time.perf_counter() - started) * 1000, 2),
-                    input_tokens=int(usage.get("input_tokens", 0) or 0),
-                    output_tokens=int(usage.get("output_tokens", 0) or 0),
+                    input_tokens=int(in_tok) if in_tok is not None else None,
+                    output_tokens=int(out_tok) if out_tok is not None else None,
                 )
+                try:
+                    parsed = json.loads(_extract_text(data))
+                except (json.JSONDecodeError, LLMResponseError) as exc:
+                    raise LLMResponseError(
+                        f"Malformed live response: {exc}", record=record
+                    ) from exc
+                if not isinstance(parsed, dict):
+                    raise LLMResponseError(
+                        "Live response JSON was not an object", record=record
+                    )
                 return parsed, record
-            except (httpx.HTTPError, json.JSONDecodeError, LLMResponseError) as exc:
+            except LLMResponseError:
+                raise
+            except (httpx.HTTPError, json.JSONDecodeError) as exc:
                 last_error = exc
                 if attempt < attempts - 1 and isinstance(exc, httpx.TransportError):
                     time.sleep(self._settings.llm_backoff_seconds * (2 ** attempt))
