@@ -119,10 +119,26 @@ async def test_verifier_failure_triggers_revision():
 
 
 @pytest.mark.asyncio
-async def test_retry_exhaustion_fails_terminally():
+async def test_unknown_account_fails_closed_at_planning():
+    # M1: deterministic preconditions reject unknown accounts before execution.
     scripted = [{"tool_name": "get_balance", "account_id": "acc_missing"}]
     engine, _ = _engine(scripted=scripted, settings=Settings(max_retries=2))
     run = await engine.create_workflow(WorkflowGoal(title="Bad account", description="check"))
     assert run.status == RunStatus.FAILED
-    assert run.attempt == 2
+    assert run.error is not None and "account" in run.error.lower()
+
+
+@pytest.mark.asyncio
+async def test_retry_exhaustion_fails_terminally():
+    scripted = [{"tool_name": "simulate_transfer", "from_account": "acc_alice",
+                 "to_account": "acc_bob", "amount": 999999.0, "currency": "USD"}]
+    engine, _ = _engine(scripted=scripted, settings=Settings(max_retries=1))
+    run = await engine.create_workflow(WorkflowGoal(title="Huge", description="transfer"))
+    for _ in range(4):
+        if run.status != RunStatus.AWAITING_APPROVAL:
+            break
+        engine.approvals.approve(run, "mgr", run.plan.plan_hash)
+        run = await engine.resume_after_approval(run)
+    assert run.status == RunStatus.FAILED
+    assert run.attempt == 1
     assert run.error is not None and "exhausted" in run.error.lower()

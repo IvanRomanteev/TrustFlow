@@ -9,12 +9,13 @@ from pydantic import BaseModel, Field
 from trustflow.agents.approval import HumanApprovalService
 from trustflow.agents.executor import Executor
 from trustflow.agents.planner import Planner
+from trustflow.agents.semantic import SemanticReviewer
 from trustflow.agents.verifier import Verifier
 from trustflow.audit.logger import AuditLogger
 from trustflow.core.errors import ApprovalError, TrustFlowError
 from trustflow.core.settings import Settings, get_settings
 from trustflow.domain.models import WorkflowGoal, WorkflowRun
-from trustflow.llm.provider import FakeLLMProvider
+from trustflow.llm.provider import build_provider
 from trustflow.orchestration.engine import RunRepository, WorkflowEngine
 from trustflow.policies.policy_engine import PolicyEngine
 from trustflow.tools.registry import ToolRegistry
@@ -42,12 +43,19 @@ class Container:
         self.audit = AuditLogger()
         self.repo = RunRepository()
         self.approvals = HumanApprovalService()
-        planner = Planner(FakeLLMProvider(), self.policy)
+        # Explicit fake/live switch; live without MODEL_API_KEY raises here.
+        provider = build_provider(settings)
+        self.llm_mode = settings.llm_mode
+        planner = Planner(provider, self.policy,
+                          max_output_tokens=settings.max_output_tokens)
         executor = Executor(self.registry, settings)
         verifier = Verifier(self.registry.ledger, self.registry.ledger.total_balance())
+        semantic = SemanticReviewer(
+            provider, self.registry.ledger,
+            max_output_tokens=settings.max_output_tokens)
         self.engine = WorkflowEngine(
             planner, executor, verifier, self.policy, self.approvals,
-            self.audit, self.repo, settings,
+            self.audit, self.repo, settings, semantic=semantic,
         )
 
 
@@ -66,8 +74,15 @@ def create_app(container: Container | None = None) -> FastAPI:
         return box
 
     @app.get("/health")
-    def health() -> dict:
-        return {"status": "ok", "synthetic_only": True}
+    def health(c: Annotated[Container, Depends(dep)]) -> dict:
+        return {
+            "status": "ok",
+            "synthetic_only": True,
+            "llm_mode": c.llm_mode,
+            "planning_model": c.settings.planning_model,
+            "review_model": c.settings.review_model,
+            "fast_model": c.settings.fast_model,
+        }
 
     @app.get("/tools")
     def tools(c: Annotated[Container, Depends(dep)]) -> dict:
@@ -112,6 +127,22 @@ def create_app(container: Container | None = None) -> FastAPI:
             return c.repo.save(run)
         except ApprovalError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.post("/workflows/{run_id}/verify-retry")
+    async def verify_retry(run_id: str, c: Annotated[Container, Depends(dep)]):
+        """Verification-only recovery: never executes tools or transfers."""
+        run = c.repo.get(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        return await c.engine.retry_verification(run)
+
+    @app.post("/workflows/{run_id}/reconcile")
+    async def reconcile(run_id: str, c: Annotated[Container, Depends(dep)]):
+        """Resolve uncertain execution outcomes from workers/ledger only."""
+        run = c.repo.get(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        return await c.engine.reconcile(run)
 
     @app.get("/workflows/{run_id}/audit")
     def audit(run_id: str, c: Annotated[Container, Depends(dep)]) -> dict:

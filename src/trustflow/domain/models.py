@@ -23,7 +23,12 @@ class RunStatus(StrEnum):
     PLANNED = "PLANNED"
     AWAITING_APPROVAL = "AWAITING_APPROVAL"
     EXECUTING = "EXECUTING"
+    # A worker may still commit; no definitive failure has been declared.
+    EXECUTION_UNCERTAIN = "EXECUTION_UNCERTAIN"
     VERIFYING = "VERIFYING"
+    # Deterministic report persisted; semantic review pending/failed.
+    # Recovery is verification-only and never re-executes tools.
+    VERIFICATION_PENDING = "VERIFICATION_PENDING"
     NEEDS_REVISION = "NEEDS_REVISION"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
@@ -37,6 +42,8 @@ class StepStatus(StrEnum):
     SUCCEEDED = "SUCCEEDED"
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
+    # Timed out while a worker may still commit. Not a definitive failure.
+    UNCERTAIN = "UNCERTAIN"
 
 
 class RiskLevel(StrEnum):
@@ -61,10 +68,19 @@ TRANSITIONS: dict[RunStatus, frozenset[RunStatus]] = {
         {RunStatus.EXECUTING, RunStatus.REJECTED, RunStatus.CANCELLED}
     ),
     RunStatus.EXECUTING: frozenset(
-        {RunStatus.VERIFYING, RunStatus.FAILED, RunStatus.CANCELLED}
+        {RunStatus.VERIFYING, RunStatus.EXECUTION_UNCERTAIN,
+         RunStatus.FAILED, RunStatus.CANCELLED}
+    ),
+    RunStatus.EXECUTION_UNCERTAIN: frozenset(
+        {RunStatus.VERIFYING, RunStatus.EXECUTING, RunStatus.FAILED,
+         RunStatus.CANCELLED}
     ),
     RunStatus.VERIFYING: frozenset(
-        {RunStatus.COMPLETED, RunStatus.NEEDS_REVISION, RunStatus.FAILED}
+        {RunStatus.COMPLETED, RunStatus.NEEDS_REVISION, RunStatus.FAILED,
+         RunStatus.VERIFICATION_PENDING}
+    ),
+    RunStatus.VERIFICATION_PENDING: frozenset(
+        {RunStatus.VERIFYING, RunStatus.FAILED, RunStatus.CANCELLED}
     ),
     RunStatus.NEEDS_REVISION: frozenset(
         {RunStatus.PLANNING, RunStatus.FAILED, RunStatus.CANCELLED}
@@ -89,6 +105,10 @@ class WorkflowGoal(BaseModel):
 class PlanStep(BaseModel):
     step_id: str
     tool_name: str
+    # Stable business-intent identity, backend-owned, independent of
+    # revision order or step index. operation_id mirrors it for the ledger.
+    intent_id: str = ""
+    operation_id: str = ""
     args: dict = Field(default_factory=dict)
     # LLM-suggested risk only; PolicyEngine overwrites with deterministic risk.
     suggested_risk: RiskLevel = RiskLevel.LOW
@@ -107,7 +127,13 @@ class Plan(BaseModel):
             "goal_title": self.goal_title,
             "version": self.version,
             "steps": [
-                {"step_id": s.step_id, "tool_name": s.tool_name, "args": s.args}
+                {
+                    "step_id": s.step_id,
+                    "tool_name": s.tool_name,
+                    "intent_id": s.intent_id,
+                    "operation_id": s.operation_id,
+                    "args": s.args,
+                }
                 for s in self.steps
             ],
         }
@@ -135,10 +161,20 @@ class VerificationCheck(BaseModel):
     detail: str = ""
 
 
+class SemanticReview(BaseModel):
+    verdict: str = "PASS"
+    confidence: float = 0.0
+    issues: list[str] = Field(default_factory=list)
+    summary: str = ""
+    model: str = ""
+
+
 class VerificationReport(BaseModel):
     passed: bool
     checks: list[VerificationCheck] = Field(default_factory=list)
     issues: list[str] = Field(default_factory=list)
+    # Advisory only: a semantic PASS can never override a deterministic FAIL.
+    semantic: SemanticReview | None = None
 
 
 class ApprovalRecord(BaseModel):
@@ -150,6 +186,28 @@ class ApprovalRecord(BaseModel):
     created_at: datetime = Field(default_factory=_now)
 
 
+class IntentStatus(StrEnum):
+    PROPOSED = "PROPOSED"      # new/modified, not yet authorized
+    AUTHORIZED = "AUTHORIZED"  # authorized payload is executable
+    COMMITTED = "COMMITTED"    # exactly one ledger tx under this intent
+    CONFLICT = "CONFLICT"      # committed intent was changed: fail closed
+    CANCELLED = "CANCELLED"    # explicitly cancelled while uncommitted
+
+
+class IntentRecord(BaseModel):
+    """Authoritative payment intent. Identity is independent of payload,
+    revision order and step position; payloads are never silently rewritten."""
+
+    intent_id: str
+    tool_name: str = "simulate_transfer"
+    authorized_payload: dict = Field(default_factory=dict)
+    proposed_payload: dict = Field(default_factory=dict)
+    fingerprint: str = ""  # fingerprint of the authorized payload
+    status: IntentStatus = IntentStatus.PROPOSED
+    authorized: bool = False
+    ever_authorized: bool = False  # cancellation of such intents needs evidence
+
+
 class WorkflowRun(BaseModel):
     run_id: str = Field(default_factory=new_id)
     goal: WorkflowGoal
@@ -159,6 +217,22 @@ class WorkflowRun(BaseModel):
     verification: VerificationReport | None = None
     approvals: list[ApprovalRecord] = Field(default_factory=list)
     attempt: int = 0
+    verification_attempts: int = 0
+    # Backend-owned operation registry: fingerprint+ordinal -> operation_id.
+    operations: list[dict] = Field(default_factory=list)
+    # Authoritative stable payment intents (round-2 manifest).
+    intents: list[IntentRecord] = Field(default_factory=list)
+    # Reserved for a future authorized-cancellation workflow. M1 has no
+    # such workflow and creates no records here; the verifier rejects any
+    # nonempty content as unsupported evidence (never as authorization).
+    # Trusted-state boundary: runs live in single-process memory, so only
+    # trusted in-process code can mutate this or replace IntentRecords;
+    # no public API accepts intents, cancellations or run state.
+    cancellations: list[dict] = Field(default_factory=list)
+    # Isolated deep snapshot taken at approval time; execution uses this.
+    approved_plan_snapshot: Plan | None = None
+    approved_hash: str = ""
+    llm_calls: list[dict] = Field(default_factory=list)
     error: str | None = None
     created_at: datetime = Field(default_factory=_now)
     updated_at: datetime = Field(default_factory=_now)

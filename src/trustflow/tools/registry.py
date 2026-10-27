@@ -76,7 +76,12 @@ class _FxTool:
 
     def invoke(self, args: BaseModel, idempotency_key: str = "") -> ToolResult:
         a = FxQuoteArgs.model_validate(args)
-        rate = self._RATES.get((a.from_currency, a.to_currency), 1.0)
+        pair = (a.from_currency, a.to_currency)
+        if pair not in self._RATES:
+            # Never default an unknown pair to 1.0; identity pairs above are
+            # explicitly supported and listed in _RATES.
+            raise ToolValidationError(f"Unsupported FX pair: {pair[0]}->{pair[1]}")
+        rate = self._RATES[pair]
         return ToolResult(
             ok=True,
             data={"rate": rate, "converted": round(a.amount * rate, 2), "synthetic": True},
@@ -112,6 +117,9 @@ class ToolRegistry:
         except Exception as exc:
             raise ToolValidationError(f"Invalid args for {name}: {exc}") from exc
         return tool.invoke(args, idempotency_key=idempotency_key)
+
+    def committed(self, idempotency_key: str):
+        return self.ledger.committed(idempotency_key)
 
     def tool_definitions(self) -> list[dict[str, Any]]:
         """Flat, non-recursive JSON Schemas for the Meta Model API."""
