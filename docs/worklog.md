@@ -71,3 +71,18 @@ Adversarial tests A-L in tests/unit/test_m1_round3.py (9 red before the fix,
 including strengthened round-2 probes for N1/G/E/N2 and a real-uvicorn HTTP
 concurrency test); full suite 120 tests, ruff/mypy clean, offline only.
 Status: ready for a separate adversarial acceptance audit (not accepted).
+
+## M1 remediation round 4 (this candidate, after 0bbee55)
+Round-3 audit BLOCKED on one P1: verifier accepted arbitrary
+`run.cancellations` dicts matching only `intent_id` as cancellation
+evidence for ever-authorized intents. Reproduced RED first (13 probes in
+`tests/unit/test_m1_round4.py`, 7 failing on 0bbee55, including forged
+bare-ID and full actor/policy/fingerprint records returning
+`passed=True`). Fix is verifier-only plus model/docs comments: nonempty
+`run.cancellations` is unsupported evidence in M1, and a CANCELLED
+ever-authorized intent always fails with its obligation unresolved, so
+COMPLETED is unreachable. Task-3 audit found no API/application path
+that replaces IntentRecords or resets `ever_authorized`; replacement
+needs trusted in-process memory access (documented boundary, M3 owns
+persistence). Full suite 133 tests, ruff/mypy clean, offline only.
+Status: candidate for a separate adversarial audit (not accepted).
