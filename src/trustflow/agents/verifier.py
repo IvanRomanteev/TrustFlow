@@ -108,16 +108,27 @@ class Verifier:
         if self._ledger is not None:
             from trustflow.domain.models import IntentStatus
 
+            # M1 has no authorized-cancellation workflow, so no record in
+            # run.cancellations can be valid evidence in M1: any nonempty
+            # content is unsupported and fails verification, whatever its
+            # intent_id, actor, decision, fingerprint or timestamp claims.
+            if run.cancellations:
+                checks.append(VerificationCheck(
+                    name="unsupported_cancellation_evidence", passed=False,
+                    detail=f"records={len(run.cancellations)}"))
+                issues.append(
+                    "Unsupported cancellation evidence: M1 has no authorized "
+                    "cancellation workflow; run.cancellations records cannot "
+                    "satisfy or erase authorized obligations"
+                )
             for intent in run.intents:
                 if intent.status in (IntentStatus.CANCELLED, IntentStatus.PROPOSED):
                     # PROPOSED/CANCELLED can never launder ledger evidence:
-                    # a tx under such an intent is an integrity conflict, and
-                    # a formerly authorized cancellation needs explicit
-                    # authorized cancellation evidence (status alone is not).
+                    # a tx under such an intent is an integrity conflict.
+                    # A CANCELLED ever-authorized intent never satisfies its
+                    # obligation in M1, regardless of cancellation records.
                     stray = [t for t in self._ledger.transactions
                              if t.idempotency_key == intent.intent_id]
-                    evidence = [c for c in run.cancellations
-                                if c.get("intent_id") == intent.intent_id]
                     if stray:
                         checks.append(VerificationCheck(
                             name=f"intent_integrity:{intent.intent_id}", passed=False,
@@ -126,15 +137,18 @@ class Verifier:
                             f"Intent {intent.intent_id} has ledger evidence in "
                             f"lifecycle {intent.status}; integrity conflict"
                         )
-                    elif intent.status == IntentStatus.CANCELLED \
-                            and intent.ever_authorized and not evidence:
+                    if intent.status == IntentStatus.CANCELLED \
+                            and intent.ever_authorized:
                         checks.append(VerificationCheck(
                             name=f"intent_cancellation:{intent.intent_id}",
                             passed=False,
-                            detail="Cancelled authorized intent lacks evidence"))
+                            detail="ever-authorized intent is CANCELLED; "
+                                   "cancellation is unsupported in M1"))
                         issues.append(
-                            f"Intent {intent.intent_id} was cancelled without "
-                            "authorized cancellation evidence"
+                            f"Intent {intent.intent_id} is CANCELLED after "
+                            "authorization; M1 has no authorized cancellation "
+                            "workflow, so the authorized obligation remains "
+                            "unresolved"
                         )
                     continue
                 if intent.status == IntentStatus.CONFLICT:

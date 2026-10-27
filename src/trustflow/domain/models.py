@@ -222,8 +222,12 @@ class WorkflowRun(BaseModel):
     operations: list[dict] = Field(default_factory=list)
     # Authoritative stable payment intents (round-2 manifest).
     intents: list[IntentRecord] = Field(default_factory=list)
-    # Explicit authorized cancellation evidence. M1 creates none through
-    # planning omissions; only a future documented cancellation workflow may.
+    # Reserved for a future authorized-cancellation workflow. M1 has no
+    # such workflow and creates no records here; the verifier rejects any
+    # nonempty content as unsupported evidence (never as authorization).
+    # Trusted-state boundary: runs live in single-process memory, so only
+    # trusted in-process code can mutate this or replace IntentRecords;
+    # no public API accepts intents, cancellations or run state.
     cancellations: list[dict] = Field(default_factory=list)
     # Isolated deep snapshot taken at approval time; execution uses this.
     approved_plan_snapshot: Plan | None = None
