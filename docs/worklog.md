@@ -1,5 +1,33 @@
 # TrustFlow Worklog
 
+## M1 offline PASS publication and bounded live acceptance
+Independent re-review confirmed offline PASS for
+75f1d9e5d6f09e724d187ae95c26018996561e74 (N1 VERIFIED FIXED). The
+candidate was published unmodified as branch m1/offline-pass-75f1d9e
+at the exact reviewed SHA; main was not pushed or merged (origin/main
+has an unrelated one-line README commit pending separate
+integration). Bounded live acceptance was then executed by the
+developer on the same SHA against the real Meta API, synthetic
+ledger only, under user-approved caps (final total cap $1.00):
+small transfer, HIGH approval (1500 USD, hash-bound), injected
+semantic outage -> verification-only retry with one transfer, and
+FX schema (USD->EUR 0.92) all PASS. Totals across all launch
+attempts: 17 real Meta requests, $0.813836 estimated from reported
+usage. Two configuration-only adjustments were needed and are
+recorded in the evidence: TRUSTFLOW_MAX_OUTPUT_TOKENS 1200 -> 4000
+(at 1200 Wonder consumed the output budget on reasoning and
+returned no text, correctly rejected as malformed) and the default
+transport retries restored after a transient Meta HTTP 500; an
+intermediate $0.50 cap was exceeded by $0.016 before the raised cap
+was approved. Source code was never changed; the published branch
+still points at the reviewed SHA. Sanitized evidence (request IDs,
+per-attempt usage, approvals, ledger transactions, verification,
+audit; no keys) is outside the repo at
+TrustFlow-context/live-acceptance/. Status: offline PASS published;
+live acceptance passed by the developer; full M1 acceptance awaits
+user/independent confirmation of the live evidence. No deploy, no
+M2 work.
+
 ## M0 — Walking skeleton (860ce7d..7e744d3)
 Planner/Executor/Verifier loop, hash-bound approvals, synthetic ledger,
 23 offline tests. Pushed at the time with approval.
