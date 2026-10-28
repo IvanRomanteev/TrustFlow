@@ -147,14 +147,15 @@ async def test_malformed_semantic_output_lands_in_recoverable_state():
 @pytest.mark.asyncio
 async def test_semantic_retry_is_verification_only_no_new_transfer():
     fake = FakeLLMProvider(review={"verdict": "FAIL", "confidence": 0.9,
-                                   "issues": ["temporary reviewer disagreement"]})
+                                   "issues": ["temporary reviewer disagreement"],
+                                   "summary": "fail"})
     engine, registry = _engine(fake=fake)
     run = await engine.create_workflow(
         WorkflowGoal(title="Transfer 100", description="transfer 100 to bob")
     )
     assert run.status == RunStatus.VERIFICATION_PENDING
     assert len(registry.ledger.transactions) == 1  # committed, not rolled back
-    fake._review = {"verdict": "PASS", "confidence": 0.9, "issues": []}
+    fake._review = {"verdict": "PASS", "confidence": 0.9, "issues": [], "summary": "ok"}
     run = await engine.retry_verification(run)
     assert run.status == RunStatus.COMPLETED
     assert len(registry.ledger.transactions) == 1

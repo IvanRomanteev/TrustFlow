@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from trustflow.core.errors import LLMResponseError
 from trustflow.domain.models import Plan, SemanticReview, WorkflowGoal
@@ -12,12 +12,16 @@ from trustflow.tools.ledger import SyntheticLedger
 
 
 class SemanticReviewInput(BaseModel):
-    """Explicit validation contract for model review output."""
+    """Explicit validation contract for model review output.
+
+    Mirrors REVIEW_SCHEMA exactly: every field is required (no defaults),
+    so an incomplete provider response is malformed, never a valid PASS.
+    """
 
     verdict: str = Field(pattern="^(PASS|FAIL)$")
     confidence: float = Field(ge=0.0, le=1.0)
-    issues: list[str] = Field(default_factory=list)
-    summary: str = ""
+    issues: list[str]
+    summary: str
 
 
 class SemanticReviewer:
@@ -73,7 +77,7 @@ class SemanticReviewer:
             tracker.record(record)
         try:
             parsed = SemanticReviewInput.model_validate(raw)
-        except Exception as exc:
+        except ValidationError as exc:
             raise LLMResponseError(
                 f"Malformed semantic review output: {exc}", record=record
             ) from exc

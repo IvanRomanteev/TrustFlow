@@ -26,7 +26,10 @@ def estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
 
 class LLMCallRecord(BaseModel):
     purpose: str  # plan | repair | semantic_review
-    attempt: int = 0  # per-purpose attempt number, assigned by the tracker
+    attempt: int = 0  # logical-call attempt per purpose, assigned by the tracker
+    # HTTP attempt within one logical call (provider retries). Logical
+    # attempts are counted by the tracker; transport attempts never are.
+    transport_attempt: int = 1
     model: str
     workflow_id: str | None = None
     request_id: str | None = None
@@ -37,6 +40,10 @@ class LLMCallRecord(BaseModel):
     usage_unknown: bool = False
     over_budget: bool = False
     expense_category: str = "application_inference"
+    # Earlier transport attempts of the same logical call, carried on the
+    # final record only so callers record exactly one object; the tracker
+    # expands them into flat records and clears this field.
+    prior_attempts: list["LLMCallRecord"] = []
 
 
 class UsageTracker:
@@ -64,16 +71,35 @@ class UsageTracker:
             )
 
     def record(self, rec: LLMCallRecord) -> LLMCallRecord:
-        """Always preserve the incurred record; flag (and signal) over-budget."""
-        if rec.workflow_id is None:
-            rec.workflow_id = self.workflow_id
+        """Always preserve the incurred record; flag (and signal) over-budget.
+
+        A record carrying ``prior_attempts`` (earlier HTTP attempts of the
+        same logical call) is expanded into one flat record per transport
+        attempt, all sharing the logical ``attempt`` number, so retries are
+        accounted without inflating the logical-call count and no attempt
+        is ever double-counted.
+        """
+        priors = list(rec.prior_attempts)
+        rec.prior_attempts = []
+        batch = [*priors, rec]
         if rec.attempt == 0:
-            rec.attempt = 1 + sum(1 for r in self.records if r.purpose == rec.purpose)
-        rec.usage_unknown = rec.input_tokens is None or rec.output_tokens is None
-        rec.estimated_cost_usd = estimate_cost(
-            rec.model, rec.input_tokens or 0, rec.output_tokens or 0
-        )
-        self.records.append(rec)
+            logical = 1 + max(
+                (r.attempt for r in self.records if r.purpose == rec.purpose),
+                default=0,
+            )
+        else:
+            logical = rec.attempt
+        for item in batch:
+            if item.workflow_id is None:
+                item.workflow_id = self.workflow_id
+            item.attempt = logical
+            item.usage_unknown = (
+                item.input_tokens is None or item.output_tokens is None
+            )
+            item.estimated_cost_usd = estimate_cost(
+                item.model, item.input_tokens or 0, item.output_tokens or 0
+            )
+            self.records.append(item)
         if self.total_tokens > self.budget:
             rec.over_budget = True
             raise TokenBudgetExceededError(

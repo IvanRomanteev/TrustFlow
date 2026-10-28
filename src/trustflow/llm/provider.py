@@ -36,7 +36,10 @@ PLAN_SCHEMA: dict[str, Any] = {
                     "currency": {"type": "string"},
                     "from_currency": {"type": "string"},
                     "to_currency": {"type": "string"},
-                    "limit": {"type": "integer"},
+                    # Same bounds as the local ListTransactionsArgs
+                    # contract (ge=1, le=100); see docs/m1.md for the
+                    # flat-schema limits that cannot be expressed per tool.
+                    "limit": {"type": "integer", "minimum": 1, "maximum": 100},
                     "rationale": {"type": "string"},
                 },
                 # All fields required (strict-subset style): the model emits
@@ -132,13 +135,49 @@ class FakeLLMProvider:
 
 
 def _extract_text(data: dict[str, Any]) -> str:
+    """Validate the envelope structure before reading any text from it.
+
+    Anything unexpected in external data raises LLMResponseError; this
+    function never indexes into unvalidated values.
+    """
+    if not isinstance(data, dict):
+        raise LLMResponseError("Live response envelope was not an object")
     if isinstance(data.get("output_text"), str) and data["output_text"]:
         return str(data["output_text"])
-    for item in data.get("output", []) or []:
-        for part in item.get("content", []) or []:
-            if isinstance(part.get("text"), str) and part["text"]:
+    output = data.get("output")
+    if output is not None and not isinstance(output, list):
+        raise LLMResponseError("Live response output was not a list")
+    for item in output or []:
+        if not isinstance(item, dict):
+            continue
+        content = item.get("content")
+        if not isinstance(content, list):
+            continue
+        for part in content:
+            if isinstance(part, dict) and isinstance(part.get("text"), str) and part["text"]:
                 return str(part["text"])
     raise LLMResponseError("Live response contained no output text")
+
+
+def _token_count(value: object) -> int | None:
+    """A valid provider token count, else None (unknown, never invented)."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int) and value >= 0:
+        return value
+    if isinstance(value, float) and value >= 0 and value.is_integer():
+        return int(value)
+    return None
+
+
+def _attempt_error(message: str, records: list[LLMCallRecord]) -> LLMResponseError:
+    """Error carrying every transport attempt; the tracker expands the
+    prior attempts attached to the final record, so nothing is lost and
+    nothing is counted twice."""
+    if records:
+        records[-1].prior_attempts = list(records[:-1])
+        return LLMResponseError(message, records=records)
+    return LLMResponseError(message)
 
 
 class MetaResponsesProvider:
@@ -163,52 +202,93 @@ class MetaResponsesProvider:
                                 "schema": schema, "strict": False}},
         }
         url = f"{self._settings.llm_base_url.rstrip('/')}/responses"
-        last_error: Exception | None = None
         attempts = 1 + self._settings.llm_max_retries
+        # One record per HTTP attempt, built before any retry/raise so
+        # retryable errors, timeouts and terminal failures are all
+        # accounted; only the final record is returned/raised, carrying
+        # the earlier ones as prior_attempts (no double counting).
+        attempt_records: list[LLMCallRecord] = []
         for attempt in range(attempts):
+            transport_attempt = attempt + 1
             started = time.perf_counter()
             try:
                 with httpx.Client(timeout=self._settings.llm_timeout_seconds,
                                   transport=self._transport) as client:
                     resp = client.post(url, headers={"Authorization": f"Bearer {key}"},
                                        json=payload)
-                if resp.status_code in (429, 500, 502, 503, 504) and attempt < attempts - 1:
-                    time.sleep(self._settings.llm_backoff_seconds * (2 ** attempt))
-                    continue
-                resp.raise_for_status()
-                data = resp.json()
-                # Usage is extracted BEFORE domain validation so an incurred
-                # call is accounted even when the payload is malformed.
-                usage = data.get("usage") or {}
-                in_tok = usage.get("input_tokens")
-                out_tok = usage.get("output_tokens")
-                record = LLMCallRecord(
+            except httpx.TransportError as exc:
+                attempt_records.append(LLMCallRecord(
                     purpose=purpose, model=str(payload["model"]),
-                    request_id=data.get("id") or resp.headers.get("x-request-id"),
+                    transport_attempt=transport_attempt,
                     latency_ms=round((time.perf_counter() - started) * 1000, 2),
-                    input_tokens=int(in_tok) if in_tok is not None else None,
-                    output_tokens=int(out_tok) if out_tok is not None else None,
-                )
-                try:
-                    parsed = json.loads(_extract_text(data))
-                except (json.JSONDecodeError, LLMResponseError) as exc:
-                    raise LLMResponseError(
-                        f"Malformed live response: {exc}", record=record
-                    ) from exc
-                if not isinstance(parsed, dict):
-                    raise LLMResponseError(
-                        "Live response JSON was not an object", record=record
-                    )
-                return parsed, record
-            except LLMResponseError:
-                raise
-            except (httpx.HTTPError, json.JSONDecodeError) as exc:
-                last_error = exc
-                if attempt < attempts - 1 and isinstance(exc, httpx.TransportError):
+                ))
+                if attempt < attempts - 1:
                     time.sleep(self._settings.llm_backoff_seconds * (2 ** attempt))
                     continue
-                raise LLMResponseError(f"Live model call failed: {exc}") from exc
-        raise LLMResponseError(f"Live model call failed: {last_error}")
+                raise _attempt_error(
+                    f"Live model call failed: {exc}", attempt_records
+                ) from exc
+            except httpx.HTTPError as exc:
+                attempt_records.append(LLMCallRecord(
+                    purpose=purpose, model=str(payload["model"]),
+                    transport_attempt=transport_attempt,
+                    latency_ms=round((time.perf_counter() - started) * 1000, 2),
+                ))
+                raise _attempt_error(
+                    f"Live model call failed: {exc}", attempt_records
+                ) from exc
+            # Usage is extracted BEFORE status/domain validation so an
+            # incurred attempt is accounted even when it failed or the
+            # payload is malformed. Unparseable bodies keep usage unknown.
+            data: Any = None
+            body_is_json = True
+            try:
+                data = resp.json()
+            except ValueError:
+                body_is_json = False
+            usage = data.get("usage") if isinstance(data, dict) else None
+            if not isinstance(usage, dict):
+                usage = {}
+            request_id = data.get("id") if isinstance(data, dict) else None
+            if not isinstance(request_id, str) or not request_id:
+                request_id = resp.headers.get("x-request-id")
+            record = LLMCallRecord(
+                purpose=purpose, model=str(payload["model"]),
+                transport_attempt=transport_attempt,
+                request_id=request_id,
+                latency_ms=round((time.perf_counter() - started) * 1000, 2),
+                input_tokens=_token_count(usage.get("input_tokens")),
+                output_tokens=_token_count(usage.get("output_tokens")),
+            )
+            attempt_records.append(record)
+            if resp.status_code in (429, 500, 502, 503, 504) and attempt < attempts - 1:
+                time.sleep(self._settings.llm_backoff_seconds * (2 ** attempt))
+                continue
+            try:
+                resp.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                raise _attempt_error(
+                    f"Live model call failed: HTTP {resp.status_code}",
+                    attempt_records,
+                ) from exc
+            if not body_is_json or not isinstance(data, dict):
+                raise _attempt_error(
+                    "Malformed live response: envelope was not a JSON object",
+                    attempt_records,
+                )
+            try:
+                parsed = json.loads(_extract_text(data))
+            except (json.JSONDecodeError, LLMResponseError) as exc:
+                raise _attempt_error(
+                    f"Malformed live response: {exc}", attempt_records
+                ) from exc
+            if not isinstance(parsed, dict):
+                raise _attempt_error(
+                    "Live response JSON was not an object", attempt_records
+                )
+            record.prior_attempts = list(attempt_records[:-1])
+            return parsed, record
+        raise _attempt_error("Live model call failed", attempt_records)
 
     def propose_plan(self, goal_title, description, repair_feedback=None):
         prompt = (
@@ -217,7 +297,9 @@ class MetaResponsesProvider:
             "Accounts: acc_alice, acc_bob, acc_ops. Currency USD. "
             "Every step must set every field: use account_id for "
             "get_balance/list_transactions; from_account, to_account, amount "
-            "and currency for simulate_transfer; empty string or 0 elsewhere. "
+            "and currency for simulate_transfer; limit only for "
+            "list_transactions (integer 1-100, use 1 elsewhere); empty "
+            "string or 0 elsewhere. "
             'Example: {"tool_name": "simulate_transfer", "account_id": "", '
             '"from_account": "acc_alice", "to_account": "acc_bob", '
             '"amount": 100, "currency": "USD", "rationale": "pay"}'

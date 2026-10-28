@@ -65,7 +65,7 @@ async def test_one_repair_then_fail_closed():
 async def test_semantic_pass_never_overrides_deterministic_fail():
     fake = FakeLLMProvider(
         scripted=[{"tool_name": "get_balance", "account_id": "acc_missing"}],
-        review={"verdict": "PASS", "confidence": 1.0, "issues": []},
+        review={"verdict": "PASS", "confidence": 1.0, "issues": [], "summary": "ok"},
     )
     # acc_missing is rejected by plan validation, so use a failing execution path:
     fake._scripted = [{"tool_name": "simulate_transfer", "from_account": "acc_alice",

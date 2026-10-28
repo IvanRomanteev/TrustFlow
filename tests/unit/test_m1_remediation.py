@@ -171,12 +171,13 @@ async def test_semantic_attempts_bounded_including_exceptions():
 # P2.5 concurrent reconcile/retry get defined responses, one transaction
 @pytest.mark.asyncio
 async def test_concurrent_retry_verification_no_crash():
-    fake = FakeLLMProvider(review={"verdict": "FAIL", "confidence": 0.5, "issues": ["x"]})
+    fake = FakeLLMProvider(review={"verdict": "FAIL", "confidence": 0.5,
+                                   "issues": ["x"], "summary": "fail"})
     engine, registry = _engine(fake=fake, settings=Settings(max_retries=5))
     run = await engine.create_workflow(
         WorkflowGoal(title="Transfer 100", description="transfer 100 to bob"))
     assert run.status == RunStatus.VERIFICATION_PENDING
-    fake._review = {"verdict": "PASS", "confidence": 0.9, "issues": []}
+    fake._review = {"verdict": "PASS", "confidence": 0.9, "issues": [], "summary": "ok"}
     results = await asyncio.gather(
         *[engine.retry_verification(run) for _ in range(3)],
         return_exceptions=True,
@@ -201,7 +202,7 @@ def test_semantic_schema_alignment():
 @pytest.mark.asyncio
 async def test_semantic_issues_sanitized_in_run():
     fake = FakeLLMProvider(review={"verdict": "FAIL", "confidence": 0.5,
-                                   "issues": [f"leaked {SECRET}"]})
+                                   "issues": [f"leaked {SECRET}"], "summary": "fail"})
     engine, _ = _engine(fake=fake)
     run = await engine.create_workflow(WorkflowGoal(title="Check", description="balance"))
     assert "SYNTH-SECRET" not in str(run.model_dump())
@@ -222,12 +223,13 @@ def test_full_tool_schema_parity():
 # P2.10 resolved error cleared after successful recovery
 @pytest.mark.asyncio
 async def test_error_cleared_after_verification_recovery():
-    fake = FakeLLMProvider(review={"verdict": "FAIL", "confidence": 0.5, "issues": ["temp"]})
+    fake = FakeLLMProvider(review={"verdict": "FAIL", "confidence": 0.5,
+                                   "issues": ["temp"], "summary": "fail"})
     engine, _ = _engine(fake=fake)
     run = await engine.create_workflow(WorkflowGoal(title="Check", description="balance"))
     assert run.status == RunStatus.VERIFICATION_PENDING
     assert run.error
-    fake._review = {"verdict": "PASS", "confidence": 0.9, "issues": []}
+    fake._review = {"verdict": "PASS", "confidence": 0.9, "issues": [], "summary": "ok"}
     run = await engine.retry_verification(run)
     assert run.status == RunStatus.COMPLETED
     assert run.error is None

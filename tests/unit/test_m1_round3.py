@@ -211,7 +211,8 @@ def test_j_api_semantic_secret_not_exposed():
     container = Container(Settings())
     container.engine.planner._llm._review = {
         "verdict": "FAIL", "confidence": 0.5,
-        "issues": ["the Authorization header value SYNTH-SECRET-API8"]}
+        "issues": ["the Authorization header value SYNTH-SECRET-API8"],
+        "summary": "fail"}
     client = TestClient(create_app(container))
     resp = client.post("/workflows", json={"title": "Check", "description": "balance"})
     assert "SYNTH-SECRET" not in resp.text

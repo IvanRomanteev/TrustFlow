@@ -413,7 +413,23 @@ class WorkflowEngine:
                         f"Semantic review unavailable: {exc}. "
                         "Committed transfers (if any) were not rolled back."
                     )
-                    if run.verification_attempts >= self.settings.semantic_max_attempts:
+                    exhausted = (
+                        run.verification_attempts
+                        >= self.settings.semantic_max_attempts
+                    )
+                    # History survives recovery: the outage is audited
+                    # (sanitized) before this branch returns, so clearing
+                    # the active error on later success erases nothing.
+                    self.audit.log(
+                        run.run_id, "verifier", "semantic_review_failed",
+                        {"error": run.error,
+                         "attempt": run.verification_attempts,
+                         "recovery_state": (
+                             RunStatus.FAILED if exhausted
+                             else RunStatus.VERIFICATION_PENDING
+                         )},
+                    )
+                    if exhausted:
                         transition(run, RunStatus.FAILED)
                     else:
                         transition(run, RunStatus.VERIFICATION_PENDING)
@@ -448,6 +464,15 @@ class WorkflowEngine:
                     run.goal, version=plan.version + 1,
                     tracker=self._tracker(run),
                 )
+                # Bounds apply to every revision, before its intents are
+                # assigned/authorized and before any step executes; a new
+                # approval never lifts the deterministic limits.
+                bound_issues = self.policy.check_bounds(revised)
+                if bound_issues:
+                    run.error = "; ".join(bound_issues)
+                    self._persist_usage(run)
+                    transition(run, RunStatus.FAILED)
+                    return self.repo.save(run)
                 # New intents in a revision are unauthorized until approved.
                 run.plan = assign_operation_ids(
                     run, revised, new_intents_authorized=False

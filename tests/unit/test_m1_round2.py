@@ -263,7 +263,7 @@ def test_api_response_has_no_secret_marker():
     container = Container(Settings())
     fake = container.engine.planner._llm
     fake._review = {"verdict": "FAIL", "confidence": 0.5,
-                    "issues": ["Authorization SYNTH-SECRET-API1"]}
+                    "issues": ["Authorization SYNTH-SECRET-API1"], "summary": "fail"}
     client = TestClient(create_app(container))
     resp = client.post("/workflows", json={"title": "Check", "description": "balance"})
     assert "SYNTH-SECRET" not in resp.text

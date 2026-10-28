@@ -40,9 +40,18 @@ class LLMResponseError(TrustFlowError):
     cost is preserved even though the domain response was invalid.
     """
 
-    def __init__(self, message: str, record: object | None = None) -> None:
+    def __init__(self, message: str, record: object | None = None,
+                 records: list | None = None) -> None:
         super().__init__(message)
-        self.record = record
+        # ``records`` carries every transport attempt of the failed logical
+        # call; the last one is also exposed as ``record`` for callers that
+        # account a single record (the tracker expands its prior attempts).
+        self.records: list = list(records) if records else (
+            [record] if record is not None else []
+        )
+        self.record = record if record is not None else (
+            self.records[-1] if self.records else None
+        )
 
 
 class PlanValidationError(TrustFlowError):
