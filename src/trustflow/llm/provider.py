@@ -16,7 +16,7 @@ import httpx
 
 from trustflow.core.errors import LLMNotConfiguredError, LLMResponseError
 from trustflow.core.settings import Settings
-from trustflow.llm.usage import LLMCallRecord
+from trustflow.llm.usage import MAX_TOKEN_COUNT, LLMCallRecord, UsageTracker
 
 PLAN_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -160,12 +160,17 @@ def _extract_text(data: dict[str, Any]) -> str:
 
 
 def _token_count(value: object) -> int | None:
-    """A valid provider token count, else None (unknown, never invented)."""
+    """A valid provider token count, else None (unknown, never invented).
+
+    Counts above MAX_TOKEN_COUNT cannot be accounted reliably and are
+    recorded as unknown; the other token field of the same response is
+    unaffected, so known usage is never lost with the unusable part.
+    """
     if isinstance(value, bool):
         return None
-    if isinstance(value, int) and value >= 0:
+    if isinstance(value, int) and 0 <= value <= MAX_TOKEN_COUNT:
         return value
-    if isinstance(value, float) and value >= 0 and value.is_integer():
+    if isinstance(value, float) and 0 <= value <= MAX_TOKEN_COUNT and value.is_integer():
         return int(value)
     return None
 
@@ -183,6 +188,11 @@ def _attempt_error(message: str, records: list[LLMCallRecord]) -> LLMResponseErr
 class MetaResponsesProvider:
     """Meta Model API via Responses API. Raises on any failure (fail closed)."""
 
+    # Callers with a per-workflow UsageTracker pass it per call (never
+    # shared provider state), so transport retries are accounted and
+    # re-reserved in the originating workflow before the next request.
+    supports_attempt_tracker = True
+
     def __init__(self, settings: Settings | None = None, model: str | None = None,
                  transport: httpx.BaseTransport | None = None) -> None:
         self._settings = settings or Settings()
@@ -190,7 +200,9 @@ class MetaResponsesProvider:
         self._transport = transport  # test seam only; production uses network
 
     def _call(self, name: str, schema: dict, prompt: str, purpose: str,
-              model: str | None = None) -> tuple[dict[str, Any], LLMCallRecord]:
+              model: str | None = None,
+              tracker: UsageTracker | None = None,
+              retry_reserve_tokens: int = 0) -> tuple[dict[str, Any], LLMCallRecord]:
         key = self._settings.model_api_key
         if not key:
             raise LLMNotConfiguredError("MODEL_API_KEY is not set (live mode)")
@@ -205,9 +217,31 @@ class MetaResponsesProvider:
         attempts = 1 + self._settings.llm_max_retries
         # One record per HTTP attempt, built before any retry/raise so
         # retryable errors, timeouts and terminal failures are all
-        # accounted; only the final record is returned/raised, carrying
-        # the earlier ones as prior_attempts (no double counting).
+        # accounted. Without a tracker, only the final record is
+        # returned/raised, carrying the earlier ones as prior_attempts
+        # (no double counting). With a tracker (workflow-bound mode),
+        # every interim/failed attempt is recorded into the originating
+        # workflow's tracker immediately, the next attempt must pass a
+        # fresh reservation against the now-known usage, and the final
+        # successful record is returned for the caller to record once.
+        # Unknown usage consumes no known tokens, so the re-reservation
+        # re-checks the full per-call estimate against known totals; the
+        # provider's actual billing for unknown attempts is not bounded
+        # by this application-side check.
         attempt_records: list[LLMCallRecord] = []
+        logical_attempt = 0
+
+        def account_before_retry(record: LLMCallRecord) -> None:
+            """Record an interim attempt in the originating workflow and
+            require a fresh reservation before any next HTTP request."""
+            nonlocal logical_attempt
+            assert tracker is not None
+            if logical_attempt:
+                record.attempt = logical_attempt
+            tracker.record(record)  # incurred usage survives budget errors
+            logical_attempt = record.attempt
+            tracker.reserve(retry_reserve_tokens)
+
         for attempt in range(attempts):
             transport_attempt = attempt + 1
             started = time.perf_counter()
@@ -217,11 +251,22 @@ class MetaResponsesProvider:
                     resp = client.post(url, headers={"Authorization": f"Bearer {key}"},
                                        json=payload)
             except httpx.TransportError as exc:
-                attempt_records.append(LLMCallRecord(
+                unknown = LLMCallRecord(
                     purpose=purpose, model=str(payload["model"]),
                     transport_attempt=transport_attempt,
                     latency_ms=round((time.perf_counter() - started) * 1000, 2),
-                ))
+                )
+                if tracker is not None:
+                    if attempt < attempts - 1:
+                        account_before_retry(unknown)
+                        time.sleep(self._settings.llm_backoff_seconds * (2 ** attempt))
+                        continue
+                    if logical_attempt:
+                        unknown.attempt = logical_attempt
+                    tracker.record(unknown)
+                    raise LLMResponseError(
+                        f"Live model call failed: {exc}") from exc
+                attempt_records.append(unknown)
                 if attempt < attempts - 1:
                     time.sleep(self._settings.llm_backoff_seconds * (2 ** attempt))
                     continue
@@ -229,11 +274,18 @@ class MetaResponsesProvider:
                     f"Live model call failed: {exc}", attempt_records
                 ) from exc
             except httpx.HTTPError as exc:
-                attempt_records.append(LLMCallRecord(
+                unknown = LLMCallRecord(
                     purpose=purpose, model=str(payload["model"]),
                     transport_attempt=transport_attempt,
                     latency_ms=round((time.perf_counter() - started) * 1000, 2),
-                ))
+                )
+                if tracker is not None:
+                    if logical_attempt:
+                        unknown.attempt = logical_attempt
+                    tracker.record(unknown)
+                    raise LLMResponseError(
+                        f"Live model call failed: {exc}") from exc
+                attempt_records.append(unknown)
                 raise _attempt_error(
                     f"Live model call failed: {exc}", attempt_records
                 ) from exc
@@ -260,10 +312,43 @@ class MetaResponsesProvider:
                 input_tokens=_token_count(usage.get("input_tokens")),
                 output_tokens=_token_count(usage.get("output_tokens")),
             )
-            attempt_records.append(record)
             if resp.status_code in (429, 500, 502, 503, 504) and attempt < attempts - 1:
+                if tracker is not None:
+                    account_before_retry(record)
+                else:
+                    attempt_records.append(record)
                 time.sleep(self._settings.llm_backoff_seconds * (2 ** attempt))
                 continue
+            if tracker is not None:
+                # Terminal path: failed attempts are recorded here (the
+                # caller must not record them again); a successful record
+                # is returned for the caller to record exactly once.
+                def fail(failed_record: LLMCallRecord, message: str,
+                         cause: Exception | None = None) -> Any:
+                    if logical_attempt:
+                        failed_record.attempt = logical_attempt
+                    tracker.record(failed_record)
+                    error = LLMResponseError(message)
+                    if cause is not None:
+                        raise error from cause
+                    raise error
+
+                try:
+                    resp.raise_for_status()
+                except httpx.HTTPStatusError as exc:
+                    fail(record, f"Live model call failed: HTTP {resp.status_code}", exc)
+                if not body_is_json or not isinstance(data, dict):
+                    fail(record, "Malformed live response: envelope was not a JSON object")
+                try:
+                    parsed = json.loads(_extract_text(data))
+                except (json.JSONDecodeError, LLMResponseError) as exc:
+                    fail(record, f"Malformed live response: {exc}", exc)
+                if not isinstance(parsed, dict):
+                    fail(record, "Live response JSON was not an object")
+                if logical_attempt:
+                    record.attempt = logical_attempt
+                return parsed, record
+            attempt_records.append(record)
             try:
                 resp.raise_for_status()
             except httpx.HTTPStatusError as exc:
@@ -290,7 +375,8 @@ class MetaResponsesProvider:
             return parsed, record
         raise _attempt_error("Live model call failed", attempt_records)
 
-    def propose_plan(self, goal_title, description, repair_feedback=None):
+    def propose_plan(self, goal_title, description, repair_feedback=None,
+                     tracker=None, retry_reserve_tokens=0):
         prompt = (
             "Plan synthetic-data tool steps as JSON for this goal. "
             f"Goal: {goal_title}. Details: {description}. {TOOLS_HINT} "
@@ -307,7 +393,9 @@ class MetaResponsesProvider:
         if repair_feedback:
             prompt += f" Previous plan was rejected: {repair_feedback}. Fix it."
         parsed, record = self._call("plan_steps", PLAN_SCHEMA, prompt,
-                                    "repair" if repair_feedback else "plan")
+                                    "repair" if repair_feedback else "plan",
+                                    tracker=tracker,
+                                    retry_reserve_tokens=retry_reserve_tokens)
         steps = parsed.get("steps")
         if not isinstance(steps, list):
             # Incurred usage travels with the error so it is never lost.
@@ -316,7 +404,7 @@ class MetaResponsesProvider:
             )
         return steps, record
 
-    def semantic_review(self, payload):
+    def semantic_review(self, payload, tracker=None, retry_reserve_tokens=0):
         prompt = (
             "Independently review whether the executed synthetic workflow satisfies "
             "the user goal. Judge only from the supplied goal, approved plan and "
@@ -324,7 +412,9 @@ class MetaResponsesProvider:
             + json.dumps(payload, default=str)[:6000]
         )
         return self._call("semantic_review", REVIEW_SCHEMA, prompt,
-                          "semantic_review", model=self._settings.review_model)
+                          "semantic_review", model=self._settings.review_model,
+                          tracker=tracker,
+                          retry_reserve_tokens=retry_reserve_tokens)
 
 
 def build_provider(settings: Settings) -> LLMProvider:

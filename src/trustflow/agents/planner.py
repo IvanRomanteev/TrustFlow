@@ -73,14 +73,25 @@ class Planner:
 
     def _propose(self, goal: WorkflowGoal, tracker: UsageTracker | None,
                  feedback: str | None = None):
+        estimated = 0
         if tracker is not None:
             # Reserve estimated input (~4 chars/token + prompt overhead)
             # plus the full allowed output before every attempt.
             estimated_input = (len(goal.title) + len(goal.description)) // 4 + 256
-            tracker.reserve(estimated_input + self._reserve_tokens)
+            estimated = estimated_input + self._reserve_tokens
+            tracker.reserve(estimated)
         try:
-            raw, record = self._llm.propose_plan(goal.title, goal.description,
-                                                 repair_feedback=feedback)
+            propose = self._llm.propose_plan
+            if tracker is not None and getattr(
+                    self._llm, "supports_attempt_tracker", False):
+                # Workflow-bound mode: the provider records each transport
+                # attempt in this tracker and re-reserves before retrying.
+                raw, record = propose(  # type: ignore[call-arg]
+                    goal.title, goal.description, repair_feedback=feedback,
+                    tracker=tracker, retry_reserve_tokens=estimated)
+            else:
+                raw, record = propose(goal.title, goal.description,
+                                      repair_feedback=feedback)
         except LLMResponseError as exc:
             if tracker is not None and exc.record is not None:
                 tracker.record(exc.record)  # type: ignore[arg-type]

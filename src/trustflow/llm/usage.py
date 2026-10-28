@@ -8,6 +8,9 @@ reservation against the output cap); it is not a guaranteed provider
 billing cap, since the provider may report different final usage.
 """
 
+import math
+from decimal import Decimal, InvalidOperation
+
 from pydantic import BaseModel
 
 from trustflow.core.errors import TokenBudgetExceededError
@@ -18,10 +21,30 @@ PRICING_PER_MILLION: dict[str, tuple[float, float]] = {
     "fake": (0.0, 0.0),
 }
 
+# Largest token count accepted from external provider data. Anything
+# above this cannot be a real per-call count and cannot be accounted
+# reliably, so ingestion records it as unknown (None) instead of
+# substituting an invented smaller number.
+MAX_TOKEN_COUNT = 1_000_000_000
+
 
 def estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
+    """Overflow-safe application-side cost estimate.
+
+    Computed in Decimal so extreme counts cannot raise OverflowError;
+    a result beyond float range is reported as infinity, never as a
+    silently clamped finite cost. Provider-ingested counts are bounded
+    by MAX_TOKEN_COUNT, so this only guards direct/internal records.
+    """
     rate_in, rate_out = PRICING_PER_MILLION.get(model, (4.0, 20.0))
-    return round((input_tokens * rate_in + output_tokens * rate_out) / 1_000_000, 8)
+    try:
+        cost = (
+            Decimal(input_tokens) * Decimal(str(rate_in))
+            + Decimal(output_tokens) * Decimal(str(rate_out))
+        ) / Decimal(1_000_000)
+        return round(float(cost), 8)
+    except (OverflowError, InvalidOperation, ValueError):
+        return math.inf
 
 
 class LLMCallRecord(BaseModel):

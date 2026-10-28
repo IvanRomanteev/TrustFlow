@@ -1,6 +1,36 @@
 """In-memory synthetic ledger. No real money ever moves here."""
 
-from pydantic import BaseModel, Field
+import math
+from typing import Annotated
+
+from pydantic import BaseModel, BeforeValidator, Field
+
+
+def strict_json_int(value: object) -> int:
+    """JSON Schema ``integer``: accepts ints and integer-valued numbers,
+    rejects bool (an int subclass in Python), strings and fractions."""
+    if isinstance(value, bool) or isinstance(value, str):
+        raise ValueError("expected a JSON integer")
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float) and math.isfinite(value) and value.is_integer():
+        return int(value)
+    raise ValueError("expected a JSON integer")
+
+
+def strict_json_number(value: object) -> float:
+    """JSON Schema ``number``: accepts ints/floats, rejects bool/strings."""
+    if isinstance(value, bool) or isinstance(value, str):
+        raise ValueError("expected a JSON number")
+    if isinstance(value, (int, float)):
+        result = float(value)
+        if math.isfinite(result):
+            return result
+    raise ValueError("expected a JSON number")
+
+
+StrictJsonInt = Annotated[int, BeforeValidator(strict_json_int)]
+StrictJsonNumber = Annotated[float, BeforeValidator(strict_json_number)]
 
 
 class Account(BaseModel):
@@ -110,13 +140,13 @@ class GetBalanceArgs(BaseModel):
 
 class ListTransactionsArgs(BaseModel):
     account_id: str
-    limit: int = Field(default=20, ge=1, le=100)
+    limit: Annotated[StrictJsonInt, Field(ge=1, le=100)] = 20
 
 
 class SimulateTransferArgs(BaseModel):
     from_account: str
     to_account: str
-    amount: float = Field(gt=0)
+    amount: Annotated[StrictJsonNumber, Field(gt=0)]
     currency: str = "USD"
     idempotency_key: str = ""
 
@@ -124,4 +154,4 @@ class SimulateTransferArgs(BaseModel):
 class FxQuoteArgs(BaseModel):
     from_currency: str
     to_currency: str
-    amount: float = Field(gt=0)
+    amount: Annotated[StrictJsonNumber, Field(gt=0)]

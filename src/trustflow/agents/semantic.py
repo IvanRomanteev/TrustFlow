@@ -1,6 +1,6 @@
 """Independent semantic review. Advisory: never overrides deterministic FAIL."""
 
-from typing import Any
+from typing import Annotated, Any
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -8,7 +8,7 @@ from trustflow.core.errors import LLMResponseError
 from trustflow.domain.models import Plan, SemanticReview, WorkflowGoal
 from trustflow.llm.provider import LLMProvider
 from trustflow.llm.usage import UsageTracker
-from trustflow.tools.ledger import SyntheticLedger
+from trustflow.tools.ledger import StrictJsonNumber, SyntheticLedger
 
 
 class SemanticReviewInput(BaseModel):
@@ -19,7 +19,9 @@ class SemanticReviewInput(BaseModel):
     """
 
     verdict: str = Field(pattern="^(PASS|FAIL)$")
-    confidence: float = Field(ge=0.0, le=1.0)
+    # Strict JSON number: bool/string coercion would accept output the
+    # published REVIEW_SCHEMA (type: number) forbids.
+    confidence: Annotated[StrictJsonNumber, Field(ge=0.0, le=1.0)]
     issues: list[str]
     summary: str
 
@@ -62,13 +64,21 @@ class SemanticReviewer:
             ],
             "evidence": self.evidence(plan),
         }
+        estimated = 0
         if tracker is not None:
             import json as _json
 
             estimated_input = len(_json.dumps(payload, default=str)) // 4 + 128
-            tracker.reserve(estimated_input + self._reserve_tokens)
+            estimated = estimated_input + self._reserve_tokens
+            tracker.reserve(estimated)
         try:
-            raw, record = self._llm.semantic_review(payload)
+            review_call = self._llm.semantic_review
+            if tracker is not None and getattr(
+                    self._llm, "supports_attempt_tracker", False):
+                raw, record = review_call(  # type: ignore[call-arg]
+                    payload, tracker=tracker, retry_reserve_tokens=estimated)
+            else:
+                raw, record = review_call(payload)
         except LLMResponseError as exc:
             if tracker is not None and exc.record is not None:
                 tracker.record(exc.record)  # type: ignore[arg-type]
