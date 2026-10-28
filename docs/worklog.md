@@ -72,6 +72,43 @@ including strengthened round-2 probes for N1/G/E/N2 and a real-uvicorn HTTP
 concurrency test); full suite 120 tests, ruff/mypy clean, offline only.
 Status: ready for a separate adversarial acceptance audit (not accepted).
 
+## M1 remediation round 6 (after re-review of 71df99c)
+Re-review BLOCKED 71df99c with residual R1–R3 only; F3 and F5 were
+independently VERIFIED FIXED and their gates (plus all earlier safety
+probes) stayed green. Review catalogue preserved outside the repo at
+`TrustFlow-context/review-71df99c/` (original, adapted, extra,
+adaptation.diff, JUnit results, integrity manifest); original probe
+SHA256 values match the re-review's recorded hashes. New regressions
+in `tests/unit/test_m1_round6.py`: 15 failed / 13 passed on 71df99c,
+28 passed after the fix. R1: token counts are ingested only within
+0..10^9, out-of-range/invalid counts become per-field unknown (known
+sibling counts preserved, no invented values), `estimate_cost` uses
+Decimal and cannot raise OverflowError, records are appended
+independently of cost estimation. R2: Planner/SemanticReviewer pass the
+per-workflow tracker and reservation estimate per call to
+tracker-aware providers; interim attempts are recorded in the
+originating workflow and re-reserved before any next HTTP request
+(both 2000- and 100-token first attempts block the retry at budget
+1500), terminal attempts are provider-recorded without double count,
+logical/transport attempt numbering preserved, no shared
+current-workflow provider state. R3: strict JSON numeric types for
+limit/amount/confidence — bool and numeric strings rejected,
+integer-valued JSON numbers accepted, fractions rejected.
+No existing project test was changed in this round. Checks on the
+fixed source: pytest 182 passed (154 + 28); ruff check src tests
+clean; mypy src clean. Independent verification against the fixed
+source (import path confirmed): adapted probes 38 passed; extra
+deep/accounting probes 45 passed, 1 failed — the failing one is the
+diagnostic that asserts the OverflowError itself, preserved unchanged;
+it fails by design now that the defect is absent, and round-6 tests
+prove the absence. Original probes (unchanged): 36 passed / 2 failed,
+the same two probe-side failures adjudicated in the re-review.
+Offline only; no push, merge, deploy, pull or paid API calls. Remote
+d2690f9… was not fetched or verified. Status: R1–R3 fixed by the
+developer, awaiting independent confirmation (M1 not accepted); live
+acceptance, restart/multiprocess persistence and AuthN/RBAC remain
+open/out of scope.
+
 ## M1 remediation round 5 (after independent audit of 89c1812)
 Independent offline audit BLOCKED 89c1812 with F1–F5 (12 red probes of
 38; repo suite 133 green). Audit probes preserved outside the repo at
