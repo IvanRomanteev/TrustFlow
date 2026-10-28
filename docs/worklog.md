@@ -72,6 +72,46 @@ including strengthened round-2 probes for N1/G/E/N2 and a real-uvicorn HTTP
 concurrency test); full suite 120 tests, ruff/mypy clean, offline only.
 Status: ready for a separate adversarial acceptance audit (not accepted).
 
+## M1 remediation round 7 (after round-6 re-review of 98d3aaa)
+Re-review BLOCKED 98d3aaa on a single confirmed new regression N1;
+R1/F1 and R2/F2 were independently VERIFIED FIXED, F3/F5 stayed
+verified, and all earlier safety gates passed. Review materials
+preserved outside the repo at `TrustFlow-context/review-98d3aaa/`
+(new probes, compare_numeric.py, logs/JUnit, adaptation diffs,
+integrity manifest); the untracked user file
+conversation-2026-10-28-171132.txt was preserved and not committed.
+N1: `strict_json_number` called float() on huge JSON integers, so a
+semantic confidence=+-10**400 after a committed transfer raised
+OverflowError outside typed validation (HTTP 500, stuck VERIFYING).
+Minimal fix in src/trustflow/tools/ledger.py only: an overflowing
+conversion now raises ValueError, flowing into the existing
+ValidationError -> LLMResponseError -> bounded verification-only
+recovery. No engine catch-all added; bool/string/non-finite rejection
+and the confidence range are unchanged, nothing is clamped.
+Regressions in tests/unit/test_m1_n1.py: 6 failed / 3 passed on
+98d3aaa, 9 passed after the fix (healthy verify-retry to COMPLETED
+with one transfer, bounded FAILED at the attempt limit, per-attempt
+usage 7/11 without duplicates, sanitized audit history after the
+active error clears, shared-validator amount checks, valid-value
+guards). Also corrected the round-6 docs phrase about record append
+vs cost estimation to match the actual order in UsageTracker.record
+(cost per item immediately before its append; safety rests on the
+ingestion bound plus non-raising Decimal arithmetic). Checks on the
+fixed source: pytest 191 passed; ruff check src tests clean (after a
+blind-exception lint fix in the new test); mypy src clean.
+Independent probes re-run against the fixed source (import path
+confirmed, originals byte-identical by SHA256): new round-6 probes
+181 passed (the N1 correctness test is green); adapted 38 passed;
+extra-adapted 46 passed; originals 36 passed / 2 failed (the same two
+probe-side failures adjudicated earlier); the reviewer's
+compare_numeric.py on the fixed tree reports ValidationError for
++-10**400 confidence, create 201 -> VERIFICATION_PENDING -> healthy
+retry COMPLETED, one transfer, audit attempt/recovery state saved.
+Offline only; no push, merge, deploy, pull, reset or paid API calls.
+Status: N1 fixed by the developer, awaiting independent confirmation
+(M1 not accepted); live acceptance, persistence and AuthN/RBAC
+remain open/out of scope.
+
 ## M1 remediation round 6 (after re-review of 71df99c)
 Re-review BLOCKED 71df99c with residual R1–R3 only; F3 and F5 were
 independently VERIFIED FIXED and their gates (plus all earlier safety

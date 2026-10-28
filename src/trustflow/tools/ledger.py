@@ -19,11 +19,20 @@ def strict_json_int(value: object) -> int:
 
 
 def strict_json_number(value: object) -> float:
-    """JSON Schema ``number``: accepts ints/floats, rejects bool/strings."""
+    """JSON Schema ``number``: accepts ints/floats, rejects bool/strings.
+
+    Total for external JSON numbers: a huge integer whose float
+    conversion overflows is rejected with ValueError (so Pydantic
+    raises ValidationError), never propagated as OverflowError and
+    never clamped into an allowed range.
+    """
     if isinstance(value, bool) or isinstance(value, str):
         raise ValueError("expected a JSON number")
     if isinstance(value, (int, float)):
-        result = float(value)
+        try:
+            result = float(value)
+        except OverflowError:
+            raise ValueError("JSON number is out of range") from None
         if math.isfinite(result):
             return result
     raise ValueError("expected a JSON number")
