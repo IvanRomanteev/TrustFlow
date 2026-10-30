@@ -1,5 +1,41 @@
 # TrustFlow Worklog
 
+## M2 round-4 targeted remediation (independent review of bde4dae: C1–C3)
+Independent review kept the gate BLOCKED on three P2 items (all
+prior gates retained): C1 canonical snapshot uniqueness was only
+checked where ledger spans exist, so a read-only workflow completed
+on a duplicate canonical identity; C2 mandatory retrieval context
+could still be shrunk at transport retry when conflicting
+mandatory+shrinkable flags were both set; C3 mandatory ledger
+evidence could vanish behind the recent-50 history window (aged
+operation after later transfers), executed reads were recomputed
+from current state, and an empty/partial mandatory_tx_ids hint
+could silently drop required rows at the provider. Review
+materials are preserved unchanged at
+TrustFlow-context/review-m2-bde4dae-independent-8a1bc9c1/.
+Maintained regressions in tests/unit/test_m2_remediation4.py:
+8 failed on baseline bde4dae, all green after the fix. Fixes:
+snapshot_validation_errors now runs at one acceptance boundary
+independent of ledger spans (semantic validation on any supplied
+snapshot, fresh and stored engine snapshot pairing); the Planner
+forwards context_shrinkable = shrinkable and not mandatory, so
+mandatory context is never shrunk at retry; snapshots and semantic
+evidence are built from the full ledger history for the plan's
+accounts, executed list_transactions rows keep their exact
+identities verified row-by-row against the authoritative ledger,
+the reviewer enforces required_mandatory_ids subset of available
+canonical IDs before any provider call, and at the provider a hint
+can only add obligations (requested reads unioned in, missing
+required rows are a typed pre-HTTP failure). Checks: pytest 258
+passed, Ruff clean, mypy clean (31 files), eval 33/33, previously
+adjudicated adapted probes 238/238, current round-3 independent
+suite 109 passed with only the 2 exploratory foreign-read probes
+failing (classified by the review itself as a non-blocker
+limitation; no foreign-read protocol added). No existing project
+test changed, no push, merge, deploy or paid calls. Status: fixed
+by the developer, READY FOR INDEPENDENT CODEX RE-REVIEW; M2 not
+accepted, M3 not started.
+
 ## M2 round-3 targeted remediation (independent review of 70e20f6: N1, F1–F4)
 Independent review kept the gate BLOCKED on five findings (R6 and
 R1/R4/R7/R8 VERIFIED FIXED and untouched): N1 malformed policy key
