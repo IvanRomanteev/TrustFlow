@@ -1,5 +1,45 @@
 # TrustFlow Worklog
 
+## M2 round-3 targeted remediation (independent review of 70e20f6: N1, F1–F4)
+Independent review kept the gate BLOCKED on five findings (R6 and
+R1/R4/R7/R8 VERIFIED FIXED and untouched): N1 malformed policy key
+crashed coverage-key construction (HTTP 500, stalled VERIFYING),
+F1 conflicting duplicate canonical tx_id could be cited while
+another row was provenance-checked, F2 fresh snapshot ID was not
+rechecked against its hash, F3 optional context still changed M1
+outcomes at transport retry and budget 1515, F4 pruning dropped
+mandatory ledger rows (current transfer, requested reads). Review
+materials are preserved unchanged at
+TrustFlow-context/review-m2-70e20f6-independent-d622c217/.
+Maintained regressions in tests/unit/test_m2_remediation3.py:
+9 failed / 1 passed on baseline 70e20f6, all green after the fix.
+Fixes: coverage keys are built only from validated EvidenceSpan
+objects after typed validation raises; canonical tx_id/operation
+identity is unique at every acceptance boundary and spans are
+located inside the exact canonical row of their backend operation;
+snapshot_validation_errors plus fresh-path model revalidation apply
+one ID/hash/canonical contract to fresh and stored snapshots;
+provider transport retry shrinks only caller-marked shrinkable
+advisory context, with the new reservation derived from actually
+removed characters and never below the context-free estimate, and
+the context-free semantic fallback omits the optional keys entirely
+(M1 budget-1515 outcome restored, R6 contract preserved); pruning
+keeps mandatory rows by exact transaction identity via the
+reviewer-supplied mandatory_tx_ids hint (committed operations plus
+requested list_transactions rows, never transmitted, identical
+historical payloads not promoted), with a documented size-reduced
+projection and a typed pre-HTTP error if mandatory evidence cannot
+fit. Independent probes with verified workspace import path:
+unmodified originals 230 passed / 8 failed, all 8 being the pre-F3
+empty-placeholder payload-shape expectations superseded by the F3
+contract; adapted copies of those two probe files (shape-only
+changes, adaptation.diff preserved in the review catalogue) pass
+with all other probes, 238 passed. Checks: pytest 250 passed, Ruff
+clean, mypy clean (31 files), eval 33/33. No existing project test
+changed, no push, merge, deploy or paid calls. Status: fixed by the
+developer, awaiting independent re-review (READY FOR INDEPENDENT
+CODEX RE-REVIEW); M2 not accepted, M3 not started.
+
 ## M2 residual remediation (re-review of ffe1dc7: R2/R3/R5/R6 residual, N1/N2/F1–F4)
 Independent re-review VERIFIED FIXED R1, R4, R7, R8 and the offsets
 gate, and kept the M2 offline gate BLOCKED on residual R2/R3/R5/R6:
