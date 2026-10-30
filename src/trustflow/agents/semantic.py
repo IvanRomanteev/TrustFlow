@@ -1,5 +1,6 @@
 """Independent semantic review. Advisory: never overrides deterministic FAIL."""
 
+import json
 from typing import Annotated, Any
 
 from pydantic import BaseModel, Field, ValidationError
@@ -14,9 +15,9 @@ from trustflow.retrieval.models import (
     LedgerSnapshot,
     SpanSourceType,
     build_ledger_snapshot,
-    canonical_snapshot_errors,
     canonical_transactions,
     make_ledger_span,
+    snapshot_validation_errors,
     span_in_text,
     validate_policy_span,
     validate_span,
@@ -85,14 +86,35 @@ class SemanticReviewer:
                 expected[key] = tx
         return expected
 
+    def _canonical_row_range(self, snapshot: LedgerSnapshot,
+                             tx_id: str) -> tuple[int, int] | None:
+        """Exact offsets of the canonical row for one transaction.
+
+        The row is located by its serialized form, so a span is bound
+        to that specific row, never to the first tx_id substring in
+        an unrelated row (F1).
+        """
+        for row in canonical_transactions(snapshot):
+            if row.get("tx_id") != tx_id:
+                continue
+            row_text = json.dumps(row, sort_keys=True, separators=(",", ":"))
+            start = snapshot.canonical_text.find(row_text)
+            if start >= 0:
+                return start, start + len(row_text)
+        return None
+
     def ledger_spans(self, snapshot: LedgerSnapshot,
                      plan: Plan) -> list[EvidenceSpan]:
-        """One span per operation of this plan, citing its own tx."""
+        """One span per operation of this plan, citing its own row."""
         spans: list[EvidenceSpan] = []
         for tx in self.expected_transactions(plan).values():
+            row_range = self._canonical_row_range(snapshot, tx.tx_id)
+            if row_range is None:
+                continue
             needle = f'"tx_id":"{tx.tx_id}"'
-            if needle in snapshot.canonical_text:
-                start, end = span_in_text(snapshot.canonical_text, needle)
+            start, end = span_in_text(
+                snapshot.canonical_text, needle, start_from=row_range[0])
+            if row_range[0] <= start and end <= row_range[1]:
                 spans.append(make_ledger_span(snapshot, start, end))
         return spans
 
@@ -133,16 +155,28 @@ class SemanticReviewer:
                     expected_snapshot_hash=snapshot.snapshot_hash,
                 ))
                 # The canonical text is the only authoritative
-                # representation: its schema/numerics are validated
-                # and the duplicate views must equal it exactly.
+                # representation: full hash, deterministic ID, schema/
+                # numerics and duplicate-view equivalence are the one
+                # contract for fresh and stored snapshots (F2).
                 # Malformed snapshot data is a typed span error here,
                 # never an escaping numeric exception (N1/R3).
-                canonical_errors = canonical_snapshot_errors(
-                    snapshot.canonical_text, snapshot.balances,
-                    snapshot.transactions)
+                canonical_errors = snapshot_validation_errors(snapshot)
                 if canonical_errors:
                     errors.extend(canonical_errors)
                     continue
+                # The cited span must lie inside the exact canonical
+                # row of an expected operation, not merely contain a
+                # tx_id that also occurs in a conflicting row (F1).
+                row_ok = False
+                for tx in expected.values():
+                    row_range = self._canonical_row_range(snapshot, tx.tx_id)
+                    if row_range is not None and \
+                            row_range[0] <= span.start and span.end <= row_range[1] \
+                            and f'"tx_id":"{tx.tx_id}"' in span.quoted_text:
+                        row_ok = True
+                        break
+                if expected and not row_ok:
+                    errors.append("span_irrelevant")
                 # Provenance: the cited canonical transactions must
                 # contain this workflow's operations, read from this
                 # ledger by their backend-owned keys. A foreign
@@ -228,12 +262,34 @@ class SemanticReviewer:
                     + ",".join(sorted(set(findings)))
                 )
             self.last_advisory_findings = findings
+        evidence_data = self.evidence(plan)
+        # Mandatory ledger rows for this workflow (F4), identified by
+        # exact transaction identity: the committed operations of the
+        # plan plus the rows a planned list_transactions read requires.
+        # Identical historical payloads are not operation identity.
+        mandatory_tx_ids = {
+            tx.tx_id for tx in self.expected_transactions(plan).values()
+        }
+        for step in plan.steps:
+            if step.tool_name == "list_transactions":
+                account = step.args.get("account_id")
+                try:
+                    limit = int(step.args.get("limit", 20))
+                except (TypeError, ValueError):
+                    limit = 20
+                rows = [
+                    t for t in evidence_data.get("transactions", [])
+                    if account in (t.get("from_account"), t.get("to_account"))
+                ]
+                mandatory_tx_ids.update(
+                    str(t.get("tx_id")) for t in rows[-limit:] if limit > 0)
         payload = {
             "goal": {"title": goal.title, "description": goal.description},
             "plan_steps": [
                 {"tool_name": s.tool_name, "args": s.args} for s in plan.steps
             ],
-            "evidence": self.evidence(plan),
+            "evidence": evidence_data,
+            "mandatory_tx_ids": sorted(mandatory_tx_ids),
             "evidence_spans": [
                 s.model_dump(mode="json") for s in (evidence_spans or [])
             ],
@@ -250,7 +306,14 @@ class SemanticReviewer:
             from trustflow.core.errors import TokenBudgetExceededError
 
             def _estimate(candidate: dict[str, Any]) -> int:
-                return len(_json.dumps(candidate, default=str)) // 4 + 128 \
+                # mandatory_tx_ids is provider-consumed metadata and
+                # is never transmitted as model evidence, so it is not
+                # part of the reserved payload (F3/F4).
+                transmitted = {
+                    k: v for k, v in candidate.items()
+                    if k != "mandatory_tx_ids"
+                }
+                return len(_json.dumps(transmitted, default=str)) // 4 + 128 \
                     + self._reserve_tokens
 
             estimated = _estimate(payload)
@@ -264,9 +327,15 @@ class SemanticReviewer:
                 # Advisory context is optional: drop it and reserve for
                 # the actually transmitted smaller payload, so a
                 # previously successful M1 outcome cannot change (R5).
+                # The context-free fallback is the genuine pre-M2
+                # payload shape: the optional keys are omitted
+                # entirely, not sent as empty placeholders whose
+                # serialization would still consume budget (F3).
                 # Incurred usage accounting is untouched.
-                payload = {**payload, "evidence_spans": [],
-                           "ledger_snapshot": None}
+                payload = {
+                    k: v for k, v in payload.items()
+                    if k not in ("evidence_spans", "ledger_snapshot")
+                }
                 estimated = _estimate(payload)
                 tracker.reserve(estimated)
         try:

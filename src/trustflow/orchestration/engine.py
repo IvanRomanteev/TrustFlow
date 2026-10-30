@@ -489,7 +489,12 @@ class WorkflowEngine:
                             ledger_span.model_dump(mode="json"))
                     spans = self._parse_spans(run, mandatory)
                 return snapshot, spans
-        snapshot = self.semantic.ledger_snapshot(plan)
+        # Fresh objects pass the same full snapshot contract as
+        # stored ones (F2): a model_copy-assembled object with a wrong
+        # ID or malformed canonical data is rejected here, typed, and
+        # never silently repaired.
+        snapshot = LedgerSnapshot.model_validate(
+            self.semantic.ledger_snapshot(plan).model_dump(mode="json"))
         new_spans = self.semantic.ledger_spans(snapshot, plan)
         old_id = stored.get("snapshot_id") if stored else None
         # Atomic pair replacement: policy spans preserved, ledger spans
@@ -574,26 +579,38 @@ class WorkflowEngine:
                         if run.goal.require_evidence:
                             # Mandatory policy obligation is checked
                             # per attempt, independently of ledger
-                            # coverage and of list truthiness (F1/R2):
-                            # present-but-partial policy evidence and
-                            # deleted policy spans are typed failures.
+                            # coverage and of list truthiness (F1/R2).
+                            # Typed validation finishes BEFORE any
+                            # coverage key is built, and keys are built
+                            # only from validated EvidenceSpan objects,
+                            # never from raw unvalidated dicts (N1):
+                            # malformed mandatory data can never raise
+                            # an unhashable-key TypeError here.
                             codes = self._policy_span_codes(run)
-                            expected_keys = {
-                                (s.get("chunk_id"), s.get("start"),
-                                 s.get("end"), s.get("text_hash"))
-                                for item in run.retrieval
-                                for s in [item.get("span") or {}]
-                            }
-                            present_keys = {
-                                (s.get("chunk_id"), s.get("start"),
-                                 s.get("end"), s.get("text_hash"))
-                                for s in run.evidence_spans
-                                if s.get("source_type") == "policy"
-                            }
-                            if expected_keys - present_keys:
-                                codes = [*codes, "span_coverage_missing"]
                             if codes:
                                 raise EvidenceValidationError(sorted(set(codes)))
+                            validated_policy = [
+                                EvidenceSpan.model_validate(s)
+                                for s in run.evidence_spans
+                                if s.get("source_type") == "policy"
+                            ]
+                            try:
+                                expected_keys = {
+                                    (s.chunk_id, s.start, s.end, s.text_hash)
+                                    for item in run.retrieval
+                                    for s in [EvidenceSpan.model_validate(
+                                        item.get("span") or {})]
+                                }
+                            except Exception:
+                                raise EvidenceValidationError(
+                                    ["span_malformed"]) from None
+                            present_keys = {
+                                (s.chunk_id, s.start, s.end, s.text_hash)
+                                for s in validated_policy
+                            }
+                            if expected_keys - present_keys:
+                                raise EvidenceValidationError(
+                                    ["span_coverage_missing"])
                         try:
                             snapshot, spans = self._snapshot_pair(run, plan)
                         except EvidenceValidationError:

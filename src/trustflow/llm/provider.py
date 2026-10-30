@@ -14,7 +14,11 @@ from typing import Any, Protocol
 
 import httpx
 
-from trustflow.core.errors import LLMNotConfiguredError, LLMResponseError
+from trustflow.core.errors import (
+    LLMNotConfiguredError,
+    LLMResponseError,
+    TokenBudgetExceededError,
+)
 from trustflow.core.settings import Settings
 from trustflow.llm.usage import MAX_TOKEN_COUNT, LLMCallRecord, UsageTracker
 
@@ -207,7 +211,8 @@ class MetaResponsesProvider:
     def _call(self, name: str, schema: dict, prompt: str, purpose: str,
               model: str | None = None,
               tracker: UsageTracker | None = None,
-              retry_reserve_tokens: int = 0) -> tuple[dict[str, Any], LLMCallRecord]:
+              retry_reserve_tokens: int = 0,
+              shrink_optional_context: bool = False) -> tuple[dict[str, Any], LLMCallRecord]:
         key = self._settings.model_api_key
         if not key:
             raise LLMNotConfiguredError("MODEL_API_KEY is not set (live mode)")
@@ -239,13 +244,44 @@ class MetaResponsesProvider:
         def account_before_retry(record: LLMCallRecord) -> None:
             """Record an interim attempt in the originating workflow and
             require a fresh reservation before any next HTTP request."""
-            nonlocal logical_attempt
+            nonlocal logical_attempt, retry_reserve_tokens
             assert tracker is not None
             if logical_attempt:
                 record.attempt = logical_attempt
             tracker.record(record)  # incurred usage survives budget errors
             logical_attempt = record.attempt
-            tracker.reserve(retry_reserve_tokens)
+            try:
+                tracker.reserve(retry_reserve_tokens)
+            except TokenBudgetExceededError:
+                # Optional retrieved context stays optional at retry
+                # (F3) only when the caller marked it shrinkable
+                # (engine-advisory context). A direct bounded-context
+                # call keeps the R6 contract: the same transmitted
+                # context is re-reserved or the retry is blocked.
+                # Without a retrieved block the honest failure stands.
+                if not shrink_optional_context:
+                    raise
+                text = str(payload.get("input", ""))
+                open_mark, close_mark = "<<<RETRIEVED\n", "\nRETRIEVED>>>"
+                start = text.find(open_mark)
+                end = text.find(close_mark, start + len(open_mark)) \
+                    if start >= 0 else -1
+                if start < 0 or end < 0:
+                    raise
+                target = tracker.budget - tracker.total_tokens
+                if target < 0:
+                    raise
+                context_start = start + len(open_mark)
+                context = text[context_start:end]
+                remove = (retry_reserve_tokens - target) * 4 + 4
+                shrunk = context[: max(0, len(context) - remove)]
+                payload["input"] = text[:context_start] + shrunk + text[end:]
+                # The new reservation is derived from the actually
+                # removed characters, never below the context-free
+                # estimate: removing the whole context cannot make
+                # the remaining goal/prompt free (M1 retry gate).
+                retry_reserve_tokens -= (len(context) - len(shrunk)) // 4
+                tracker.reserve(retry_reserve_tokens)
 
         for attempt in range(attempts):
             transport_attempt = attempt + 1
@@ -381,7 +417,8 @@ class MetaResponsesProvider:
         raise _attempt_error("Live model call failed", attempt_records)
 
     def propose_plan(self, goal_title, description, repair_feedback=None,
-                     tracker=None, retry_reserve_tokens=0, retrieval_context=None):
+                     tracker=None, retry_reserve_tokens=0, retrieval_context=None,
+                     context_shrinkable=False):
         prompt = (
             "Plan synthetic-data tool steps as JSON for this goal. "
             f"Goal: {goal_title}. Details: {description}. {TOOLS_HINT} "
@@ -409,7 +446,9 @@ class MetaResponsesProvider:
         parsed, record = self._call("plan_steps", PLAN_SCHEMA, prompt,
                                     "repair" if repair_feedback else "plan",
                                     tracker=tracker,
-                                    retry_reserve_tokens=retry_reserve_tokens)
+                                    retry_reserve_tokens=retry_reserve_tokens,
+                                    shrink_optional_context=bool(
+                                        context_shrinkable and retrieval_context))
         steps = parsed.get("steps")
         if not isinstance(steps, list):
             # Incurred usage travels with the error so it is never lost.
@@ -424,25 +463,118 @@ class MetaResponsesProvider:
     SEMANTIC_PAYLOAD_MAX_CHARS = 6000
 
     def _semantic_payload_text(self, payload) -> str:
+        # mandatory_tx_ids is consumed here for pruning and is never
+        # transmitted as model evidence.
+        mandatory_hint = payload.get("mandatory_tx_ids") \
+            if isinstance(payload, dict) else None
+        payload = {
+            k: v for k, v in payload.items() if k != "mandatory_tx_ids"
+        } if isinstance(payload, dict) else payload
         full = json.dumps(payload, default=str)
         if len(full) <= self.SEMANTIC_PAYLOAD_MAX_CHARS:
             return full
         # Oversize: keep every mandatory field whole (goal, plan,
-        # evidence spans, ledger snapshot) and drop only evidence
-        # transactions that no span cites. If the mandatory remainder
-        # still does not fit, fail with a controlled typed error
-        # before any HTTP call instead of truncating (F4/R5).
+        # evidence spans, ledger snapshot) and every mandatory ledger
+        # row, and drop only optional historical transactions.
+        # Mandatory rows are derived from the workflow itself — the
+        # planned operations and the requested ledger reads — never
+        # from the presence of optional citations (F4): current
+        # committed operations and the transactions a planned
+        # list_transactions read requires are always preserved. If
+        # the mandatory remainder still does not fit, fail with a
+        # controlled typed error before any HTTP call (F4/R5).
         evidence = payload.get("evidence") if isinstance(payload, dict) else None
         spans = payload.get("evidence_spans") if isinstance(payload, dict) else None
         if isinstance(evidence, dict) and isinstance(evidence.get("transactions"), list):
+            txs = [tx for tx in evidence["transactions"] if isinstance(tx, dict)]
             quoted = [str(s.get("quoted_text", "")) for s in (spans or [])
                       if isinstance(s, dict)]
-            kept = [
-                tx for tx in evidence["transactions"]
-                if isinstance(tx, dict)
-                and any(str(tx.get("tx_id", "")) and str(tx.get("tx_id")) in q
-                        for q in quoted)
-            ]
+            mandatory_ids = {
+                str(tx.get("tx_id")) for tx in txs
+                if any(str(tx.get("tx_id", "")) and str(tx.get("tx_id")) in q
+                       for q in quoted)
+            }
+            if isinstance(mandatory_hint, list):
+                # Exact identities supplied by the reviewer are
+                # authoritative; identical historical payloads are
+                # never promoted to mandatory by resemblance (F4).
+                mandatory_ids = {
+                    str(tx_id) for tx_id in mandatory_hint
+                } | mandatory_ids
+                kept = [tx for tx in txs
+                        if str(tx.get("tx_id")) in mandatory_ids]
+                reduced = {**payload,
+                           "evidence": {**evidence, "transactions": kept}}
+                text = json.dumps(reduced, default=str)
+                if len(text) <= self.SEMANTIC_PAYLOAD_MAX_CHARS:
+                    return text
+                # Size-reduced projection (still one whole JSON
+                # document): compact separators and no empty optional
+                # span fields. Mandatory rows, spans, snapshot
+                # metadata and hashes stay whole.
+                def _compact_spans(rows):
+                    return [
+                        {k: v for k, v in s.items() if v != ""}
+                        if isinstance(s, dict) else s for s in rows
+                    ]
+
+                # In the size-reduced projection only, mandatory rows
+                # are identified by tx_id (the full row, including its
+                # idempotency key, remains in the hash-bound canonical
+                # snapshot held locally); every other row field stays.
+                compact = {
+                    **reduced,
+                    "evidence": {
+                        **evidence,
+                        "transactions": [
+                            {k: v for k, v in tx.items()
+                             if k != "idempotency_key"} for tx in kept
+                        ],
+                    },
+                    "evidence_spans": _compact_spans(
+                        reduced.get("evidence_spans") or []),
+                }
+                text = json.dumps(compact, separators=(",", ":"),
+                                  default=str)
+                if len(text) <= self.SEMANTIC_PAYLOAD_MAX_CHARS:
+                    return text
+                raise LLMResponseError(
+                    "Semantic payload exceeds "
+                    f"{self.SEMANTIC_PAYLOAD_MAX_CHARS} chars with all "
+                    "mandatory evidence preserved; refusing to transmit "
+                    "truncated JSON")
+            for step in payload.get("plan_steps") or []:
+                if not isinstance(step, dict):
+                    continue
+                args = step.get("args") or {}
+                if step.get("tool_name") == "simulate_transfer":
+                    for tx in txs:
+                        try:
+                            match = (
+                                tx.get("from_account") == args.get("from_account")
+                                and tx.get("to_account") == args.get("to_account")
+                                and float(tx.get("amount", -1))
+                                == float(args.get("amount", -2))
+                                and tx.get("currency", "USD")
+                                == args.get("currency", "USD"))
+                        except (TypeError, ValueError):
+                            match = False
+                        if match:
+                            mandatory_ids.add(str(tx.get("tx_id")))
+                elif step.get("tool_name") == "list_transactions":
+                    account = args.get("account_id")
+                    try:
+                        limit = int(args.get("limit", 20))
+                    except (TypeError, ValueError):
+                        limit = 20
+                    rows = [
+                        tx for tx in txs
+                        if account in (tx.get("from_account"),
+                                       tx.get("to_account"))
+                    ]
+                    for tx in rows[-limit:] if limit > 0 else []:
+                        mandatory_ids.add(str(tx.get("tx_id")))
+            kept = [tx for tx in txs if str(tx.get("tx_id")) in mandatory_ids]
             reduced = {**payload, "evidence": {**evidence, "transactions": kept}}
             text = json.dumps(reduced, default=str)
             if len(text) <= self.SEMANTIC_PAYLOAD_MAX_CHARS:

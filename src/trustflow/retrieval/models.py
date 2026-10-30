@@ -78,7 +78,8 @@ class RetrievedChunk(BaseModel):
 
 
 def canonical_snapshot_errors(canonical_text: str, balances: dict,
-                              transactions: list[dict]) -> list[str]:
+                              transactions: list[dict],
+                              unique: bool = True) -> list[str]:
     """Validate the single authoritative representation (R3/N1).
 
     The canonical text is the only source of truth. Its JSON must
@@ -112,7 +113,33 @@ def canonical_snapshot_errors(canonical_text: str, balances: dict,
         return ["span_malformed"]
     if parsed["balances"] != balances or parsed["transactions"] != transactions:
         return ["span_malformed"]
+    # Canonical transaction identity is unique: conflicting or exact
+    # duplicate tx_id / operation-key rows make every citation in the
+    # snapshot ambiguous (F1).
+    if unique:
+        tx_ids = [tx.get("tx_id") for tx in parsed["transactions"]]
+        op_keys = [tx.get("idempotency_key") for tx in parsed["transactions"]]
+        if len(set(tx_ids)) != len(tx_ids) or len(set(op_keys)) != len(op_keys):
+            return ["span_malformed"]
     return []
+
+
+def snapshot_validation_errors(snapshot: "LedgerSnapshot") -> list[str]:
+    """The one snapshot contract for fresh and stored objects (F2).
+
+    Works on any object carrying the fields, including instances
+    assembled with ``model_copy`` that bypassed model validation:
+    full hash, deterministic ID derivation and canonical/duplicate
+    consistency are all rechecked, never silently repaired.
+    """
+    errors: list[str] = []
+    if sha256_text(snapshot.canonical_text) != snapshot.snapshot_hash:
+        errors.append("span_version_mismatch")
+    if snapshot.snapshot_id != f"ledger-{snapshot.snapshot_hash[:16]}":
+        errors.append("span_source_mismatch")
+    errors.extend(canonical_snapshot_errors(
+        snapshot.canonical_text, snapshot.balances, snapshot.transactions))
+    return errors
 
 
 def canonical_transactions(snapshot: "LedgerSnapshot") -> list[dict]:
@@ -144,8 +171,14 @@ class LedgerSnapshot(BaseModel):
             raise ValueError("snapshot hash does not match canonical text")
         if self.snapshot_id != f"ledger-{self.snapshot_hash[:16]}":
             raise ValueError("snapshot id does not match canonical hash")
+        # Construction validates schema/hash/equivalence. Identity
+        # uniqueness is enforced by snapshot_validation_errors at
+        # every acceptance boundary (semantic validation, snapshot
+        # pairing), so an ambiguous object can be constructed for
+        # diagnosis but can never be accepted as evidence (F1).
         errors = canonical_snapshot_errors(
-            self.canonical_text, self.balances, self.transactions)
+            self.canonical_text, self.balances, self.transactions,
+            unique=False)
         if errors:
             raise ValueError("snapshot canonical data is malformed: "
                              + ",".join(errors))

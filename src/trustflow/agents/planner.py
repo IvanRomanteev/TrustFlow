@@ -128,6 +128,18 @@ class Planner:
         context_kw: dict[str, Any] = {}
         if transmitted:
             context_kw["retrieval_context"] = transmitted
+            # The transport layer may shrink optional context at retry
+            # only when the caller marked it shrinkable (F3); it is
+            # told explicitly, never inferred from the context (R6).
+            import inspect
+
+            try:
+                params: dict[str, Any] = dict(
+                    inspect.signature(self._llm.propose_plan).parameters)
+            except (TypeError, ValueError):
+                params = {}
+            if "context_shrinkable" in params:
+                context_kw["context_shrinkable"] = retrieval_shrinkable
         try:
             propose = self._llm.propose_plan
             if tracker is not None and getattr(
