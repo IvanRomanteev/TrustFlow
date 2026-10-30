@@ -1,5 +1,46 @@
 # TrustFlow Worklog
 
+## M2 remediation R1–R8 (after independent BLOCKED review of f0a1536)
+Independent offline review BLOCKED f0a1536 with R1–R8 (plus a P3
+offset-typing clarification); its catalogue is preserved unchanged
+outside the repo at TrustFlow-context/review-m2-f0a1536/ (REPORT,
+independent probes, results). Maintained regressions in
+tests/unit/test_m2_remediation.py reproduced the defects on the
+baseline (17 failed / 2 passed) before the fix. R1: mandatory policy
+evidence is validated (hash/source/version/chunk/relevance) before
+first execution and again before resume/revision execution;
+corruption while AWAITING_APPROVAL fails with zero transfers. R2:
+the fail-open snapshot/span preparation swallow is removed;
+malformed or unbuildable mandatory evidence raises typed
+EvidenceValidationError/LLMResponseError into bounded
+verification-only recovery (one transfer, report/usage/audit
+preserved, no COMPLETED without evidence). R3: ledger citations are
+bound to backend-owned operation/intent keys with payload, snapshot
+provenance, per-operation coverage and real relevance; foreign
+self-consistent snapshots and arbitrary slices are rejected. R4:
+snapshot+spans are stored and reused as a consistent pair while
+coverage holds, atomically rotated with audit otherwise; outage A,
+completion B, healthy retry A completes with one transfer each. R5:
+advisory semantic context is dropped and re-reserved when it cannot
+fit, restoring the M1 budget-1800 outcome; mandatory evidence is
+never dropped and incurred usage is kept. R6: planner reservation
+includes the identical bounded context actually transmitted
+(initial, repair, retry). R7: chunk_id resolves through the
+authoritative corpus and the span must lie inside its chunk. R8:
+retrieval-context capability is signature-checked against the actual
+propose_plan callable; legacy providers keep M1 behaviour with no
+TypeError retry. P3: strict integer offsets (bool/string/fraction
+rejected, integer-valued JSON numbers accepted). One pre-existing M2
+test was corrected to the R1 contract (corruption while awaiting
+approval now blocks payment instead of completing a transfer);
+post-commit behaviour is covered by the R2 regressions. The review's
+original probes were not modified; they pass 41/41 on the fixed
+source with the workspace import path verified (baseline 23/18).
+Checks: pytest 230 passed, Ruff clean, mypy clean (31 files), eval
+33/33. No push, merge, deploy or paid calls. Status: fixed by the
+developer, awaiting independent re-review; M2 not accepted, M3 not
+started.
+
 ## M2 candidate — policy retrieval and evidence spans (offline)
 Implemented on branch m2/retrieval-evidence-spans from the documented
 M1 acceptance state (162cc70), contracts first in docs/m2.md
