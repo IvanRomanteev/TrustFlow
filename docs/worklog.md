@@ -1,5 +1,32 @@
 # TrustFlow Worklog
 
+## M1 technical acceptance (independent Codex confirmation)
+Independent Codex review confirmed offline PASS and functional live
+VERIFIED PASS for source 75f1d9e5d6f09e724d187ae95c26018996561e74.
+M1 is therefore technically accepted in the verified synthetic /
+single-process scope. Successful live configuration:
+TRUSTFLOW_LLM_MODE=live, TRUSTFLOW_MAX_OUTPUT_TOKENS 1200 -> 4000
+(configuration only, no source change), muse-wonder-1.0 for planning
+and semantic review, synthetic ledger only, default transport
+retries; small transfer, HIGH approval, injected semantic outage with
+verification-only retry, and FX schema all PASS. Procedure remarks
+are recorded separately and the bounded procedure is not recorded as
+fully complied with: the intermediate $0.50 cap was exceeded by
+$0.016220 before the $1.00 total cap was subsequently agreed;
+confirmation of the specific 20-request limit is absent (17 real Meta
+requests were recorded in total); $0.813836 is an estimate from known
+reported usage, not confirmed provider billing. Registered
+follow-ups, mandatory before any further paid runs but not requiring
+repetition of the passed functional M1 acceptance: P2 harness
+reservation, P3 request counters. Current HEAD at recording time:
+16ffd0db27fee81909534ce5ffd10f21070c4d9f on local main; it differs
+from the reviewed source only in README.md, docs/m1.md and
+docs/worklog.md. Published branch m1/offline-pass-75f1d9e remains at
+75f1d9e. The untracked user file conversation-2026-10-28-171132.txt
+was preserved and not committed. No push, merge, deploy or paid API
+calls in this step; M2 code not started, plan presented for scope
+agreement.
+
 ## M1 offline PASS publication and bounded live acceptance
 Independent re-review confirmed offline PASS for
 75f1d9e5d6f09e724d187ae95c26018996561e74 (N1 VERIFIED FIXED). The
