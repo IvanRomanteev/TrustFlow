@@ -358,8 +358,10 @@ async def test_k_stale_approval_cannot_resurrect_terminal_run():
 def test_trust_boundary_api_models_have_no_intent_replacement_surface():
     from trustflow.api.app import ApprovalRequest, CreateWorkflowRequest
 
+    # M2 adds only the explicit require_evidence opt-in (docs/m2.md);
+    # it carries no intent/cancellation data and cannot replace intents.
     assert set(CreateWorkflowRequest.model_fields) == {
-        "title", "description", "requested_by"}
+        "title", "description", "requested_by", "require_evidence"}
     assert set(ApprovalRequest.model_fields) == {"actor", "plan_hash", "reason"}
     # IntentRecord replacement is only possible by direct in-process memory
     # access (trusted code), which the verifier still fails closed for

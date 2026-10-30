@@ -18,6 +18,7 @@ from trustflow.domain.models import WorkflowGoal, WorkflowRun
 from trustflow.llm.provider import build_provider
 from trustflow.orchestration.engine import RunRepository, WorkflowEngine
 from trustflow.policies.policy_engine import PolicyEngine
+from trustflow.retrieval.corpus import PolicyRetriever
 from trustflow.tools.registry import ToolRegistry
 
 
@@ -25,6 +26,8 @@ class CreateWorkflowRequest(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(default="", max_length=2000)
     requested_by: str = Field(default="demo-user", max_length=100)
+    # M2 explicit opt-in to mandatory citations (docs/m2.md).
+    require_evidence: bool = False
 
 
 class ApprovalRequest(BaseModel):
@@ -50,12 +53,18 @@ class Container:
                           max_output_tokens=settings.max_output_tokens)
         executor = Executor(self.registry, settings)
         verifier = Verifier(self.registry.ledger, self.registry.ledger.total_balance())
+        retriever = PolicyRetriever(
+            top_k=settings.retrieval_top_k,
+            min_score=settings.retrieval_min_score)
         semantic = SemanticReviewer(
             provider, self.registry.ledger,
-            max_output_tokens=settings.max_output_tokens)
+            max_output_tokens=settings.max_output_tokens,
+            retriever=retriever,
+            retrieval_min_score=settings.retrieval_min_score)
         self.engine = WorkflowEngine(
             planner, executor, verifier, self.policy, self.approvals,
             self.audit, self.repo, settings, semantic=semantic,
+            retriever=retriever,
         )
 
 
@@ -91,7 +100,8 @@ def create_app(container: Container | None = None) -> FastAPI:
     @app.post("/workflows", status_code=201)
     async def create_workflow(req: CreateWorkflowRequest, c: Annotated[Container, Depends(dep)]):
         goal = WorkflowGoal(title=req.title, description=req.description,
-                            requested_by=req.requested_by)
+                            requested_by=req.requested_by,
+                            require_evidence=req.require_evidence)
         run = await c.engine.create_workflow(goal)
         return run
 

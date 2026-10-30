@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     token_budget_per_workflow: int = 20000
     # Total semantic-review attempts per workflow, INCLUDING the initial call.
     semantic_max_attempts: int = 3
+    # M2 retrieval (advisory, deterministic, offline; see docs/m2.md).
+    retrieval_top_k: int = 3
+    retrieval_min_score: float = 0.1
     high_risk_threshold: float = 1000.0
     max_steps: int = 20
     max_retries: int = 2

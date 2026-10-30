@@ -100,6 +100,10 @@ class WorkflowGoal(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(default="", max_length=2000)
     requested_by: str = Field(default="demo-user", max_length=100)
+    # M2 explicit opt-in only: mandatory evidence citations for this
+    # workflow (docs/m2.md). Default False keeps every M1 workflow
+    # advisory; retrieval never becomes mandatory implicitly.
+    require_evidence: bool = False
 
 
 class PlanStep(BaseModel):
@@ -233,6 +237,12 @@ class WorkflowRun(BaseModel):
     approved_plan_snapshot: Plan | None = None
     approved_hash: str = ""
     llm_calls: list[dict] = Field(default_factory=list)
+    # M2 advisory retrieval evidence (docs/m2.md): retrieved policy
+    # chunks, evidence spans (policy + ledger) and the ledger snapshot
+    # the ledger spans cite. Advisory unless goal.require_evidence.
+    retrieval: list[dict] = Field(default_factory=list)
+    evidence_spans: list[dict] = Field(default_factory=list)
+    ledger_snapshot: dict | None = None
     error: str | None = None
     created_at: datetime = Field(default_factory=_now)
     updated_at: datetime = Field(default_factory=_now)

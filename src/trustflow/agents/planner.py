@@ -72,7 +72,8 @@ class Planner:
         self._reserve_tokens = max_output_tokens
 
     def _propose(self, goal: WorkflowGoal, tracker: UsageTracker | None,
-                 feedback: str | None = None):
+                 feedback: str | None = None,
+                 retrieval_context: str | None = None):
         estimated = 0
         if tracker is not None:
             # Reserve estimated input (~4 chars/token + prompt overhead)
@@ -80,6 +81,12 @@ class Planner:
             estimated_input = (len(goal.title) + len(goal.description)) // 4 + 256
             estimated = estimated_input + self._reserve_tokens
             tracker.reserve(estimated)
+        # Advisory retrieved context is forwarded only to providers
+        # that explicitly accept it; other providers keep M1 behaviour.
+        context_kw: dict[str, Any] = {}
+        if retrieval_context and getattr(
+                self._llm, "supports_retrieval_context", False):
+            context_kw["retrieval_context"] = retrieval_context
         try:
             propose = self._llm.propose_plan
             if tracker is not None and getattr(
@@ -88,10 +95,11 @@ class Planner:
                 # attempt in this tracker and re-reserves before retrying.
                 raw, record = propose(  # type: ignore[call-arg]
                     goal.title, goal.description, repair_feedback=feedback,
-                    tracker=tracker, retry_reserve_tokens=estimated)
+                    tracker=tracker, retry_reserve_tokens=estimated,
+                    **context_kw)
             else:
                 raw, record = propose(goal.title, goal.description,
-                                      repair_feedback=feedback)
+                                      repair_feedback=feedback, **context_kw)
         except LLMResponseError as exc:
             if tracker is not None and exc.record is not None:
                 tracker.record(exc.record)  # type: ignore[arg-type]
@@ -101,12 +109,14 @@ class Planner:
         return raw
 
     def create_plan(self, goal: WorkflowGoal, version: int = 1,
-                    tracker: UsageTracker | None = None) -> Plan:
-        raw = self._propose(goal, tracker)
+                    tracker: UsageTracker | None = None,
+                    retrieval_context: str | None = None) -> Plan:
+        raw = self._propose(goal, tracker, retrieval_context=retrieval_context)
         try:
             steps = validate_steps(raw)
         except PlanValidationError as first_error:
-            raw = self._propose(goal, tracker, feedback=str(first_error))
+            raw = self._propose(goal, tracker, feedback=str(first_error),
+                                retrieval_context=retrieval_context)
             steps = validate_steps(raw)  # second failure propagates: fail closed
         for idx, step in enumerate(steps):
             step.step_id = f"v{version}-step-{idx + 1}"

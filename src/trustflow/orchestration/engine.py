@@ -28,6 +28,8 @@ from trustflow.domain.models import (
 from trustflow.domain.state_machine import transition
 from trustflow.llm.usage import UsageTracker
 from trustflow.policies.policy_engine import PolicyEngine
+from trustflow.retrieval.corpus import PolicyRetriever
+from trustflow.retrieval.models import EvidenceSpan
 
 
 class RunRepository:
@@ -233,6 +235,7 @@ class WorkflowEngine:
         repo: RunRepository | None = None,
         settings: Settings | None = None,
         semantic: SemanticReviewer | None = None,
+        retriever: PolicyRetriever | None = None,
     ) -> None:
         self.planner = planner
         self.executor = executor
@@ -243,6 +246,8 @@ class WorkflowEngine:
         self.repo = repo or RunRepository()
         self.settings = settings or Settings()
         self.semantic = semantic
+        # M2 advisory retrieval (docs/m2.md). None keeps pure M1 wiring.
+        self.retriever = retriever
         self._trackers: dict[str, UsageTracker] = {}
         self._claim_lock = threading.Lock()
         self._inflight: set[str] = set()
@@ -269,14 +274,58 @@ class WorkflowEngine:
                 step.args = json.loads(json.dumps(intent.authorized_payload))
         return plan
 
+    def _attach_retrieval(self, run: WorkflowRun) -> str | None:
+        """Advisory retrieval before planning. Returns context text.
+
+        Mandatory mode (goal.require_evidence) with no retrieved
+        evidence is a pre-execution failure: the caller fails the run
+        before any mutation. Advisory absence never blocks.
+        """
+        if self.retriever is None:
+            return None
+        query = f"{run.goal.title} {run.goal.description}"
+        try:
+            retrieved = self.retriever.retrieve(query)
+        except Exception:  # advisory layer must not break M1 workflows
+            retrieved = []
+            self.audit.log(run.run_id, "retrieval", "retrieval_failed",
+                           {"codes": ["retrieval_unavailable"]})
+        run.retrieval = [r.model_dump(mode="json") for r in retrieved]
+        run.evidence_spans = [
+            r.span.model_dump(mode="json") for r in retrieved
+        ]
+        self.audit.log(run.run_id, "retrieval", "retrieval_attached", {
+            "chunks": [r.chunk.chunk_id for r in retrieved],
+            "corpus_version": self.retriever.corpus_version,
+        })
+        if not retrieved:
+            return None
+        return "\n".join(
+            f"[{r.chunk.doc_id} v{r.chunk.version}] {r.chunk.text}"
+            for r in retrieved
+        )
+
     async def create_workflow(self, goal: WorkflowGoal) -> WorkflowRun:
         run = WorkflowRun(goal=goal)
         self.repo.save(run)
         self.audit.log(run.run_id, goal.requested_by, "workflow_created", {"title": goal.title})
         transition(run, RunStatus.PLANNING)
+        retrieval_context = self._attach_retrieval(run)
+        if goal.require_evidence and not run.retrieval:
+            # Mandatory pre-execution evidence unavailable: fail before
+            # planning/execution, so no mutation can start (docs/m2.md).
+            run.error = sanitize_error(
+                "retrieval_unavailable: mandatory evidence could not be "
+                "retrieved before execution"
+            )
+            self.audit.log(run.run_id, "retrieval", "retrieval_failed",
+                           {"codes": ["retrieval_unavailable"]})
+            transition(run, RunStatus.FAILED)
+            return self.repo.save(run)
         try:
-            planned = self.planner.create_plan(goal, version=1,
-                                               tracker=self._tracker(run))
+            planned = self.planner.create_plan(
+                goal, version=1, tracker=self._tracker(run),
+                retrieval_context=retrieval_context)
             plan = assign_operation_ids(
                 run, planned,
                 new_intents_authorized=not self.policy.requires_approval(planned),
@@ -395,9 +444,46 @@ class WorkflowEngine:
                     )
                     transition(run, RunStatus.FAILED)
                     return self.repo.save(run)
+                # M2: deterministic ledger snapshot + spans are built
+                # before the semantic call and stored on the run. The
+                # snapshot is immutable, so later commits cannot move
+                # an existing citation. Span validation inside the
+                # reviewer is integrity/relevance only (docs/m2.md).
+                snapshot = None
+                spans: list[EvidenceSpan] = []
+                if self.semantic is not None:
+                    try:
+                        snapshot = self.semantic.ledger_snapshot(plan)
+                        run.ledger_snapshot = snapshot.model_dump(mode="json")
+                        known = {
+                            (s.get("source_id"), s.get("start"), s.get("end"))
+                            for s in run.evidence_spans
+                        }
+                        for ledger_span in self.semantic.ledger_spans(snapshot, plan):
+                            key = (ledger_span.source_id, ledger_span.start,
+                                   ledger_span.end)
+                            if key not in known:
+                                run.evidence_spans.append(
+                                    ledger_span.model_dump(mode="json"))
+                        spans = [
+                            EvidenceSpan.model_validate(s)
+                            for s in run.evidence_spans
+                        ]
+                        self.repo.save(run)
+                    except Exception:
+                        snapshot = None
+                        spans = []
                 try:
-                    review = self.semantic.review(run.goal, plan,
-                                                  tracker=self._tracker(run))
+                    review = self.semantic.review(
+                        run.goal, plan, tracker=self._tracker(run),
+                        evidence_spans=spans,
+                        mandatory_citations=run.goal.require_evidence,
+                        ledger_snapshot=snapshot)
+                    if self.semantic.last_advisory_findings:
+                        self.audit.log(
+                            run.run_id, "retrieval", "span_advisory_findings",
+                            {"codes": sorted(set(
+                                self.semantic.last_advisory_findings))})
                     report.semantic = review
                     run.verification = report
                     if review.verdict != "PASS":
