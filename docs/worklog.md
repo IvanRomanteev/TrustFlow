@@ -1,5 +1,44 @@
 # TrustFlow Worklog
 
+## M2 residual remediation (re-review of ffe1dc7: R2/R3/R5/R6 residual, N1/N2/F1–F4)
+Independent re-review VERIFIED FIXED R1, R4, R7, R8 and the offsets
+gate, and kept the M2 offline gate BLOCKED on residual R2/R3/R5/R6:
+F1 missing mandatory policy spans completed, F2 duplicate-index
+laundering of a foreign canonical snapshot, F3 optional planner
+context still changed budget outcomes, F4 provider silently sliced
+mandatory semantic JSON at 6000 chars, plus new regressions N1
+(malformed snapshot amount escaped to HTTP 500 / stalled VERIFYING)
+and N2 (legacy reservation for untransmitted context). Review
+materials are preserved unchanged at
+TrustFlow-context/review-m2-ffe1dc7/. Maintained regressions in
+tests/unit/test_m2_remediation2.py: 9 failed on baseline ffe1dc7,
+all green after the fix (plus a provider boundary test added with
+the fix). Fixes: mandatory policy obligation is checked per
+verification attempt independently of ledger coverage/truthiness;
+snapshot canonical text is the single authoritative representation
+(hash/id, strict numeric schema, duplicate views validated as
+exactly equivalent, provenance read from parsed canonical
+transactions bound by operation keys); malformed prepared evidence
+is a typed EvidenceValidationError/LLMResponseError in bounded
+verification-only recovery with report/usage/audit preserved, one
+transfer and healthy retry after the cause is removed, with no
+general catch of programming errors; engine-advisory planner
+context is shrunk before reservation only when the engine marks it
+shrinkable, mandatory context is never shrunk, and capability plus
+the actual transmitted arguments are determined before any
+reservation (legacy reserves nothing untransmitted); the semantic
+provider sends one whole structured JSON document under an explicit
+6000-char limit, dropping only uncited evidence transactions and
+raising a controlled error before any HTTP call if mandatory
+evidence cannot fit. Independent probes, unmodified and run from
+byte-identical copies with the workspace import path verified:
+original 41/41 and additional 88/88 pass (129 total). Checks: pytest
+240 passed, Ruff clean, mypy clean (31 files), eval 33/33. No
+existing project test was changed, no push, merge, deploy or paid
+calls. Status: fixed by the developer, awaiting independent
+re-review; M2 not accepted, M3 not started. No claim->citation
+grounding and no live prompt-injection robustness are claimed.
+
 ## M2 remediation R1–R8 (after independent BLOCKED review of f0a1536)
 Independent offline review BLOCKED f0a1536 with R1–R8 (plus a P3
 offset-typing clarification); its catalogue is preserved unchanged
