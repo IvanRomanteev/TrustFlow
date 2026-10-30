@@ -460,7 +460,12 @@ class WorkflowEngine:
             if any(r.status == StepStatus.UNCERTAIN for r in run.step_results):
                 return self.repo.save(run)
             transition(run, RunStatus.VERIFYING)
-            return await self._verify_loop(run, plan)
+            # N1: reconciliation is verification-only. A definitively
+            # resolved outcome (committed in the ledger, or a dead
+            # worker with no commit) is verified as-is: no planner
+            # revision and no replacement mutation can ever be
+            # scheduled from recovery.
+            return await self._verify_loop(run, plan, semantic_only_retry=True)
         finally:
             with self._claim_lock:
                 self._inflight.discard(run.run_id)

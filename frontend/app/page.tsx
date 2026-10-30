@@ -75,17 +75,32 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [refresh]);
 
-  async function act(label: string, fn: () => Promise<WorkflowRun>) {
+  async function act(label: string, fn: () => Promise<WorkflowRun>,
+                      followResult = false) {
+    // N2: capture the selected run before awaiting. A late action
+    // response must never steal a newer user selection: it may only
+    // update the visible run when that run is still selected (or the
+    // action explicitly creates/selects its result, e.g. Create).
+    const startedFor = runIdRef.current;
     try {
       const updated = await fn();
-      // The action response is the newest authoritative state: it
-      // supersedes every refresh started before the mutation (F6).
+      // The action response is the newest authoritative state for
+      // its own run: it supersedes refreshes started before it (F6).
       generationRef.current += 1;
+      if (!followResult && runIdRef.current !== startedFor) {
+        setMessage(
+          `${label}: finished for a previously selected run `
+          + `(backend status ${updated.status}); your current selection is unchanged.`);
+        await refresh(); // refreshes list + currently selected run only
+        return;
+      }
       selectRun(updated.run_id);
       setRun(updated);
       setMessage(`${label}: backend status is now ${updated.status}.`);
       await refresh();
     } catch (err) {
+      // Errors are reported as a notice only; they never overwrite
+      // the selected run, its evidence, or its audit (N2-F).
       setMessage(`${label} failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
@@ -128,7 +143,7 @@ export default function Home() {
               async () => {
                 const created = await api.create(title, description, requireEvidence);
                 return created;
-              })}>
+              }, true)}>
               Create workflow
             </button>
             <label htmlFor="runs">Runs (durable, newest first)</label>
