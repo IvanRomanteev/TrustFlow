@@ -57,14 +57,12 @@ class Container:
                 PersistentLedger,
                 SQLiteAuditLogger,
                 SQLiteRunRepository,
-                recover_interrupted_runs,
             )
 
             self.registry = ToolRegistry(ledger=PersistentLedger(settings.db_path))
             self.audit = SQLiteAuditLogger(settings.db_path)
             self.repo = SQLiteRunRepository(settings.db_path)
             self.persistence = "sqlite"
-            self.recovered_runs = recover_interrupted_runs(self.repo, self.audit)
         else:
             self.registry = ToolRegistry()
             self.audit = AuditLogger()
@@ -91,6 +89,10 @@ class Container:
             self.audit, self.repo, settings, semantic=semantic,
             retriever=retriever,
         )
+        if self.persistence == "sqlite":
+            # F1/F5 startup recovery with ledger reconciliation
+            # (engine-level; never re-executes, never calls a model).
+            self.recovered_runs = self.engine.recover_interrupted_runs()
 
 
 @lru_cache
@@ -174,8 +176,12 @@ def create_app(container: Container | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="Workflow not found")
         try:
             c.approvals.approve(run, req.actor, req.plan_hash, req.reason)
+            # F2 atomic decision claim: the approval + exact snapshot +
+            # EXECUTING are CAS-persisted BEFORE execution. A racing
+            # decision loses here with 409 and writes no audit event.
+            claimed = c.repo.save(run)
             c.audit.log(run_id, req.actor, "approval_granted", {"plan_hash": req.plan_hash})
-            return await c.engine.resume_after_approval(run)
+            return await c.engine.resume_after_approval(claimed)
         except ApprovalError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         except TrustFlowError as exc:
@@ -189,8 +195,11 @@ def create_app(container: Container | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="Workflow not found")
         try:
             c.approvals.reject(run, req.actor, req.plan_hash, req.reason)
+            # F2: persist the winning rejection (CAS) before auditing
+            # it, so a losing race records no successful decision.
+            saved = c.repo.save(run)
             c.audit.log(run_id, req.actor, "approval_rejected", {"plan_hash": req.plan_hash})
-            return c.repo.save(run)
+            return saved
         except ApprovalError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         except TrustFlowError as exc:

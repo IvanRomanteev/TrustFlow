@@ -184,6 +184,17 @@ class Executor:
                 ))
                 if task is not None and task.done():
                     self._pending.pop(key, None)
+            elif task is None:
+                # No live worker tracks this step (e.g. after a process
+                # restart workers cannot survive) and the ledger has no
+                # commit: the operation definitively did not commit.
+                updated.append(StepResult(
+                    step_id=step.step_id, tool_name=step.tool_name,
+                    status=StepStatus.FAILED,
+                    error="Worker no longer tracked and no ledger commit; "
+                          "operation was not committed",
+                    idempotency_key=key,
+                ))
             elif task is not None and task.done():
                 self._pending.pop(key, None)
                 try:

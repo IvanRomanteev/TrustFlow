@@ -24,23 +24,38 @@ export default function Home() {
   const [message, setMessage] = useState<string | null>(null);
   const [backend, setBackend] = useState<string>("checking…");
   const runIdRef = useRef<string | null>(null);
+  // F6: monotonic refresh generation. A response is applied only if
+  // no newer refresh/action/selection started meanwhile — an already
+  // completed stale response can never overwrite newer state, even
+  // when its fetch finished before a mutation but resolves after it.
+  const generationRef = useRef(0);
 
   const selectRun = useCallback((id: string | null) => {
+    generationRef.current += 1; // invalidate in-flight refreshes
     runIdRef.current = id;
     if (id) localStorage.setItem(RUN_KEY, id);
     else localStorage.removeItem(RUN_KEY);
   }, []);
 
   const refresh = useCallback(async () => {
+    const generation = ++generationRef.current;
+    const stale = () => generation !== generationRef.current;
     try {
       const [list, health] = await Promise.all([api.listRuns(), api.health()]);
+      if (stale()) return;
       setRuns(list);
       setBackend(`backend ok · persistence=${health.persistence} · llm=${health.llm_mode} (fake = deterministic, no Meta call)`);
       const id = runIdRef.current ?? localStorage.getItem(RUN_KEY);
       const target = id && list.some((r) => r.run_id === id) ? id : list[0]?.run_id;
       if (target) {
-        selectRun(target);
+        if (target !== runIdRef.current) {
+          runIdRef.current = target;
+          localStorage.setItem(RUN_KEY, target);
+        }
         const [fresh, trail] = await Promise.all([api.getRun(target), api.getAudit(target)]);
+        // Ignore responses for a run that is no longer selected, and
+        // any response superseded by a newer generation (F6).
+        if (stale() || runIdRef.current !== target) return;
         setRun(fresh);
         setAudit(trail.events);
       } else {
@@ -48,6 +63,7 @@ export default function Home() {
         setAudit([]);
       }
     } catch (err) {
+      if (stale()) return;
       setBackend(`backend unreachable: ${err instanceof Error ? err.message : String(err)}`);
     }
   }, [selectRun]);
@@ -62,6 +78,9 @@ export default function Home() {
   async function act(label: string, fn: () => Promise<WorkflowRun>) {
     try {
       const updated = await fn();
+      // The action response is the newest authoritative state: it
+      // supersedes every refresh started before the mutation (F6).
+      generationRef.current += 1;
       selectRun(updated.run_id);
       setRun(updated);
       setMessage(`${label}: backend status is now ${updated.status}.`);
@@ -175,9 +194,16 @@ export default function Home() {
                 {!run.verification && <p className="muted">No verification report yet.</p>}
                 {run.verification && (
                   <>
-                    <p>Deterministic: <span className={run.verification.passed ? "check-pass" : "check-fail"}>
-                      {run.verification.passed ? "PASS" : "FAIL"}</span>
+                    {/* F7: deterministic verdict comes from the actual
+                        deterministic checks only; verification.passed
+                        is the overall result (semantic included). */}
+                    <p>Deterministic: {run.verification.checks.length === 0
+                      ? <span>— unknown (no checks reported) —</span>
+                      : <span className={run.verification.checks.every((c) => c.passed) ? "check-pass" : "check-fail"}>
+                          {run.verification.checks.every((c) => c.passed) ? "PASS" : "FAIL"}</span>}
                       {run.verification.semantic && <> · Semantic ({run.verification.semantic.model}): {run.verification.semantic.verdict}</>}
+                      {" "}· Overall: <span className={run.verification.passed ? "check-pass" : "check-fail"}>
+                        {run.verification.passed ? "PASS" : "FAIL"}</span>
                     </p>
                     <table>
                       <thead><tr><th>Check</th><th>Result</th><th>Detail</th></tr></thead>

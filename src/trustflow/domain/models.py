@@ -214,6 +214,11 @@ class IntentRecord(BaseModel):
 
 class WorkflowRun(BaseModel):
     run_id: str = Field(default_factory=new_id)
+    # M3 per-record optimistic concurrency (F2): the persistence
+    # version this detached copy was loaded at. Excluded from dumps,
+    # so the API/storage JSON shapes are unchanged; the SQLite runs
+    # table column is authoritative and every save CAS-checks it.
+    persistence_version: int = Field(default=0, exclude=True)
     goal: WorkflowGoal
     status: RunStatus = RunStatus.CREATED
     plan: Plan | None = None

@@ -17,6 +17,7 @@ from trustflow.agents.verifier import Verifier
 from trustflow.audit.logger import AuditLogger
 from trustflow.core.errors import (
     ApprovalRequiredError,
+    ConcurrentUpdateError,
     EvidenceValidationError,
     LLMResponseError,
     TrustFlowError,
@@ -263,9 +264,24 @@ class WorkflowEngine:
 
     def _tracker(self, run: WorkflowRun) -> UsageTracker:
         if run.run_id not in self._trackers:
-            self._trackers[run.run_id] = UsageTracker(
+            tracker = UsageTracker(
                 self.settings.token_budget_per_workflow, workflow_id=run.run_id
             )
+            # F3: rehydrate from the authoritative persisted records so
+            # a restart never resets the budget, loses failed-call
+            # history, or renumbers logical/transport attempts. Flat
+            # persisted records are appended as-is (never re-recorded,
+            # so nothing is double-counted on repeated resumes).
+            from trustflow.llm.usage import LLMCallRecord
+
+            for raw in run.llm_calls:
+                try:
+                    record = LLMCallRecord.model_validate(raw)
+                except Exception:
+                    continue  # malformed history is skipped, never invented
+                record.prior_attempts = []
+                tracker.records.append(record)
+            self._trackers[run.run_id] = tracker
         return self._trackers[run.run_id]
 
     def _persist_usage(self, run: WorkflowRun) -> None:
@@ -396,6 +412,10 @@ class WorkflowEngine:
                         "steps": len(plan.steps)})
         bound_issues = self.policy.check_bounds(plan)
         transition(run, RunStatus.PLANNED)
+        # F1 durable checkpoint: canonical plan, stable intent/operation
+        # IDs and authorization state are persisted BEFORE any approval
+        # pause or ledger side effect can occur.
+        self.repo.save(run)
         if bound_issues:
             run.error = "; ".join(bound_issues)
             transition(run, RunStatus.EXECUTING)
@@ -459,6 +479,132 @@ class WorkflowEngine:
         finally:
             with self._claim_lock:
                 self._inflight.discard(run.run_id)
+
+    def _rebuild_results_after_restart(self, run: WorkflowRun,
+                                       plan: Plan) -> list:
+        """Rebuild step results after a crash (F1). Transfers are
+        taken only from the ledger under their authoritative operation
+        key, after payload + authorization checks; uncommitted
+        transfers are never re-executed and never fabricated. Reads
+        are non-mutating and are refreshed fresh."""
+        from trustflow.agents.executor import payload_matches
+        from trustflow.domain.models import StepResult
+
+        registry = self.executor._registry  # internal wiring, same process
+        results: list = []
+        for step in plan.steps:
+            key = step.operation_id or step.intent_id or ""
+            if step.tool_name == "simulate_transfer":
+                committed = registry.committed(key) if key else None
+                intent = next(
+                    (i for i in run.intents
+                     if i.intent_id == (step.intent_id or step.operation_id)),
+                    None,
+                )
+                if (
+                    committed is not None
+                    and intent is not None
+                    and intent.authorized
+                    and payload_matches(step, committed)
+                ):
+                    results.append(StepResult(
+                        step_id=step.step_id, tool_name=step.tool_name,
+                        status=StepStatus.SUCCEEDED,
+                        data={**committed.model_dump(),
+                              "reconciled_from_ledger": True,
+                              "recovered_after_restart": True},
+                        idempotency_key=key,
+                    ))
+                else:
+                    results.append(StepResult(
+                        step_id=step.step_id, tool_name=step.tool_name,
+                        status=StepStatus.FAILED,
+                        error="Not committed before restart; not re-executed",
+                        idempotency_key=key,
+                    ))
+                continue
+            try:
+                outcome = registry.invoke(step.tool_name, dict(step.args), key)
+                results.append(StepResult(
+                    step_id=step.step_id, tool_name=step.tool_name,
+                    status=StepStatus.SUCCEEDED if outcome.ok else StepStatus.FAILED,
+                    data=outcome.data, error=outcome.error,
+                    idempotency_key=key,
+                ))
+            except Exception as exc:
+                results.append(StepResult(
+                    step_id=step.step_id, tool_name=step.tool_name,
+                    status=StepStatus.FAILED,
+                    error=sanitize_error(str(exc)), idempotency_key=key,
+                ))
+        return results
+
+    def recover_interrupted_runs(self) -> list[str]:
+        """Startup recovery (F1/F5). Never executes transfers and
+        never calls a model: stranded execution is reconciled from
+        the ledger into verification-only recovery; runs interrupted
+        before a durable plan checkpoint fail closed."""
+        from trustflow.domain.models import TERMINAL
+
+        recovered: list[str] = []
+        for run in self.repo.list():
+            try:
+                changed = self._recover_one(run, TERMINAL)
+            except ConcurrentUpdateError:
+                continue  # another process recovered it first
+            if changed:
+                recovered.append(run.run_id)
+        return recovered
+
+    def _recover_one(self, run: WorkflowRun, terminal: frozenset) -> bool:
+        status = run.status
+        if status in terminal or status in (
+            RunStatus.AWAITING_APPROVAL,
+            RunStatus.VERIFICATION_PENDING,
+            RunStatus.EXECUTION_UNCERTAIN,
+        ):
+            return False
+        if status in (RunStatus.CREATED, RunStatus.PLANNING,
+                      RunStatus.NEEDS_REVISION):
+            if status == RunStatus.CREATED:
+                transition(run, RunStatus.PLANNING)
+            transition(run, RunStatus.FAILED)
+            run.error = (
+                "Interrupted before a durable execution checkpoint; "
+                "failed closed after restart (recovery executed no tools)"
+            )
+            self.repo.save(run)
+            self.audit.log(run.run_id, "system", "restart_recovered",
+                           {"recovery_state": str(RunStatus.FAILED)})
+            return True
+        if status == RunStatus.PLANNED and run.plan is not None:
+            if self.policy.requires_approval(run.plan) or \
+                    has_unauthorized_intents(run, run.plan):
+                transition(run, RunStatus.AWAITING_APPROVAL)
+                self.repo.save(run)
+                self.audit.log(
+                    run.run_id, "system", "restart_recovered",
+                    {"recovery_state": str(RunStatus.AWAITING_APPROVAL)})
+                return True
+            transition(run, RunStatus.EXECUTING)
+            status = RunStatus.EXECUTING
+        if status in (RunStatus.EXECUTING, RunStatus.VERIFYING) \
+                and run.plan is not None:
+            plan = self._execution_plan(run)
+            run.step_results = self._rebuild_results_after_restart(run, plan)
+            if status == RunStatus.EXECUTING:
+                transition(run, RunStatus.VERIFYING)
+            transition(run, RunStatus.VERIFICATION_PENDING)
+            run.error = (
+                "Recovered after restart; committed operations reconciled "
+                "from ledger, verification-only recovery, no re-execution"
+            )
+            self.repo.save(run)
+            self.audit.log(
+                run.run_id, "system", "restart_recovered",
+                {"recovery_state": str(RunStatus.VERIFICATION_PENDING)})
+            return True
+        return False
 
     def _snapshot_pair(self, run: WorkflowRun,
                        plan: Plan) -> tuple[LedgerSnapshot, list[EvidenceSpan]]:
@@ -548,6 +694,10 @@ class WorkflowEngine:
         if self._fail_before_mutation(run):
             return run
         plan = self._execution_plan(run)
+        # F1 durable execution claim: EXECUTING + exact plan/snapshot +
+        # intent authorization are persisted BEFORE the executor can
+        # cause any ledger side effect.
+        self.repo.save(run)
         run.step_results = await self.executor.execute(run, plan)
         self.audit.log(run.run_id, "executor", "execution_finished",
                        {"results": len(run.step_results)})
@@ -577,6 +727,11 @@ class WorkflowEngine:
                     )
                     if not exhausted:
                         run.verification_attempts += 1
+                if not exhausted:
+                    # F4: the attempt reservation is durable BEFORE the
+                    # reviewer is invoked, so a crash after a completed
+                    # review can never hand the attempt back.
+                    self.repo.save(run)
                 if exhausted:
                     run.error = (
                         "Semantic attempt limit reached. Committed transfers "
@@ -698,6 +853,17 @@ class WorkflowEngine:
                 run.error = None  # resolved; history stays in the audit trail
                 transition(run, RunStatus.COMPLETED)
                 return self.repo.save(run)
+            if semantic_only_retry and not semantic_failed:
+                # F5: a deterministic FAIL cannot be resolved by
+                # verification-only recovery (no re-execution, no
+                # fabricated results), so it terminates bounded instead
+                # of pending forever without consuming any allowance.
+                run.error = sanitize_error(
+                    "Deterministic verification failed; verification-only "
+                    "recovery cannot resolve it: " + "; ".join(report.issues)
+                )
+                transition(run, RunStatus.FAILED)
+                return self.repo.save(run)
             if semantic_failed or semantic_only_retry:
                 run.error = sanitize_error(
                     "Semantic review FAIL. Committed transfers (if any) were "
@@ -754,6 +920,9 @@ class WorkflowEngine:
             if self._fail_before_mutation(run):
                 return run
             plan = self._execution_plan(run)
+            # F1: durable EXECUTING checkpoint for the revision too,
+            # before any step of it can cause a ledger side effect.
+            self.repo.save(run)
             run.step_results = await self.executor.execute(run, plan)
             if any(r.status == StepStatus.UNCERTAIN for r in run.step_results):
                 transition(run, RunStatus.EXECUTION_UNCERTAIN)

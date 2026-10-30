@@ -1,5 +1,34 @@
 # TrustFlow Worklog
 
+## M3 remediation round 1 (independent review of 695bfd8: F1–F7 BLOCKED)
+Independent offline review BLOCKED 695bfd8 with two P1 and five P2
+findings; its probes are preserved unchanged at
+TrustFlow-context/review-m3-695bfd8-independent-6237b106/. All seven
+are fixed by the developer and await independent re-review (details
+in docs/m3.md). F1: PLANNED/EXECUTING durable checkpoints before any
+ledger side effect, approval claim CAS-saved before execution, and
+ledger-key reconciliation at startup (paid runs cannot be rejected
+after restart). F2: per-record persistence_version CAS replaces the
+shared repository _versions map; concurrent approve/approve,
+approve/reject and reject/approve yield exactly one 200 decision,
+one audit event and one transfer. F3: UsageTracker rehydrates from
+persisted llm_calls without double counting. F4: semantic attempt
+increment is durable before reviewer invocation. F5: deterministic
+FAIL in verification-only recovery terminates FAILED; untracked
+uncertain steps with no ledger commit resolve as not committed.
+F6/F7: generation-guarded polling and deterministic/semantic/overall
+verdict separation, both verified in headless Chrome (held stale
+AWAITING response after completed approve; injected semantic FAIL).
+Maintained regressions in tests/unit/test_m3_remediation.py include
+real os._exit child-process crashes after ledger commit and after
+completed semantic review. Checks: pytest 287 passed (279 previous
++ 8 new), Ruff clean, mypy clean, frontend build green; the review's
+own test_independent.py (11) and test_more.py (5) also pass against
+the fixed source from byte-identical copies. No existing project
+test changed; both conversation files preserved; no push, merge,
+deploy or paid calls. Status: READY FOR INDEPENDENT CODEX
+RE-REVIEW; M3 not accepted.
+
 ## M3 candidate — persistence + demo UI (from accepted M2 fefd3fd)
 Implemented on branch m3/persistence-ui, based exactly on the
 independently accepted M2 SHA fefd3fdcebcb784170d9097eb9f2bc428da9f524
