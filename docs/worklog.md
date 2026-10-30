@@ -1,5 +1,31 @@
 # TrustFlow Worklog
 
+## M2 candidate — policy retrieval and evidence spans (offline)
+Implemented on branch m2/retrieval-evidence-spans from the documented
+M1 acceptance state (162cc70), contracts first in docs/m2.md
+(d047311). Agreed scope is a synthetic in-repository corpus and span
+annotations, explicitly not a reproduction of the unprovided
+Playbook. Retrieval covers versioned synthetic policies
+(synthetic-policies-v1, deterministic lexical retrieval) and
+deterministic ledger-evidence snapshots (canonical JSON, SHA-256,
+snapshot id/hash immutable after later commits). Text spans use
+start inclusive / end exclusive in Unicode code points with UTF-8
+SHA-256 hashes; integrity, relevance and authority are checked
+separately and retrieval stays advisory — PolicyEngine and ledger
+verification remain decisive, retrieved text cannot change approval,
+limits or tools. Mandatory citations exist only via the explicit
+WorkflowGoal.require_evidence opt-in: missing mandatory
+pre-execution evidence fails before any mutation; span errors found
+after a commit preserve the transfer/report/usage/audit and use
+bounded verification-only recovery with no second transfer. 11 new
+eval scenarios (33 total with the preserved 22) plus unit contracts
+cover prompt injection in a retrieved document, intact-but-irrelevant
+spans, substituted version/source, corrupted hashes, snapshot
+stability and both fail-closed modes. P2/P3 live harness fixes remain
+mandatory before any future paid run and did not block this offline
+work; no paid calls, push, merge or deploy. Status: M2 candidate for
+independent Codex review, not self-accepted.
+
 ## M1 technical acceptance (independent Codex confirmation)
 Independent Codex review confirmed offline PASS and functional live
 VERIFIED PASS for source 75f1d9e5d6f09e724d187ae95c26018996561e74.
