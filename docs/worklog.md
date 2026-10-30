@@ -1,5 +1,35 @@
 # TrustFlow Worklog
 
+## M3 remediation round 2 (independent re-review of 8143dbc: N1 + N2)
+Independent re-review VERIFIED FIXED F1–F4, original F6 and F7, and
+kept the gate BLOCKED on two items (review preserved at
+TrustFlow-context/review-m3-8143dbc-independent-1a01d72b/). N1 (P1):
+reconcile of a definitively dead worker (no live task, no ledger
+commit) entered the ordinary revision loop and executed a
+replacement transfer (ledger 0→1 with plan_revised). Fix is routing
+only: WorkflowEngine.reconcile now verifies with
+semantic_only_retry=True, so dead/no-commit ends in bounded FAILED
+with zero planner and zero mutating tool calls, committed outcomes
+still reconcile verification-only from the ledger, and live workers
+stay EXECUTION_UNCERTAIN until they resolve; normal planning and
+revisions are untouched. N2 (P2): a late action response
+re-selected its own run over a newer user selection; act() now
+captures the selected run before awaiting and, when selection moved
+on, only refreshes the list and the still-selected run with a
+notice. Maintained regressions in
+tests/unit/test_m3_remediation2.py (real os._exit(81) child with a
+barrier-held worker; live-worker control). RED on 8143dbc: dead
+worker test failed as reproduced; GREEN after the fix. Headless
+Chrome: delayed approve of A while B selected keeps B in
+localStorage and all panels, backend A COMPLETED. Checks: pytest
+289 passed (287 previous + 2 new), Ruff clean, mypy clean,
+frontend build green; Docker daemon unavailable in this session
+(compose config valid, exit 0; Docker runtime for the new candidate
+is NOT VERIFIED here). No existing project test changed; both
+conversation files preserved; no push, merge, deploy or paid
+calls. Status: READY FOR INDEPENDENT CODEX RE-REVIEW; M3 not
+accepted.
+
 ## M3 remediation round 1 (independent review of 695bfd8: F1–F7 BLOCKED)
 Independent offline review BLOCKED 695bfd8 with two P1 and five P2
 findings; its probes are preserved unchanged at
