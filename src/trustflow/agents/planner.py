@@ -92,25 +92,42 @@ class Planner:
 
     def _propose(self, goal: WorkflowGoal, tracker: UsageTracker | None,
                  feedback: str | None = None,
-                 retrieval_context: str | None = None):
-        bounded_context = (retrieval_context or "")[: self._CONTEXT_CHARS] or None
-        estimated = 0
+                 retrieval_context: str | None = None,
+                 retrieval_mandatory: bool = False,
+                 retrieval_shrinkable: bool = False):
+        # Capability and the actual transmitted arguments are decided
+        # BEFORE any reservation (R6/N2): a legacy callable that does
+        # not accept the context never has it reserved.
+        accepts = bool(retrieval_context) and self._accepts_retrieval_context()
+        transmitted = (
+            (retrieval_context or "")[: self._CONTEXT_CHARS] if accepts else "")
+        base_len = len(goal.title) + len(goal.description)
+
+        def estimate(context_len: int) -> int:
+            return (base_len + context_len) // 4 + 256 + self._reserve_tokens
+
+        estimated = estimate(len(transmitted))
         if tracker is not None:
-            # Reserve estimated input (~4 chars/token + prompt overhead)
-            # plus the full allowed output before every attempt. The
-            # bounded retrieval context actually transmitted is part of
-            # the known input, for the initial and every retry call.
-            estimated_input = (
-                len(goal.title) + len(goal.description)
-                + len(bounded_context or "")
-            ) // 4 + 256
-            estimated = estimated_input + self._reserve_tokens
+            if transmitted and retrieval_shrinkable \
+                    and not retrieval_mandatory \
+                    and estimated > tracker.budget - tracker.total_tokens:
+                # Optional context is shrunk to what fits the remaining
+                # budget before reservation (R5/F3), identically for
+                # initial, repair and transport-retry calls. If even
+                # the context-free estimate does not fit, the honest
+                # reservation failure below is preserved.
+                room = tracker.budget - tracker.total_tokens - 256 \
+                    - self._reserve_tokens
+                max_len = max(0, (room + 1) * 4 - 1 - base_len) \
+                    if room >= 0 else 0
+                transmitted = transmitted[:max_len]
+                estimated = estimate(len(transmitted))
+            # Mandatory context is never silently shrunk: its full
+            # reservation either fits or fails before execution.
             tracker.reserve(estimated)
-        # Advisory retrieved context is forwarded only when the actual
-        # callable accepts it; other providers keep M1 behaviour.
         context_kw: dict[str, Any] = {}
-        if bounded_context and self._accepts_retrieval_context():
-            context_kw["retrieval_context"] = bounded_context
+        if transmitted:
+            context_kw["retrieval_context"] = transmitted
         try:
             propose = self._llm.propose_plan
             if tracker is not None and getattr(
@@ -134,13 +151,19 @@ class Planner:
 
     def create_plan(self, goal: WorkflowGoal, version: int = 1,
                     tracker: UsageTracker | None = None,
-                    retrieval_context: str | None = None) -> Plan:
-        raw = self._propose(goal, tracker, retrieval_context=retrieval_context)
+                    retrieval_context: str | None = None,
+                    retrieval_mandatory: bool = False,
+                    retrieval_shrinkable: bool = False) -> Plan:
+        raw = self._propose(goal, tracker, retrieval_context=retrieval_context,
+                            retrieval_mandatory=retrieval_mandatory,
+                            retrieval_shrinkable=retrieval_shrinkable)
         try:
             steps = validate_steps(raw)
         except PlanValidationError as first_error:
             raw = self._propose(goal, tracker, feedback=str(first_error),
-                                retrieval_context=retrieval_context)
+                                retrieval_context=retrieval_context,
+                                retrieval_mandatory=retrieval_mandatory,
+                                retrieval_shrinkable=retrieval_shrinkable)
             steps = validate_steps(raw)  # second failure propagates: fail closed
         for idx, step in enumerate(steps):
             step.step_id = f"v{version}-step-{idx + 1}"

@@ -418,12 +418,46 @@ class MetaResponsesProvider:
             )
         return steps, record
 
+    # Explicit serialized-payload limit (docs/m2.md). The payload is
+    # always transmitted as one whole structured JSON document; a
+    # serialized document is never sliced mid-JSON.
+    SEMANTIC_PAYLOAD_MAX_CHARS = 6000
+
+    def _semantic_payload_text(self, payload) -> str:
+        full = json.dumps(payload, default=str)
+        if len(full) <= self.SEMANTIC_PAYLOAD_MAX_CHARS:
+            return full
+        # Oversize: keep every mandatory field whole (goal, plan,
+        # evidence spans, ledger snapshot) and drop only evidence
+        # transactions that no span cites. If the mandatory remainder
+        # still does not fit, fail with a controlled typed error
+        # before any HTTP call instead of truncating (F4/R5).
+        evidence = payload.get("evidence") if isinstance(payload, dict) else None
+        spans = payload.get("evidence_spans") if isinstance(payload, dict) else None
+        if isinstance(evidence, dict) and isinstance(evidence.get("transactions"), list):
+            quoted = [str(s.get("quoted_text", "")) for s in (spans or [])
+                      if isinstance(s, dict)]
+            kept = [
+                tx for tx in evidence["transactions"]
+                if isinstance(tx, dict)
+                and any(str(tx.get("tx_id", "")) and str(tx.get("tx_id")) in q
+                        for q in quoted)
+            ]
+            reduced = {**payload, "evidence": {**evidence, "transactions": kept}}
+            text = json.dumps(reduced, default=str)
+            if len(text) <= self.SEMANTIC_PAYLOAD_MAX_CHARS:
+                return text
+        raise LLMResponseError(
+            "Semantic payload exceeds "
+            f"{self.SEMANTIC_PAYLOAD_MAX_CHARS} chars with all mandatory "
+            "evidence preserved; refusing to transmit truncated JSON")
+
     def semantic_review(self, payload, tracker=None, retry_reserve_tokens=0):
         prompt = (
             "Independently review whether the executed synthetic workflow satisfies "
             "the user goal. Judge only from the supplied goal, approved plan and "
             "independently obtained ledger evidence. Return the review JSON.\n"
-            + json.dumps(payload, default=str)[:6000]
+            + self._semantic_payload_text(payload)
         )
         return self._call("semantic_review", REVIEW_SCHEMA, prompt,
                           "semantic_review", model=self._settings.review_model,

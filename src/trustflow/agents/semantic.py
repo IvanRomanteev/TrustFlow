@@ -14,6 +14,8 @@ from trustflow.retrieval.models import (
     LedgerSnapshot,
     SpanSourceType,
     build_ledger_snapshot,
+    canonical_snapshot_errors,
+    canonical_transactions,
     make_ledger_span,
     span_in_text,
     validate_policy_span,
@@ -130,12 +132,24 @@ class SemanticReviewer:
                     expected_source_id=snapshot.snapshot_id,
                     expected_snapshot_hash=snapshot.snapshot_hash,
                 ))
-                # Provenance: the snapshot must actually contain this
-                # workflow's operations, read from this ledger by their
-                # backend-owned keys. A self-consistent foreign snapshot
-                # fails here even though its own hash matches (R3).
+                # The canonical text is the only authoritative
+                # representation: its schema/numerics are validated
+                # and the duplicate views must equal it exactly.
+                # Malformed snapshot data is a typed span error here,
+                # never an escaping numeric exception (N1/R3).
+                canonical_errors = canonical_snapshot_errors(
+                    snapshot.canonical_text, snapshot.balances,
+                    snapshot.transactions)
+                if canonical_errors:
+                    errors.extend(canonical_errors)
+                    continue
+                # Provenance: the cited canonical transactions must
+                # contain this workflow's operations, read from this
+                # ledger by their backend-owned keys. A foreign
+                # canonical ledger fails here even though its own
+                # hash matches (R3).
                 by_key = {t.get("idempotency_key"): t
-                          for t in snapshot.transactions}
+                          for t in canonical_transactions(snapshot)}
                 for key, tx in expected.items():
                     snap_tx = by_key.get(key)
                     if snap_tx is None or not (
@@ -198,6 +212,13 @@ class SemanticReviewer:
             # Mandatory evidence can never be silently absent (R2).
             raise LLMResponseError(
                 "Evidence span validation failed: retrieval_unavailable")
+        if mandatory_citations and not any(
+                s.source_type == SpanSourceType.POLICY
+                for s in (evidence_spans or [])):
+            # Ledger citations never satisfy the separate mandatory
+            # policy-evidence obligation (F1/R2).
+            raise LLMResponseError(
+                "Evidence span validation failed: span_coverage_missing")
         if evidence_spans:
             findings = self.validate_evidence_spans(
                 evidence_spans, goal, plan, snapshot=ledger_snapshot)

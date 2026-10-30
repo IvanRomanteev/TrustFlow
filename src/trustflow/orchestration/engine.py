@@ -373,7 +373,9 @@ class WorkflowEngine:
         try:
             planned = self.planner.create_plan(
                 goal, version=1, tracker=self._tracker(run),
-                retrieval_context=retrieval_context)
+                retrieval_context=retrieval_context,
+                retrieval_mandatory=goal.require_evidence,
+                retrieval_shrinkable=not goal.require_evidence)
             plan = assign_operation_ids(
                 run, planned,
                 new_intents_authorized=not self.policy.requires_approval(planned),
@@ -569,6 +571,29 @@ class WorkflowEngine:
                 spans: list[EvidenceSpan] = []
                 try:
                     if self.semantic is not None:
+                        if run.goal.require_evidence:
+                            # Mandatory policy obligation is checked
+                            # per attempt, independently of ledger
+                            # coverage and of list truthiness (F1/R2):
+                            # present-but-partial policy evidence and
+                            # deleted policy spans are typed failures.
+                            codes = self._policy_span_codes(run)
+                            expected_keys = {
+                                (s.get("chunk_id"), s.get("start"),
+                                 s.get("end"), s.get("text_hash"))
+                                for item in run.retrieval
+                                for s in [item.get("span") or {}]
+                            }
+                            present_keys = {
+                                (s.get("chunk_id"), s.get("start"),
+                                 s.get("end"), s.get("text_hash"))
+                                for s in run.evidence_spans
+                                if s.get("source_type") == "policy"
+                            }
+                            if expected_keys - present_keys:
+                                codes = [*codes, "span_coverage_missing"]
+                            if codes:
+                                raise EvidenceValidationError(sorted(set(codes)))
                         try:
                             snapshot, spans = self._snapshot_pair(run, plan)
                         except EvidenceValidationError:

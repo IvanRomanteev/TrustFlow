@@ -11,9 +11,13 @@ import json
 import re
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from trustflow.tools.ledger import StrictJsonInt, SyntheticLedger
+from trustflow.tools.ledger import (
+    StrictJsonInt,
+    SyntheticLedger,
+    strict_json_number,
+)
 
 
 def sha256_text(text: str) -> str:
@@ -73,8 +77,58 @@ class RetrievedChunk(BaseModel):
     span: EvidenceSpan
 
 
+def canonical_snapshot_errors(canonical_text: str, balances: dict,
+                              transactions: list[dict]) -> list[str]:
+    """Validate the single authoritative representation (R3/N1).
+
+    The canonical text is the only source of truth. Its JSON must
+    parse, every numeric field must be a strict finite JSON number,
+    and the duplicate ``balances``/``transactions`` views must be
+    exactly equivalent to it — provenance is never read from a
+    representation different from the one that was hashed.
+    """
+    try:
+        parsed = json.loads(canonical_text)
+    except (ValueError, TypeError):
+        return ["span_malformed"]
+    if not isinstance(parsed, dict) \
+            or not isinstance(parsed.get("balances"), dict) \
+            or not isinstance(parsed.get("transactions"), list):
+        return ["span_malformed"]
+    try:
+        for account in parsed["balances"].values():
+            if not isinstance(account, dict):
+                return ["span_malformed"]
+            strict_json_number(account.get("balance"))
+        for tx in parsed["transactions"]:
+            if not isinstance(tx, dict):
+                return ["span_malformed"]
+            for key in ("tx_id", "from_account", "to_account",
+                        "currency", "idempotency_key"):
+                if not isinstance(tx.get(key), str):
+                    return ["span_malformed"]
+            strict_json_number(tx.get("amount"))
+    except (ValueError, TypeError, OverflowError):
+        return ["span_malformed"]
+    if parsed["balances"] != balances or parsed["transactions"] != transactions:
+        return ["span_malformed"]
+    return []
+
+
+def canonical_transactions(snapshot: "LedgerSnapshot") -> list[dict]:
+    """Transactions parsed from the authoritative canonical text."""
+    parsed = json.loads(snapshot.canonical_text)
+    rows = parsed.get("transactions") if isinstance(parsed, dict) else None
+    return rows if isinstance(rows, list) else []
+
+
 class LedgerSnapshot(BaseModel):
-    """Immutable deterministic snapshot; later commits cannot change it."""
+    """Immutable deterministic snapshot; later commits cannot change it.
+
+    ``canonical_text`` is authoritative; ``balances``/``transactions``
+    are duplicate views validated as exactly equivalent to it, with
+    strict finite numeric fields and a matching SHA-256/id.
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -83,6 +137,19 @@ class LedgerSnapshot(BaseModel):
     canonical_text: str
     balances: dict = Field(default_factory=dict)
     transactions: list[dict] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _canonical_is_authoritative(self) -> "LedgerSnapshot":
+        if sha256_text(self.canonical_text) != self.snapshot_hash:
+            raise ValueError("snapshot hash does not match canonical text")
+        if self.snapshot_id != f"ledger-{self.snapshot_hash[:16]}":
+            raise ValueError("snapshot id does not match canonical hash")
+        errors = canonical_snapshot_errors(
+            self.canonical_text, self.balances, self.transactions)
+        if errors:
+            raise ValueError("snapshot canonical data is malformed: "
+                             + ",".join(errors))
+        return self
 
 
 def chunk_document(doc: PolicyDocument) -> list[PolicyChunk]:
