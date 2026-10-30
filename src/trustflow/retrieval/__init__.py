@@ -13,6 +13,7 @@ from trustflow.retrieval.models import (
     make_policy_span,
     sha256_text,
     span_in_text,
+    validate_policy_span,
     validate_relevance,
     validate_span,
 )
@@ -32,6 +33,7 @@ __all__ = [
     "make_policy_span",
     "sha256_text",
     "span_in_text",
+    "validate_policy_span",
     "validate_relevance",
     "validate_span",
 ]

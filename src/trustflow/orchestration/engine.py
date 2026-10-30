@@ -15,7 +15,12 @@ from trustflow.agents.planner import Planner
 from trustflow.agents.semantic import SemanticReviewer
 from trustflow.agents.verifier import Verifier
 from trustflow.audit.logger import AuditLogger
-from trustflow.core.errors import ApprovalRequiredError, TrustFlowError
+from trustflow.core.errors import (
+    ApprovalRequiredError,
+    EvidenceValidationError,
+    LLMResponseError,
+    TrustFlowError,
+)
 from trustflow.core.logging import sanitize_error
 from trustflow.core.settings import Settings
 from trustflow.domain.models import (
@@ -29,7 +34,7 @@ from trustflow.domain.state_machine import transition
 from trustflow.llm.usage import UsageTracker
 from trustflow.policies.policy_engine import PolicyEngine
 from trustflow.retrieval.corpus import PolicyRetriever
-from trustflow.retrieval.models import EvidenceSpan
+from trustflow.retrieval.models import EvidenceSpan, LedgerSnapshot
 
 
 class RunRepository:
@@ -305,22 +310,65 @@ class WorkflowEngine:
             for r in retrieved
         )
 
+    def _policy_span_codes(self, run: WorkflowRun) -> list[str]:
+        """Validate mandatory policy evidence (integrity incl. chunk
+        binding, source/version, relevance) against the authoritative
+        corpus. A non-empty evidence list is not proof of validity."""
+        if self.retriever is None:
+            return ["retrieval_unavailable"]
+        spans: list[EvidenceSpan] = []
+        for raw in run.evidence_spans:
+            if raw.get("source_type") != "policy":
+                continue
+            try:
+                spans.append(EvidenceSpan.model_validate(raw))
+            except Exception:
+                return ["span_malformed"]
+        if not spans:
+            return ["retrieval_unavailable"]
+        plan = run.plan or Plan(goal_title=run.goal.title, steps=[])
+        if self.semantic is not None:
+            return self.semantic.validate_evidence_spans(spans, run.goal, plan)
+        from trustflow.retrieval.models import validate_policy_span
+
+        codes: list[str] = []
+        query = f"{run.goal.title} {run.goal.description}"
+        for span in spans:
+            doc = self.retriever.document(span.source_id)
+            if doc is None:
+                codes.append("span_source_mismatch")
+                continue
+            codes.extend(validate_policy_span(
+                span, doc, self.retriever.chunk(span.chunk_id), query,
+                self.settings.retrieval_min_score))
+        return codes
+
+    def _fail_before_mutation(self, run: WorkflowRun) -> bool:
+        """Mandatory-evidence gate checked immediately before any
+        execution (creation, resume after approval, revision)."""
+        if not run.goal.require_evidence:
+            return False
+        codes = self._policy_span_codes(run)
+        if not codes:
+            return False
+        run.error = sanitize_error(
+            "Mandatory evidence invalid before execution: "
+            + ",".join(sorted(set(codes))))
+        self.audit.log(run.run_id, "retrieval", "mandatory_evidence_invalid",
+                       {"codes": sorted(set(codes))})
+        transition(run, RunStatus.FAILED)
+        self.repo.save(run)
+        return True
+
     async def create_workflow(self, goal: WorkflowGoal) -> WorkflowRun:
         run = WorkflowRun(goal=goal)
         self.repo.save(run)
         self.audit.log(run.run_id, goal.requested_by, "workflow_created", {"title": goal.title})
         transition(run, RunStatus.PLANNING)
         retrieval_context = self._attach_retrieval(run)
-        if goal.require_evidence and not run.retrieval:
-            # Mandatory pre-execution evidence unavailable: fail before
-            # planning/execution, so no mutation can start (docs/m2.md).
-            run.error = sanitize_error(
-                "retrieval_unavailable: mandatory evidence could not be "
-                "retrieved before execution"
-            )
-            self.audit.log(run.run_id, "retrieval", "retrieval_failed",
-                           {"codes": ["retrieval_unavailable"]})
-            transition(run, RunStatus.FAILED)
+        if goal.require_evidence and self._fail_before_mutation(run):
+            # Mandatory evidence unavailable/invalid: fail before
+            # planning, so no mutation can start (docs/m2.md R1).
             return self.repo.save(run)
         try:
             planned = self.planner.create_plan(
@@ -406,7 +454,75 @@ class WorkflowEngine:
             with self._claim_lock:
                 self._inflight.discard(run.run_id)
 
+    def _snapshot_pair(self, run: WorkflowRun,
+                       plan: Plan) -> tuple[LedgerSnapshot, list[EvidenceSpan]]:
+        """Consistent snapshot+spans pair for this run (R4).
+
+        The stored snapshot is reused while it still covers this
+        plan's operations, so another workflow's later commits cannot
+        invalidate a healthy recovery. When coverage no longer holds,
+        snapshot and its ledger spans are replaced atomically as a
+        pair and the rotation is audited; old spans are never kept
+        against a new snapshot.
+        """
+        assert self.semantic is not None
+        mandatory = run.goal.require_evidence
+        stored = run.ledger_snapshot
+        if stored is not None:
+            snapshot = LedgerSnapshot.model_validate(stored)
+            expected = self.semantic.expected_transactions(plan)
+            covered = all(
+                any(t.get("idempotency_key") == key
+                    and t.get("tx_id") == tx.tx_id
+                    for t in snapshot.transactions)
+                for key, tx in expected.items()
+            )
+            if covered:
+                spans = self._parse_spans(run, mandatory)
+                have_ledger = {s.snapshot_id for s in spans
+                               if s.source_type == "ledger"}
+                if expected and snapshot.snapshot_id not in have_ledger:
+                    for ledger_span in self.semantic.ledger_spans(snapshot, plan):
+                        run.evidence_spans.append(
+                            ledger_span.model_dump(mode="json"))
+                    spans = self._parse_spans(run, mandatory)
+                return snapshot, spans
+        snapshot = self.semantic.ledger_snapshot(plan)
+        new_spans = self.semantic.ledger_spans(snapshot, plan)
+        old_id = stored.get("snapshot_id") if stored else None
+        # Atomic pair replacement: policy spans preserved, ledger spans
+        # replaced together with the snapshot they cite.
+        run.evidence_spans = [
+            s for s in run.evidence_spans if s.get("source_type") != "ledger"
+        ] + [s.model_dump(mode="json") for s in new_spans]
+        run.ledger_snapshot = snapshot.model_dump(mode="json")
+        if old_id and old_id != snapshot.snapshot_id:
+            self.audit.log(run.run_id, "retrieval", "ledger_snapshot_rotated",
+                           {"old_snapshot_id": old_id,
+                            "new_snapshot_id": snapshot.snapshot_id})
+        self.repo.save(run)
+        return snapshot, self._parse_spans(run, mandatory)
+
+    def _parse_spans(self, run: WorkflowRun,
+                     mandatory: bool) -> list[EvidenceSpan]:
+        """Parse stored span dicts. Mandatory malformed data is a
+        typed EvidenceValidationError (R2), never silently dropped;
+        advisory malformed entries are skipped and audited."""
+        spans: list[EvidenceSpan] = []
+        for raw in run.evidence_spans:
+            try:
+                spans.append(EvidenceSpan.model_validate(raw))
+            except Exception:
+                if mandatory:
+                    raise EvidenceValidationError(["span_malformed"]) from None
+                self.audit.log(run.run_id, "retrieval",
+                               "span_advisory_findings",
+                               {"codes": ["span_malformed"]})
+        return spans
+
     async def _execute_and_verify(self, run: WorkflowRun) -> WorkflowRun:
+        if self._fail_before_mutation(run):
+            return run
         plan = self._execution_plan(run)
         run.step_results = await self.executor.execute(run, plan)
         self.audit.log(run.run_id, "executor", "execution_finished",
@@ -444,36 +560,30 @@ class WorkflowEngine:
                     )
                     transition(run, RunStatus.FAILED)
                     return self.repo.save(run)
-                # M2: deterministic ledger snapshot + spans are built
-                # before the semantic call and stored on the run. The
-                # snapshot is immutable, so later commits cannot move
-                # an existing citation. Span validation inside the
-                # reviewer is integrity/relevance only (docs/m2.md).
+                # M2: the consistent ledger snapshot+spans pair is
+                # built before the semantic call. Mandatory preparation
+                # failure is typed and follows the same bounded
+                # verification-only recovery as a semantic failure:
+                # no fail-open spans=[] bypass (R2/R4).
                 snapshot = None
                 spans: list[EvidenceSpan] = []
-                if self.semantic is not None:
-                    try:
-                        snapshot = self.semantic.ledger_snapshot(plan)
-                        run.ledger_snapshot = snapshot.model_dump(mode="json")
-                        known = {
-                            (s.get("source_id"), s.get("start"), s.get("end"))
-                            for s in run.evidence_spans
-                        }
-                        for ledger_span in self.semantic.ledger_spans(snapshot, plan):
-                            key = (ledger_span.source_id, ledger_span.start,
-                                   ledger_span.end)
-                            if key not in known:
-                                run.evidence_spans.append(
-                                    ledger_span.model_dump(mode="json"))
-                        spans = [
-                            EvidenceSpan.model_validate(s)
-                            for s in run.evidence_spans
-                        ]
-                        self.repo.save(run)
-                    except Exception:
-                        snapshot = None
-                        spans = []
                 try:
+                    if self.semantic is not None:
+                        try:
+                            snapshot, spans = self._snapshot_pair(run, plan)
+                        except EvidenceValidationError:
+                            raise
+                        except Exception as exc:
+                            if run.goal.require_evidence:
+                                raise LLMResponseError(
+                                    "Evidence preparation failed: "
+                                    "retrieval_unavailable") from exc
+                            self.audit.log(
+                                run.run_id, "retrieval",
+                                "span_advisory_findings",
+                                {"codes": ["retrieval_unavailable"]})
+                            snapshot = None
+                            spans = self._parse_spans(run, mandatory=False)
                     review = self.semantic.review(
                         run.goal, plan, tracker=self._tracker(run),
                         evidence_spans=spans,
@@ -581,6 +691,8 @@ class WorkflowEngine:
                 transition(run, RunStatus.AWAITING_APPROVAL)
                 return self.repo.save(run)
             transition(run, RunStatus.EXECUTING)
+            if self._fail_before_mutation(run):
+                return run
             plan = self._execution_plan(run)
             run.step_results = await self.executor.execute(run, plan)
             if any(r.status == StepStatus.UNCERTAIN for r in run.step_results):

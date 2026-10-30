@@ -13,7 +13,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from trustflow.tools.ledger import SyntheticLedger
+from trustflow.tools.ledger import StrictJsonInt, SyntheticLedger
 
 
 def sha256_text(text: str) -> str:
@@ -57,8 +57,10 @@ class EvidenceSpan(BaseModel):
     corpus_version: str = ""  # policy spans
     snapshot_id: str = ""  # ledger spans
     snapshot_hash: str = ""  # ledger spans
-    start: int
-    end: int
+    # Strict JSON integers: bool/string/fraction coercion is rejected;
+    # integer-valued JSON numbers (0.0) stay valid per the M1 contract.
+    start: StrictJsonInt
+    end: StrictJsonInt
     quoted_text: str
     text_hash: str
 
@@ -120,11 +122,28 @@ def span_in_text(source_text: str, needle: str, start_from: int = 0) -> tuple[in
     return start, start + len(needle)
 
 
+def _chunk_binding_errors(span: EvidenceSpan, chunk: PolicyChunk) -> list[str]:
+    """The span must belong to its declared chunk (docs/m2.md R7)."""
+    errors: list[str] = []
+    if (
+        chunk.doc_id != span.source_id
+        or chunk.version != span.version
+        or chunk.corpus_version != span.corpus_version
+    ):
+        errors.append("span_chunk_mismatch")
+    if not (chunk.start <= span.start < span.end <= chunk.end):
+        errors.append("span_chunk_mismatch")
+    return errors
+
+
 def make_policy_span(doc: PolicyDocument, chunk: PolicyChunk,
                      start: int, end: int) -> EvidenceSpan:
-    """Span over the document text; offsets are document-level."""
-    if chunk.doc_id != doc.doc_id:
-        raise ValueError("span_source_mismatch")
+    """Span over the document text; offsets are document-level and
+    must lie inside the declared chunk of the authoritative document."""
+    if chunk.doc_id != doc.doc_id or doc.text[chunk.start:chunk.end] != chunk.text:
+        raise ValueError("span_chunk_mismatch")
+    if not (chunk.start <= start < end <= chunk.end):
+        raise ValueError("span_chunk_mismatch")
     return _span_for(
         SpanSourceType.POLICY, doc.doc_id, chunk.chunk_id, doc.text, start, end,
         version=doc.version, corpus_version=doc.corpus_version,
@@ -178,7 +197,8 @@ def validate_span(span: EvidenceSpan, source_text: str, *,
                   expected_source_id: str = "",
                   expected_version: str = "",
                   expected_corpus_version: str = "",
-                  expected_snapshot_hash: str = "") -> list[str]:
+                  expected_snapshot_hash: str = "",
+                  expected_chunk: PolicyChunk | None = None) -> list[str]:
     """Integrity only: bounds, exact text, hash, source and version.
 
     Returns stable error codes (docs/m2.md); empty means intact. This
@@ -199,6 +219,11 @@ def validate_span(span: EvidenceSpan, source_text: str, *,
             errors.append("span_version_mismatch")
         if span.snapshot_hash and sha256_text(source_text) != span.snapshot_hash:
             errors.append("span_version_mismatch")
+    if expected_chunk is not None:
+        if span.chunk_id != expected_chunk.chunk_id:
+            errors.append("span_chunk_mismatch")
+        else:
+            errors.extend(_chunk_binding_errors(span, expected_chunk))
     if not (0 <= span.start < span.end <= len(source_text)):
         errors.append("span_out_of_bounds")
         return errors
@@ -206,6 +231,24 @@ def validate_span(span: EvidenceSpan, source_text: str, *,
         errors.append("span_text_mismatch")
     if sha256_text(span.quoted_text) != span.text_hash:
         errors.append("span_hash_mismatch")
+    return errors
+
+
+def validate_policy_span(span: EvidenceSpan, doc: PolicyDocument,
+                         chunk: PolicyChunk | None, query: str,
+                         min_score: float) -> list[str]:
+    """Full policy-span check: integrity (incl. chunk binding), then
+    relevance. ``chunk`` is resolved by the caller from the
+    authoritative corpus; ``None`` means the chunk_id is unknown."""
+    if chunk is None:
+        return ["span_chunk_mismatch"]
+    errors = validate_span(
+        span, doc.text, expected_source_id=doc.doc_id,
+        expected_version=doc.version,
+        expected_corpus_version=doc.corpus_version,
+        expected_chunk=chunk,
+    )
+    errors.extend(validate_relevance(span, query, min_score))
     return errors
 
 

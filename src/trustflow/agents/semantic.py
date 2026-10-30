@@ -16,7 +16,7 @@ from trustflow.retrieval.models import (
     build_ledger_snapshot,
     make_ledger_span,
     span_in_text,
-    validate_relevance,
+    validate_policy_span,
     validate_span,
 )
 from trustflow.tools.ledger import StrictJsonNumber, SyntheticLedger
@@ -65,20 +65,33 @@ class SemanticReviewer:
         """Deterministic snapshot of the evidence for this plan."""
         return build_ledger_snapshot(self._ledger, sorted(self._accounts(plan)))
 
-    def ledger_spans(self, snapshot: LedgerSnapshot,
-                     plan: Plan) -> list[EvidenceSpan]:
-        """One span per committed transaction, citing its tx_id entry."""
-        spans: list[EvidenceSpan] = []
-        tx_ids = {t["tx_id"] for t in snapshot.transactions}
+    def expected_transactions(self, plan: Plan) -> dict[str, Any]:
+        """Backend-owned operation -> ledger transaction for this plan.
+
+        Identity comes from the step's operation/intent id, never from
+        ordering: the ledger is queried by that exact key (R3).
+        """
+        expected: dict[str, Any] = {}
         for step in plan.steps:
             if step.tool_name != "simulate_transfer":
                 continue
-            for tx_id in sorted(tx_ids):
-                needle = f'"tx_id":"{tx_id}"'
-                if needle in snapshot.canonical_text:
-                    start, end = span_in_text(snapshot.canonical_text, needle)
-                    spans.append(make_ledger_span(snapshot, start, end))
-                    break
+            key = step.operation_id or step.intent_id
+            if not key:
+                continue
+            tx = self._ledger.find_by_key(key)
+            if tx is not None:
+                expected[key] = tx
+        return expected
+
+    def ledger_spans(self, snapshot: LedgerSnapshot,
+                     plan: Plan) -> list[EvidenceSpan]:
+        """One span per operation of this plan, citing its own tx."""
+        spans: list[EvidenceSpan] = []
+        for tx in self.expected_transactions(plan).values():
+            needle = f'"tx_id":"{tx.tx_id}"'
+            if needle in snapshot.canonical_text:
+                start, end = span_in_text(snapshot.canonical_text, needle)
+                spans.append(make_ledger_span(snapshot, start, end))
         return spans
 
     def validate_evidence_spans(
@@ -94,9 +107,7 @@ class SemanticReviewer:
         """
         errors: list[str] = []
         goal_query = f"{goal.title} {goal.description}"
-        plan_query = " ".join(
-            f"{s.tool_name} {s.args}" for s in plan.steps
-        )
+        expected = self.expected_transactions(plan)
         for span in spans:
             if span.source_type == SpanSourceType.POLICY:
                 doc = (
@@ -106,12 +117,10 @@ class SemanticReviewer:
                 if doc is None:
                     errors.append("span_source_mismatch")
                     continue
-                errors.extend(validate_span(
-                    span, doc.text, expected_source_id=doc.doc_id,
-                    expected_version=doc.version,
-                    expected_corpus_version=doc.corpus_version,
-                ))
-                errors.extend(validate_relevance(span, goal_query, self._min_score))
+                chunk = self._retriever.chunk(span.chunk_id) \
+                    if self._retriever is not None else None
+                errors.extend(validate_policy_span(
+                    span, doc, chunk, goal_query, self._min_score))
             else:
                 if snapshot is None or span.snapshot_id != snapshot.snapshot_id:
                     errors.append("span_source_mismatch")
@@ -121,7 +130,42 @@ class SemanticReviewer:
                     expected_source_id=snapshot.snapshot_id,
                     expected_snapshot_hash=snapshot.snapshot_hash,
                 ))
-                errors.extend(validate_relevance(span, plan_query, 0.0))
+                # Provenance: the snapshot must actually contain this
+                # workflow's operations, read from this ledger by their
+                # backend-owned keys. A self-consistent foreign snapshot
+                # fails here even though its own hash matches (R3).
+                by_key = {t.get("idempotency_key"): t
+                          for t in snapshot.transactions}
+                for key, tx in expected.items():
+                    snap_tx = by_key.get(key)
+                    if snap_tx is None or not (
+                        snap_tx.get("tx_id") == tx.tx_id
+                        and snap_tx.get("from_account") == tx.from_account
+                        and snap_tx.get("to_account") == tx.to_account
+                        and float(snap_tx.get("amount", -1)) == float(tx.amount)
+                        and snap_tx.get("currency") == tx.currency
+                    ):
+                        errors.append("span_source_mismatch")
+                        break
+                # Relevance: the citation must cite one of this plan's
+                # own transactions; an arbitrary intact slice of the
+                # snapshot is not evidence for the operation (R3).
+                if expected and not any(
+                    f'"tx_id":"{tx.tx_id}"' in span.quoted_text
+                    for tx in expected.values()
+                ):
+                    errors.append("span_irrelevant")
+        # Coverage: every committed operation of the plan needs its
+        # own ledger citation when a snapshot is supplied.
+        if snapshot is not None and expected:
+            cited = {
+                tx.tx_id for tx in expected.values()
+                if any(s.source_type == SpanSourceType.LEDGER
+                       and f'"tx_id":"{tx.tx_id}"' in s.quoted_text
+                       for s in spans)
+            }
+            if len(cited) < len(expected):
+                errors.append("span_coverage_missing")
         return errors
 
     def evidence(self, plan: Plan) -> dict[str, Any]:
@@ -150,6 +194,10 @@ class SemanticReviewer:
         # existing bounded verification-only recovery (no re-execution).
         # Advisory findings are only recorded for audit.
         self.last_advisory_findings = []
+        if mandatory_citations and not evidence_spans:
+            # Mandatory evidence can never be silently absent (R2).
+            raise LLMResponseError(
+                "Evidence span validation failed: retrieval_unavailable")
         if evidence_spans:
             findings = self.validate_evidence_spans(
                 evidence_spans, goal, plan, snapshot=ledger_snapshot)
@@ -178,9 +226,28 @@ class SemanticReviewer:
         if tracker is not None:
             import json as _json
 
-            estimated_input = len(_json.dumps(payload, default=str)) // 4 + 128
-            estimated = estimated_input + self._reserve_tokens
-            tracker.reserve(estimated)
+            from trustflow.core.errors import TokenBudgetExceededError
+
+            def _estimate(candidate: dict[str, Any]) -> int:
+                return len(_json.dumps(candidate, default=str)) // 4 + 128 \
+                    + self._reserve_tokens
+
+            estimated = _estimate(payload)
+            try:
+                tracker.reserve(estimated)
+            except TokenBudgetExceededError:
+                if mandatory_citations:
+                    # Mandatory evidence is never dropped for budget;
+                    # the honest reservation failure propagates (R5).
+                    raise
+                # Advisory context is optional: drop it and reserve for
+                # the actually transmitted smaller payload, so a
+                # previously successful M1 outcome cannot change (R5).
+                # Incurred usage accounting is untouched.
+                payload = {**payload, "evidence_spans": [],
+                           "ledger_snapshot": None}
+                estimated = _estimate(payload)
+                tracker.reserve(estimated)
         try:
             review_call = self._llm.semantic_review
             if tracker is not None and getattr(

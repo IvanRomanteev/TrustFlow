@@ -71,22 +71,46 @@ class Planner:
         self._policy = policy or PolicyEngine()
         self._reserve_tokens = max_output_tokens
 
+    # The provider truncates retrieved context to this bound; the
+    # planner bounds once here so reservation and call use the
+    # identical transmitted text (R6).
+    _CONTEXT_CHARS = 2000
+
+    def _accepts_retrieval_context(self) -> bool:
+        """Capability is agreed with the actual callable signature,
+        never inherited blindly (R8): a legacy override that does not
+        accept ``retrieval_context`` (and has no ``**kwargs``) is never
+        passed the keyword. No TypeError-based retry is used."""
+        import inspect
+
+        try:
+            params = inspect.signature(self._llm.propose_plan).parameters
+        except (TypeError, ValueError):
+            return False
+        return "retrieval_context" in params or any(
+            p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
+
     def _propose(self, goal: WorkflowGoal, tracker: UsageTracker | None,
                  feedback: str | None = None,
                  retrieval_context: str | None = None):
+        bounded_context = (retrieval_context or "")[: self._CONTEXT_CHARS] or None
         estimated = 0
         if tracker is not None:
             # Reserve estimated input (~4 chars/token + prompt overhead)
-            # plus the full allowed output before every attempt.
-            estimated_input = (len(goal.title) + len(goal.description)) // 4 + 256
+            # plus the full allowed output before every attempt. The
+            # bounded retrieval context actually transmitted is part of
+            # the known input, for the initial and every retry call.
+            estimated_input = (
+                len(goal.title) + len(goal.description)
+                + len(bounded_context or "")
+            ) // 4 + 256
             estimated = estimated_input + self._reserve_tokens
             tracker.reserve(estimated)
-        # Advisory retrieved context is forwarded only to providers
-        # that explicitly accept it; other providers keep M1 behaviour.
+        # Advisory retrieved context is forwarded only when the actual
+        # callable accepts it; other providers keep M1 behaviour.
         context_kw: dict[str, Any] = {}
-        if retrieval_context and getattr(
-                self._llm, "supports_retrieval_context", False):
-            context_kw["retrieval_context"] = retrieval_context
+        if bounded_context and self._accepts_retrieval_context():
+            context_kw["retrieval_context"] = bounded_context
         try:
             propose = self._llm.propose_plan
             if tracker is not None and getattr(

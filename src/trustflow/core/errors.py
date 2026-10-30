@@ -68,3 +68,18 @@ class ConflictingOperationError(TrustFlowError):
 
 class IntentConflictError(TrustFlowError):
     """Raised when a revision changes a committed intent or is ambiguous."""
+
+
+class EvidenceValidationError(TrustFlowError):
+    """Typed mandatory-evidence failure (M2, docs/m2.md).
+
+    Carries stable span/retrieval codes. In mandatory mode this never
+    degrades to silently absent evidence: before a commit it fails the
+    run before mutation; after a commit the engine routes it into
+    bounded verification-only recovery.
+    """
+
+    def __init__(self, codes: list[str]) -> None:
+        self.codes = list(codes)
+        super().__init__(
+            "Evidence validation failed: " + ",".join(sorted(set(self.codes))))

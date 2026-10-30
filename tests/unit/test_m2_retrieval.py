@@ -144,7 +144,11 @@ async def test_advisory_missing_evidence_keeps_m1_behaviour():
 
 
 @pytest.mark.asyncio
-async def test_post_commit_span_error_is_verification_only():
+async def test_corruption_while_awaiting_approval_blocks_payment():
+    # Remediation R1 supersedes the original M2 expectation: corruption
+    # discovered before execution must prevent the transfer entirely.
+    # Post-commit span errors (verification-only recovery, one
+    # transfer) are covered in test_m2_remediation.py (R2).
     retriever = PolicyRetriever()
     engine, registry = _engine([_transfer(1500.0)], retriever)
     run = await engine.create_workflow(WorkflowGoal(
@@ -157,14 +161,8 @@ async def test_post_commit_span_error_is_verification_only():
     run.evidence_spans[0] = broken
     engine.approvals.approve(run, "eval", run.plan.plan_hash)
     run = await engine.resume_after_approval(run)
-    assert run.status == RunStatus.VERIFICATION_PENDING
-    assert len(registry.ledger.transactions) == 1
-    assert run.verification is not None and run.verification.passed
-    run = await engine.retry_verification(run)
-    assert len(registry.ledger.transactions) == 1
-    run = await engine.retry_verification(run)
     assert run.status == RunStatus.FAILED
-    assert len(registry.ledger.transactions) == 1
+    assert registry.ledger.transactions == []
 
 
 @pytest.mark.asyncio

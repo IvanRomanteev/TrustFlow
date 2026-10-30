@@ -82,6 +82,10 @@ class PolicyRetriever:
     def document(self, doc_id: str) -> PolicyDocument | None:
         return self._docs.get(doc_id)
 
+    def chunk(self, chunk_id: str) -> PolicyChunk | None:
+        """Authoritative chunk resolution by id (R7)."""
+        return next((c for c in self._chunks if c.chunk_id == chunk_id), None)
+
     def chunks(self) -> list[PolicyChunk]:
         return list(self._chunks)
 
