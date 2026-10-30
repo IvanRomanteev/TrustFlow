@@ -132,6 +132,11 @@ class SemanticReviewer:
         errors: list[str] = []
         goal_query = f"{goal.title} {goal.description}"
         expected = self.expected_transactions(plan)
+        # The canonical snapshot contract applies whenever a snapshot
+        # is supplied, independently of whether any ledger spans exist
+        # (C1: read-only workflows with zero ledger citations).
+        if snapshot is not None:
+            errors.extend(snapshot_validation_errors(snapshot))
         for span in spans:
             if span.source_type == SpanSourceType.POLICY:
                 doc = (
@@ -217,26 +222,25 @@ class SemanticReviewer:
         return errors
 
     def evidence(self, plan: Plan) -> dict[str, Any]:
-        """Evidence read directly from the ledger, not from executor output."""
-        accounts = self._accounts(plan)
-        balances = {}
-        transactions: list[dict] = []
-        for acct in sorted(accounts):
-            try:
-                balances[acct] = self._ledger.get_balance(acct).model_dump()
-                transactions.extend(
-                    t.model_dump() for t in self._ledger.list_transactions(acct, 50)
-                )
-            except KeyError:
-                continue
-        unique = {t["tx_id"]: t for t in transactions}
-        return {"balances": balances, "transactions": list(unique.values())}
+        """Evidence read directly from the ledger, not from executor output.
+
+        The full canonical snapshot for the plan's accounts is the
+        source, so a committed operation never disappears behind a
+        recent-history window (C3, aged operations).
+        """
+        accounts = sorted(self._accounts(plan))
+        if not accounts:
+            return {"balances": {}, "transactions": []}
+        snapshot = build_ledger_snapshot(self._ledger, accounts)
+        return {"balances": snapshot.balances,
+                "transactions": snapshot.transactions}
 
     def review(self, goal: WorkflowGoal, plan: Plan,
                tracker: UsageTracker | None = None,
                evidence_spans: list[EvidenceSpan] | None = None,
                mandatory_citations: bool = False,
-               ledger_snapshot: LedgerSnapshot | None = None) -> SemanticReview:
+               ledger_snapshot: LedgerSnapshot | None = None,
+               step_results: list | None = None) -> SemanticReview:
         # Span validation runs before any model call. Mandatory-mode
         # failures raise LLMResponseError so the engine follows the
         # existing bounded verification-only recovery (no re-execution).
@@ -270,19 +274,57 @@ class SemanticReviewer:
         mandatory_tx_ids = {
             tx.tx_id for tx in self.expected_transactions(plan).values()
         }
+        # Executed reads: the identities that the read actually
+        # returned are the obligation, verified row-by-row against
+        # the authoritative ledger evidence. A later ledger state
+        # never redefines an already executed read (C3-B).
+        authoritative = {
+            str(t.get("tx_id")): t
+            for t in evidence_data.get("transactions", [])
+        }
+        results_by_step = {
+            getattr(r, "step_id", None): r for r in (step_results or [])
+        }
         for step in plan.steps:
-            if step.tool_name == "list_transactions":
+            if step.tool_name != "list_transactions":
+                continue
+            result = results_by_step.get(step.step_id)
+            rows = None
+            if result is not None and getattr(result, "status", None) is not None \
+                    and str(getattr(result.status, "value", result.status)) == "SUCCEEDED":
+                rows = [
+                    dict(t) for t in
+                    (getattr(result, "data", {}) or {}).get("transactions", [])
+                    if isinstance(t, dict)
+                ]
+                for row in rows:
+                    tx_id = str(row.get("tx_id"))
+                    if authoritative.get(tx_id) != row:
+                        raise LLMResponseError(
+                            "Mandatory read evidence does not match the "
+                            "authoritative ledger: span_malformed")
+                mandatory_tx_ids.update(str(t.get("tx_id")) for t in rows)
+            if rows is None:
                 account = step.args.get("account_id")
                 try:
                     limit = int(step.args.get("limit", 20))
                 except (TypeError, ValueError):
                     limit = 20
-                rows = [
+                window = [
                     t for t in evidence_data.get("transactions", [])
                     if account in (t.get("from_account"), t.get("to_account"))
                 ]
                 mandatory_tx_ids.update(
-                    str(t.get("tx_id")) for t in rows[-limit:] if limit > 0)
+                    str(t.get("tx_id")) for t in window[-limit:] if limit > 0)
+        # Completeness at the reviewer boundary: every mandatory row
+        # must be available from the authoritative source before any
+        # provider call (C3). Missing rows are a typed failure, never
+        # a silently incomplete payload.
+        missing = mandatory_tx_ids - set(authoritative)
+        if missing:
+            raise LLMResponseError(
+                "Mandatory ledger evidence unavailable: "
+                "span_coverage_missing")
         payload = {
             "goal": {"title": goal.title, "description": goal.description},
             "plan_steps": [

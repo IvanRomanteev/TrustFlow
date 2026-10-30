@@ -139,7 +139,10 @@ class Planner:
             except (TypeError, ValueError):
                 params = {}
             if "context_shrinkable" in params:
-                context_kw["context_shrinkable"] = retrieval_shrinkable
+                # Mandatory semantics dominate shrinkable at every
+                # boundary, transport retry included (C2).
+                context_kw["context_shrinkable"] = (
+                    retrieval_shrinkable and not retrieval_mandatory)
         try:
             propose = self._llm.propose_plan
             if tracker is not None and getattr(

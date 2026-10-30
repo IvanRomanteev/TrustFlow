@@ -34,7 +34,11 @@ from trustflow.domain.state_machine import transition
 from trustflow.llm.usage import UsageTracker
 from trustflow.policies.policy_engine import PolicyEngine
 from trustflow.retrieval.corpus import PolicyRetriever
-from trustflow.retrieval.models import EvidenceSpan, LedgerSnapshot
+from trustflow.retrieval.models import (
+    EvidenceSpan,
+    LedgerSnapshot,
+    snapshot_validation_errors,
+)
 
 
 class RunRepository:
@@ -469,9 +473,22 @@ class WorkflowEngine:
         """
         assert self.semantic is not None
         mandatory = run.goal.require_evidence
+
+        def checked(snapshot: LedgerSnapshot) -> LedgerSnapshot:
+            # One acceptance boundary for fresh and stored snapshots,
+            # independent of ledger spans (C1). Invalid representations
+            # are rejected typed, never silently repaired.
+            errors = snapshot_validation_errors(snapshot)
+            if errors:
+                if mandatory:
+                    raise EvidenceValidationError(sorted(set(errors)))
+                raise ValueError(
+                    "snapshot validation failed: " + ",".join(sorted(set(errors))))
+            return snapshot
+
         stored = run.ledger_snapshot
         if stored is not None:
-            snapshot = LedgerSnapshot.model_validate(stored)
+            snapshot = checked(LedgerSnapshot.model_validate(stored))
             expected = self.semantic.expected_transactions(plan)
             covered = all(
                 any(t.get("idempotency_key") == key
@@ -493,8 +510,8 @@ class WorkflowEngine:
         # stored ones (F2): a model_copy-assembled object with a wrong
         # ID or malformed canonical data is rejected here, typed, and
         # never silently repaired.
-        snapshot = LedgerSnapshot.model_validate(
-            self.semantic.ledger_snapshot(plan).model_dump(mode="json"))
+        snapshot = checked(LedgerSnapshot.model_validate(
+            self.semantic.ledger_snapshot(plan).model_dump(mode="json")))
         new_spans = self.semantic.ledger_spans(snapshot, plan)
         old_id = stored.get("snapshot_id") if stored else None
         # Atomic pair replacement: policy spans preserved, ledger spans
@@ -630,7 +647,8 @@ class WorkflowEngine:
                         run.goal, plan, tracker=self._tracker(run),
                         evidence_spans=spans,
                         mandatory_citations=run.goal.require_evidence,
-                        ledger_snapshot=snapshot)
+                        ledger_snapshot=snapshot,
+                        step_results=run.step_results)
                     if self.semantic.last_advisory_findings:
                         self.audit.log(
                             run.run_id, "retrieval", "span_advisory_findings",

@@ -495,12 +495,40 @@ class MetaResponsesProvider:
                        for q in quoted)
             }
             if isinstance(mandatory_hint, list):
-                # Exact identities supplied by the reviewer are
-                # authoritative; identical historical payloads are
-                # never promoted to mandatory by resemblance (F4).
+                # Completeness (C3-C): a supplied hint can add
+                # obligations but can never silently remove rows that
+                # the plan itself makes mandatory. Required IDs must
+                # be present in the available evidence, and requested
+                # read rows are unioned in regardless of the hint.
+                available_ids = {str(tx.get("tx_id")) for tx in txs}
+                missing = {
+                    str(tx_id) for tx_id in mandatory_hint
+                } - available_ids
+                if missing:
+                    raise LLMResponseError(
+                        "Mandatory ledger evidence incomplete: "
+                        "required transactions are absent from the "
+                        "available evidence; refusing to transmit")
                 mandatory_ids = {
                     str(tx_id) for tx_id in mandatory_hint
                 } | mandatory_ids
+                for step in payload.get("plan_steps") or []:
+                    if not isinstance(step, dict):
+                        continue
+                    args = step.get("args") or {}
+                    if step.get("tool_name") == "list_transactions":
+                        account = args.get("account_id")
+                        try:
+                            limit = int(args.get("limit", 20))
+                        except (TypeError, ValueError):
+                            limit = 20
+                        rows = [
+                            tx for tx in txs
+                            if account in (tx.get("from_account"),
+                                           tx.get("to_account"))
+                        ]
+                        for tx in rows[-limit:] if limit > 0 else []:
+                            mandatory_ids.add(str(tx.get("tx_id")))
                 kept = [tx for tx in txs
                         if str(tx.get("tx_id")) in mandatory_ids]
                 reduced = {**payload,

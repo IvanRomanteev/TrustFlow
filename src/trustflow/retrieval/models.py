@@ -271,7 +271,12 @@ def build_ledger_snapshot(ledger: SyntheticLedger,
             balances[name] = ledger.get_balance(name).model_dump()
         except KeyError:
             continue
-        for tx in ledger.list_transactions(name, 100):
+    # Full authoritative history for the snapshot accounts: a capped
+    # recent-history window must never decide which committed
+    # operations exist (C3).
+    wanted = set(names)
+    for tx in ledger.transactions:
+        if tx.from_account in wanted or tx.to_account in wanted:
             txs[tx.tx_id] = tx.model_dump()
     transactions = [txs[k] for k in sorted(txs)]
     canonical = json.dumps(
