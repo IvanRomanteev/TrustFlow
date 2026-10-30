@@ -1,5 +1,36 @@
 # TrustFlow Worklog
 
+## M3 candidate — persistence + demo UI (from accepted M2 fefd3fd)
+Implemented on branch m3/persistence-ui, based exactly on the
+independently accepted M2 SHA fefd3fdcebcb784170d9097eb9f2bc428da9f524
+(M2 OFFLINE GATE: PASS). The Engineering Playbook was not found
+locally and its contents were not invented; M3 scope is the kickoff
+text plus accepted M1/M2 contracts (docs/m3.md). Phase 1: SQLite
+(stdlib sqlite3, TRUSTFLOW_DB_PATH) behind the existing contracts —
+SQLiteRunRepository with optimistic versioning (cross-process
+single-use approvals), PersistentLedger with one BEGIN IMMEDIATE
+transaction per transfer and UNIQUE(idempotency_key), append-only
+SQLiteAuditLogger, idempotent migrations, verification-only restart
+recovery (EXECUTING/VERIFYING -> VERIFICATION_PENDING, approvals and
+uncertain runs untouched); unset DB path keeps exact M1/M2 in-memory
+behaviour. Phase 2: X-Approval-Token authorization (401/403) on
+approve/reject/verify-retry/reconcile when configured, GET /workflows,
+CORS, and a Next.js three-panel demo UI (task input, run timeline,
+approval & evidence with exact plan hash) with a permanent
+SANDBOX / NO REAL FUNDS banner and 2s polling. Phase 3:
+docker-compose.yml (config validated; Docker daemon was not running
+in this environment, so images were not built here) plus
+deterministic fake-mode API E2E for ordinary success, HIGH-risk
+approval, semantic-failure verification-only recovery and mandatory
+evidence blocking before mutation. Checks: pytest 279 passed
+(261 pre-existing + 18 new), Ruff clean, mypy clean (37 files),
+frontend production build green, real-process restart keeps
+COMPLETED run/approval/results, headless Chrome rendered all three
+panels against the durable backend. No existing test changed; both
+untracked conversation files preserved. Status: M3 candidate ready
+for independent review; not self-accepted. No push, merge, deploy
+or paid calls.
+
 ## M2 round-5 targeted remediation (independent review of c9956ee: C4 only)
 Independent review confirmed C1/C2 VERIFIED FIXED and previous C3
 cases GREEN, and kept the gate BLOCKED on one regression: C4, the

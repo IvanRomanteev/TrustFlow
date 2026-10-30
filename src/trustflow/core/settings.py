@@ -49,6 +49,14 @@ class Settings(BaseSettings):
     max_steps: int = 20
     max_retries: int = 2
     step_timeout_seconds: float = 5.0
+    # M3 persistence (docs/m3.md). Unset keeps the exact M1/M2
+    # in-memory behaviour; set (demo/Docker) for durable SQLite state.
+    db_path: str | None = None
+    # M3 approval authorization. When set, approval/recovery endpoints
+    # require the X-Approval-Token header. Never logged or persisted.
+    approval_token: str | None = None
+    # Local demo UI origins allowed by CORS.
+    cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     @property
     def model_api_key(self) -> str | None:

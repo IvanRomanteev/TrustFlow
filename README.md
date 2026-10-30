@@ -35,6 +35,22 @@ Open http://127.0.0.1:8000/docs for the interactive API.
 
 Low-risk goals (e.g. a balance check) execute and verify immediately.
 
+## M3 demo (durable state + UI)
+
+One command (Docker daemon required):
+
+```powershell
+docker compose up --build
+```
+
+Then open http://127.0.0.1:3000 in a browser. Approval token for
+panel 3: `demo-approval-token`. Without Docker, run the backend with
+`TRUSTFLOW_DB_PATH=data/trustflow.db` and
+`TRUSTFLOW_APPROVAL_TOKEN=demo-approval-token` set, plus
+`npm run start` in `frontend/` after `npm install` and
+`npm run build`. Workflow, ledger, approval and audit state lives in
+SQLite and survives restarts; see [docs/m3.md](docs/m3.md).
+
 ## Safety
 
 - Risk is decided by the deterministic backend `PolicyEngine`, never by the LLM alone.

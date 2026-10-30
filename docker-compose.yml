@@ -1,0 +1,25 @@
+# TrustFlow demo (M3): one command — docker compose up --build
+# Then open http://127.0.0.1:3000 in a browser (SANDBOX, synthetic only).
+# Approval token for the demo UI: demo-approval-token (panel 3).
+services:
+  backend:
+    build: .
+    environment:
+      TRUSTFLOW_LLM_MODE: "fake"
+      TRUSTFLOW_DB_PATH: "/data/trustflow.db"
+      TRUSTFLOW_APPROVAL_TOKEN: "demo-approval-token"
+    volumes:
+      - tf-data:/data
+    ports:
+      - "8000:8000"
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: "http://127.0.0.1:8000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+volumes:
+  tf-data:

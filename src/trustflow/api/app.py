@@ -1,9 +1,11 @@
 """FastAPI app: workflows, approvals, audit, tools. Synthetic data only."""
 
+import hmac
 from functools import lru_cache
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from trustflow.agents.approval import HumanApprovalService
@@ -41,10 +43,33 @@ class Container:
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
-        self.registry = ToolRegistry()
+        self.persistence = "memory"
+        self.recovered_runs: list[str] = []
+        self.registry: ToolRegistry
+        self.audit: AuditLogger
+        self.repo: RunRepository
+        if settings.db_path:
+            # M3 durable mode (docs/m3.md): SQLite behind the same
+            # repository/ledger/audit contracts as the in-memory M1/M2
+            # implementations. Crash-stranded runs are recovered
+            # verification-only; committed payments never re-execute.
+            from trustflow.persistence import (
+                PersistentLedger,
+                SQLiteAuditLogger,
+                SQLiteRunRepository,
+                recover_interrupted_runs,
+            )
+
+            self.registry = ToolRegistry(ledger=PersistentLedger(settings.db_path))
+            self.audit = SQLiteAuditLogger(settings.db_path)
+            self.repo = SQLiteRunRepository(settings.db_path)
+            self.persistence = "sqlite"
+            self.recovered_runs = recover_interrupted_runs(self.repo, self.audit)
+        else:
+            self.registry = ToolRegistry()
+            self.audit = AuditLogger()
+            self.repo = RunRepository()
         self.policy = PolicyEngine(settings)
-        self.audit = AuditLogger()
-        self.repo = RunRepository()
         self.approvals = HumanApprovalService()
         # Explicit fake/live switch; live without MODEL_API_KEY raises here.
         provider = build_provider(settings)
@@ -78,9 +103,32 @@ def create_app(container: Container | None = None) -> FastAPI:
                   description="Self-verifying multi-agent workflows. Synthetic data only.")
     box = container or get_container()
     app.state.container = box
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=box.settings.cors_origins,
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type", "X-Approval-Token"],
+    )
 
     def dep() -> Container:
         return box
+
+    def require_approval_token(
+        c: Annotated[Container, Depends(dep)],
+        x_approval_token: Annotated[str | None, Header()] = None,
+    ) -> None:
+        """Approval authorization (M3). Enforced whenever a token is
+        configured (the demo always configures one); unset keeps the
+        M1/M2 local-test behaviour. The token is never logged."""
+        expected = c.settings.approval_token
+        if not expected:
+            return
+        if x_approval_token is None:
+            raise HTTPException(
+                status_code=401, detail="X-Approval-Token header required")
+        if not hmac.compare_digest(x_approval_token, expected):
+            raise HTTPException(
+                status_code=403, detail="Invalid approval token")
 
     @app.get("/health")
     def health(c: Annotated[Container, Depends(dep)]) -> dict:
@@ -91,6 +139,8 @@ def create_app(container: Container | None = None) -> FastAPI:
             "planning_model": c.settings.planning_model,
             "review_model": c.settings.review_model,
             "fast_model": c.settings.fast_model,
+            "persistence": c.persistence,
+            "approval_auth_required": bool(c.settings.approval_token),
         }
 
     @app.get("/tools")
@@ -105,6 +155,10 @@ def create_app(container: Container | None = None) -> FastAPI:
         run = await c.engine.create_workflow(goal)
         return run
 
+    @app.get("/workflows")
+    def list_workflows(c: Annotated[Container, Depends(dep)]) -> list[WorkflowRun]:
+        return c.repo.list()
+
     @app.get("/workflows/{run_id}")
     def get_workflow(run_id: str, c: Annotated[Container, Depends(dep)]) -> WorkflowRun:
         run = c.repo.get(run_id)
@@ -112,7 +166,8 @@ def create_app(container: Container | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="Workflow not found")
         return run
 
-    @app.post("/workflows/{run_id}/approve")
+    @app.post("/workflows/{run_id}/approve",
+              dependencies=[Depends(require_approval_token)])
     async def approve(run_id: str, req: ApprovalRequest, c: Annotated[Container, Depends(dep)]):
         run = c.repo.get(run_id)
         if run is None:
@@ -126,7 +181,8 @@ def create_app(container: Container | None = None) -> FastAPI:
         except TrustFlowError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-    @app.post("/workflows/{run_id}/reject")
+    @app.post("/workflows/{run_id}/reject",
+              dependencies=[Depends(require_approval_token)])
     def reject(run_id: str, req: ApprovalRequest, c: Annotated[Container, Depends(dep)]):
         run = c.repo.get(run_id)
         if run is None:
@@ -137,8 +193,11 @@ def create_app(container: Container | None = None) -> FastAPI:
             return c.repo.save(run)
         except ApprovalError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except TrustFlowError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-    @app.post("/workflows/{run_id}/verify-retry")
+    @app.post("/workflows/{run_id}/verify-retry",
+              dependencies=[Depends(require_approval_token)])
     async def verify_retry(run_id: str, c: Annotated[Container, Depends(dep)]):
         """Verification-only recovery: never executes tools or transfers."""
         run = c.repo.get(run_id)
@@ -146,7 +205,8 @@ def create_app(container: Container | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="Workflow not found")
         return await c.engine.retry_verification(run)
 
-    @app.post("/workflows/{run_id}/reconcile")
+    @app.post("/workflows/{run_id}/reconcile",
+              dependencies=[Depends(require_approval_token)])
     async def reconcile(run_id: str, c: Annotated[Container, Depends(dep)]):
         """Resolve uncertain execution outcomes from workers/ledger only."""
         run = c.repo.get(run_id)

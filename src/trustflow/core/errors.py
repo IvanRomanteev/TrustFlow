@@ -70,6 +70,14 @@ class IntentConflictError(TrustFlowError):
     """Raised when a revision changes a committed intent or is ambiguous."""
 
 
+class ConcurrentUpdateError(TrustFlowError):
+    """Raised when a persisted run changed since it was loaded (M3).
+
+    Optimistic-concurrency backstop that keeps hash-bound approvals
+    single-use across processes; the API maps it to HTTP 409.
+    """
+
+
 class EvidenceValidationError(TrustFlowError):
     """Typed mandatory-evidence failure (M2, docs/m2.md).
 
