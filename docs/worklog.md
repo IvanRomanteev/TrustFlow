@@ -1,5 +1,35 @@
 # TrustFlow Worklog
 
+## M2 round-5 targeted remediation (independent review of c9956ee: C4 only)
+Independent review confirmed C1/C2 VERIFIED FIXED and previous C3
+cases GREEN, and kept the gate BLOCKED on one regression: C4, the
+provider re-derived the executed read from the current last-N
+window, promoting 35 later transactions into mandatory evidence
+after unrelated history growth (36 required rows became 71, the
+8115-char payload exceeded the limit and healthy recovery was
+blocked). Review materials are preserved unchanged at
+TrustFlow-context/review-m2-c9956ee-independent-c0195e2d/.
+Maintained regressions in tests/unit/test_m2_remediation5.py:
+3 failed on baseline c9956ee, all green after the fix. Fix: the
+reviewer marks its obligation set complete via
+mandatory_tx_ids_complete, carried as an attribute of the internal
+SemanticPayload (never serialized, transmitted or counted in the
+reservation shape); a complete authoritative hint is used exactly
+(verified executed-read IDs union committed-operation IDs union
+cited IDs) with the C3 required-subset-of-available check intact,
+while an unmarked/incomplete hint keeps the previous C3 union
+protection so empty/partial direct metadata still cannot drop
+requested rows and missing committed evidence is rejected before
+HTTP. Checks: pytest 261 passed, Ruff clean, mypy clean (31
+files), eval 33/33, adapted independent aggregate 238/238,
+unchanged round-3 probes 109/111 (only the two known out-of-scope
+foreign-read exploratory failures), round-4 independent suite
+green on all six former C4 reproductions with only the two
+previously documented direct-provider exploratory failures
+remaining. No existing project test changed, no push, merge,
+deploy or paid calls. Status: fixed by the developer, READY FOR
+INDEPENDENT CODEX RE-REVIEW; M2 not accepted, M3 not started.
+
 ## M2 round-4 targeted remediation (independent review of bde4dae: C1–C3)
 Independent review kept the gate BLOCKED on three P2 items (all
 prior gates retained): C1 canonical snapshot uniqueness was only
