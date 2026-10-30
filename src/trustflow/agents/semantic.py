@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from trustflow.core.errors import LLMResponseError
 from trustflow.domain.models import Plan, SemanticReview, WorkflowGoal
-from trustflow.llm.provider import LLMProvider
+from trustflow.llm.provider import LLMProvider, SemanticPayload
 from trustflow.llm.usage import UsageTracker
 from trustflow.retrieval.corpus import PolicyRetriever
 from trustflow.retrieval.models import (
@@ -325,7 +325,14 @@ class SemanticReviewer:
             raise LLMResponseError(
                 "Mandatory ledger evidence unavailable: "
                 "span_coverage_missing")
-        payload = {
+        # The reviewer computed these obligations from verified
+        # executed reads and backend-owned committed operations
+        # against the authoritative ledger (C3/C4): the set is
+        # complete, and later ledger growth must never expand it.
+        # Completeness travels as a payload attribute, not a
+        # serialized key, so internal metadata changes neither the
+        # transmitted payload nor its reservation shape.
+        payload = SemanticPayload({
             "goal": {"title": goal.title, "description": goal.description},
             "plan_steps": [
                 {"tool_name": s.tool_name, "args": s.args} for s in plan.steps
@@ -340,7 +347,8 @@ class SemanticReviewer:
                  "snapshot_hash": ledger_snapshot.snapshot_hash}
                 if ledger_snapshot is not None else None
             ),
-        }
+        })
+        payload.mandatory_tx_ids_complete = True
         estimated = 0
         if tracker is not None:
             import json as _json
@@ -353,7 +361,8 @@ class SemanticReviewer:
                 # part of the reserved payload (F3/F4).
                 transmitted = {
                     k: v for k, v in candidate.items()
-                    if k != "mandatory_tx_ids"
+                    if k not in ("mandatory_tx_ids",
+                                 "mandatory_tx_ids_complete")
                 }
                 return len(_json.dumps(transmitted, default=str)) // 4 + 128 \
                     + self._reserve_tokens
@@ -374,10 +383,13 @@ class SemanticReviewer:
                 # entirely, not sent as empty placeholders whose
                 # serialization would still consume budget (F3).
                 # Incurred usage accounting is untouched.
-                payload = {
+                reduced = SemanticPayload({
                     k: v for k, v in payload.items()
                     if k not in ("evidence_spans", "ledger_snapshot")
-                }
+                })
+                reduced.mandatory_tx_ids_complete = \
+                    payload.mandatory_tx_ids_complete
+                payload = reduced
                 estimated = _estimate(payload)
                 tracker.reserve(estimated)
         try:

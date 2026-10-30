@@ -81,6 +81,17 @@ class LLMProvider(Protocol):
     def semantic_review(self, payload: dict[str, Any]) -> tuple[dict[str, Any], LLMCallRecord]: ...
 
 
+class SemanticPayload(dict):
+    """Internal reviewer-to-provider payload (never a wire format).
+
+    ``mandatory_tx_ids_complete`` travels as an attribute, not a
+    serialized key: internal completeness metadata must not change
+    the transmitted payload or its reservation shape (C4).
+    """
+
+    mandatory_tx_ids_complete: bool = False
+
+
 class FakeLLMProvider:
     """Deterministic offline provider. Zero cost, no network, no keys."""
 
@@ -467,8 +478,13 @@ class MetaResponsesProvider:
         # transmitted as model evidence.
         mandatory_hint = payload.get("mandatory_tx_ids") \
             if isinstance(payload, dict) else None
+        mandatory_complete = bool(
+            getattr(payload, "mandatory_tx_ids_complete", False)) or (
+            payload.get("mandatory_tx_ids_complete") is True
+            if isinstance(payload, dict) else False)
         payload = {
-            k: v for k, v in payload.items() if k != "mandatory_tx_ids"
+            k: v for k, v in payload.items()
+            if k not in ("mandatory_tx_ids", "mandatory_tx_ids_complete")
         } if isinstance(payload, dict) else payload
         full = json.dumps(payload, default=str)
         if len(full) <= self.SEMANTIC_PAYLOAD_MAX_CHARS:
@@ -512,7 +528,15 @@ class MetaResponsesProvider:
                 mandatory_ids = {
                     str(tx_id) for tx_id in mandatory_hint
                 } | mandatory_ids
+                # A complete authoritative hint is used exactly as
+                # supplied (C4): later history is never re-windowed
+                # into mandatory executed-read evidence. Only an
+                # incomplete/unmarked hint keeps the C3 protection
+                # below, unioning the requested read rows from the
+                # available evidence.
                 for step in payload.get("plan_steps") or []:
+                    if mandatory_complete:
+                        break
                     if not isinstance(step, dict):
                         continue
                     args = step.get("args") or {}
