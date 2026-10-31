@@ -698,3 +698,18 @@ pytest 340 passed, ruff/mypy PASS, frontend build PASS, eval 33/33
 critical 20/20 0 violations, verdict digest 90043870... stable,
 ablations A 18/18 B 23/24. Status: M4 R3 IMPLEMENTATION COMPLETE -
 INDEPENDENT ACCEPTANCE PENDING. Not pushed, no acceptance tag.
+
+## M4 remediation round 4 (branch m4/acceptance-remediation-r4)
+
+Parent R3 candidate e06b86e23c52b5a9aeca53a7c908af518e8dde05,
+independently BLOCKED on R3-F4a-INT (custom int key subclass executed
+__str__ at the publication boundary and leaked the synthetic marker
+into traces/ablations). Surgical fix in evaluation/errors.py only:
+exact-type dispatch for mapping keys, subclasses normalized to
+<unsupported-key> without representation hooks. New maintained tests
+tests/unit/test_m4_remediation4.py cover custom int/float/str keys,
+ordinary numeric keys, placeholder collisions and a real CLI
+subprocess scan. Reviewer minimal_int_contract copied to a separate
+workspace: FAIL on R3 (3 hook calls), PASS on R4 (0 hook calls, 0
+leaks). Status: M4 R4 IMPLEMENTATION COMPLETE - INDEPENDENT
+ACCEPTANCE PENDING. Not pushed, no acceptance tag.

@@ -51,14 +51,18 @@ def _sanitize_key(key) -> str:
     still goes through full redaction. Unsupported key objects are
     never stringified: arbitrary ``__str__``/``__repr__`` is untrusted.
     """
-    if isinstance(key, str):
+    key_type = type(key)
+    if key_type is str:
         if _LABEL_KEY.fullmatch(key) and not any(ch.isdigit() for ch in key):
             text = key
         else:
             text = redact(key)
         return text if len(text) <= _MAX_STR else text[:_MAX_STR] + "<truncated>"
-    if key is None or isinstance(key, (bool, int, float)):
+    if key_type in (bool, int, float):
+        # Exact built-in types only: subclasses may override __str__.
         return str(key)
+    if key is None:
+        return "None"
     return "<unsupported-key>"
 
 
@@ -81,7 +85,7 @@ def sanitize_payload(value, depth: int = 0):
         collisions: dict[str, int] = {}
         for k, v in list(value.items())[:_MAX_ITEMS]:
             skey = _sanitize_key(k)
-            sval = ("[REDACTED]" if isinstance(k, str)
+            sval = ("[REDACTED]" if type(k) is str
                     and _CREDENTIAL_KEY.search(k)
                     else sanitize_payload(v, depth + 1))
             if skey in published:
