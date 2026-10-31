@@ -171,6 +171,171 @@ def test_owned_image_cleanup_requires_label_and_identity():
     assert not module._owned_image_ok(labels, None, "run-1", None)
 
 
+# --- P2-05 R2 adversarial matrix (fake Docker runner, no daemon) ------
+# Each case scripts the Docker CLI boundary and asserts the observable
+# safety outcome: no mutation is ever authorized by an inconclusive
+# inspection, and cleanup addresses only the recorded immutable ID.
+
+import json as _json  # noqa: E402
+import subprocess as _sp  # noqa: E402
+
+_IMG = "sha256:" + "a" * 64
+_OTHER = "sha256:" + "b" * 64
+
+
+def _cp(rc, out="", err=""):
+    return _sp.CompletedProcess([], rc, out, err)
+
+
+def _found(out_id=_IMG, labels=None):
+    return _cp(0, _json.dumps(
+        [{"Id": out_id, "Config": {"Labels": labels or {}}}]))
+
+
+def _scripted(module, monkeypatch, handler):
+    calls = []
+
+    def fake_run(args, timeout=600, cwd=None):
+        calls.append(list(args))
+        return handler(list(args))
+
+    monkeypatch.setattr(module, "_run", fake_run)
+    return calls
+
+
+def _inspect_only(calls):
+    return all(c[:3] == ["docker", "image", "inspect"] for c in calls)
+
+
+def test_inspect_confirmed_missing_is_not_found(monkeypatch):
+    module = _docker_e2e_module()
+
+    def handler(args):
+        return _cp(1, "[]", f"Error response from daemon: "
+                            f"No such image: {args[3]}")
+
+    _scripted(module, monkeypatch, handler)
+    res = module._inspect_image("repo:missing")
+    assert res.state is module.InspectState.NOT_FOUND
+
+
+def test_inspect_found_validates_metadata(monkeypatch):
+    module = _docker_e2e_module()
+    _scripted(module, monkeypatch,
+              lambda args: _found(labels={module.RUN_LABEL: "r1"}))
+    res = module._inspect_image(_IMG)
+    assert res.state is module.InspectState.FOUND
+    assert res.image_id == _IMG
+    assert res.labels[module.RUN_LABEL] == "r1"
+
+
+def test_inspect_daemon_permission_and_unknown_errors_fail_closed(monkeypatch):
+    module = _docker_e2e_module()
+    for err in ("Cannot connect to the Docker daemon at unix:///x",
+                "permission denied while trying to connect to Docker",
+                "unknown flag: --bogus"):
+        _scripted(module, monkeypatch,
+                  lambda args, e=err: _cp(1, "", e))
+        res = module._inspect_image("repo:x")
+        assert res.state is module.InspectState.ERROR, err
+
+
+def test_inspect_malformed_and_empty_output_fail_closed(monkeypatch):
+    module = _docker_e2e_module()
+    for out in ("not-json", "[]", "{}", '[{"Id": 42}]'):
+        _scripted(module, monkeypatch, lambda args, o=out: _cp(0, o))
+        assert module._inspect_image("repo:x").state is \
+            module.InspectState.ERROR, out
+
+
+def test_inspect_timeout_is_error_and_blocks_allocation(monkeypatch):
+    module = _docker_e2e_module()
+
+    def handler(args):
+        raise _sp.TimeoutExpired("docker", 120)
+
+    calls = _scripted(module, monkeypatch, handler)
+    assert module._inspect_image("repo:x").state is module.InspectState.ERROR
+    with pytest.raises(AssertionError):
+        module._allocate_matcher_tag()
+    assert _inspect_only(calls)  # no build/mutation was attempted
+
+
+def test_allocation_aborts_on_inspection_error(monkeypatch):
+    module = _docker_e2e_module()
+    calls = _scripted(module, monkeypatch,
+                       lambda args: _cp(1, "", "daemon unavailable"))
+    with pytest.raises(AssertionError):
+        module._allocate_matcher_tag()
+    assert _inspect_only(calls)
+
+
+def test_sentinel_guard_fails_closed_on_error():
+    module = _docker_e2e_module()
+    err = module.InspectResult(module.InspectState.ERROR, detail="boom")
+    with pytest.raises(AssertionError):
+        module._fail_if_error(err, "legacy")
+    ok = module.InspectResult(module.InspectState.NOT_FOUND)
+    module._fail_if_error(ok, "legacy")  # must not raise
+
+
+def test_cleanup_inspection_error_is_visible_failure(monkeypatch):
+    module = _docker_e2e_module()
+    calls = _scripted(module, monkeypatch,
+                       lambda args: _cp(1, "", "daemon unavailable"))
+    with pytest.warns(UserWarning):
+        outcome = module._cleanup_owned_image(_IMG, "run-1")
+    assert outcome == "cleanup-failed"  # never a silent success
+    assert not any("rmi" in c for c in calls)
+
+
+def test_cleanup_label_and_id_mismatch_preserve(monkeypatch):
+    module = _docker_e2e_module()
+    for found in (_found(labels={module.RUN_LABEL: "other"}),
+                  _found(out_id=_OTHER, labels={module.RUN_LABEL: "run-1"})):
+        calls = _scripted(module, monkeypatch, lambda args, f=found: f)
+        with pytest.warns(UserWarning):
+            outcome = module._cleanup_owned_image(_IMG, "run-1")
+        assert outcome == "preserved-unverified"
+        assert _inspect_only(calls)
+
+
+def test_cleanup_without_recorded_identity_makes_no_docker_calls(monkeypatch):
+    module = _docker_e2e_module()
+    calls = _scripted(module, monkeypatch, lambda args: _cp(0))
+    with pytest.warns(UserWarning):
+        assert module._cleanup_owned_image(None, None) == "preserved-unverified"
+    assert calls == []
+
+
+def test_cleanup_removes_by_immutable_id_only(monkeypatch):
+    module = _docker_e2e_module()
+
+    def handler(args):
+        if args[:3] == ["docker", "image", "inspect"]:
+            return _found(labels={module.RUN_LABEL: "run-1"})
+        return _cp(0)
+
+    calls = _scripted(module, monkeypatch, handler)
+    assert module._cleanup_owned_image(_IMG, "run-1") == "removed"
+    removals = [c for c in calls if "rmi" in c]
+    assert removals == [["docker", "rmi", _IMG]]  # ID target, no -f, no tag
+
+
+def test_cleanup_removal_refusal_is_visible(monkeypatch):
+    module = _docker_e2e_module()
+
+    def handler(args):
+        if args[:3] == ["docker", "image", "inspect"]:
+            return _found(labels={module.RUN_LABEL: "run-1"})
+        return _cp(1, "", "conflict: unable to delete (must be forced)")
+
+    _scripted(module, monkeypatch, handler)
+    with pytest.warns(UserWarning):
+        outcome = module._cleanup_owned_image(_IMG, "run-1")
+    assert outcome == "preserved-conflict"
+
+
 def test_compose_publishes_loopback_only():
     import re
 

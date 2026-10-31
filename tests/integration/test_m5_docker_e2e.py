@@ -21,6 +21,8 @@ import urllib.error
 import urllib.request
 import uuid
 import warnings
+from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 
 import pytest
@@ -79,21 +81,81 @@ def test_compose_default_config_binds_loopback_only():
             assert port.get("host_ip") == "127.0.0.1", (service, port)
 
 
-# --- Per-invocation image ownership (P2-05) ---------------------------
-# The historical matcher test built into the shared fixed tag
-# `trustflow-m5-matcher-test:latest` and removed it unconditionally,
-# destroying a pre-existing image owned by someone else. Now every
-# invocation builds into a UUID tag carrying an ownership label; the
-# created image ID is recorded, and cleanup re-verifies label + ID
-# before removing exactly that tag (never `-f`, never a shared tag).
+# --- Fail-closed inspection + immutable-ID cleanup (P2-05 R2) --------
+# R1 defects closed here: (R1) inspect errors were mapped to "missing"
+# and authorized overwriting/deleting existing images; (R2) cleanup
+# removed a mutable tag after validating a different image ID (retag
+# TOCTOU). Inspection is now an explicit three-state result, and
+# deletion addresses only the recorded immutable image ID.
 
 RUN_LABEL = "trustflow.test-run"
-LEGACY_FIXED_TAG = "trustflow-m5-matcher-test:latest"  # never built now
+SENTINEL_LABEL = "trustflow.sentinel"
+LEGACY_FIXED_TAG = "trustflow-m5-matcher-test:latest"  # never written
+
+
+class InspectState(Enum):
+    FOUND = "found"
+    NOT_FOUND = "not_found"
+    ERROR = "error"
+
+
+@dataclass
+class InspectResult:
+    state: InspectState
+    image_id: str | None = None
+    labels: dict = field(default_factory=dict)
+    detail: str = ""
+
+
+def _inspect_image(ref: str) -> InspectResult:
+    """Three-state image inspection; never guesses absence.
+
+    NOT_FOUND requires every confirmed-absence signal the real Docker
+    CLI produces (nonzero exit, stdout exactly ``[]``, and the
+    daemon's ``No such image: <ref>`` message). Daemon, permission,
+    transport, timeout and malformed-output failures are ERROR.
+    """
+    try:
+        proc = _run(["docker", "image", "inspect", ref], timeout=120)
+    except subprocess.TimeoutExpired:
+        return InspectResult(InspectState.ERROR,
+                             detail=f"inspect timed out for {ref}")
+    if proc.returncode == 0:
+        try:
+            items = json.loads(proc.stdout)
+        except ValueError:
+            return InspectResult(InspectState.ERROR,
+                                 detail=f"malformed inspect output for {ref}")
+        if not isinstance(items, list) or len(items) != 1 \
+                or not isinstance(items[0], dict):
+            return InspectResult(InspectState.ERROR,
+                                 detail=f"unexpected inspect result for {ref}")
+        image_id = items[0].get("Id")
+        labels = (items[0].get("Config") or {}).get("Labels") or {}
+        if not isinstance(image_id, str) \
+                or not image_id.startswith("sha256:") \
+                or not isinstance(labels, dict):
+            return InspectResult(InspectState.ERROR,
+                                 detail=f"invalid inspect metadata for {ref}")
+        return InspectResult(InspectState.FOUND, image_id=image_id,
+                             labels=dict(labels))
+    if (proc.stdout or "").strip() == "[]" \
+            and f"No such image: {ref}" in (proc.stderr or ""):
+        return InspectResult(InspectState.NOT_FOUND)
+    return InspectResult(
+        InspectState.ERROR,
+        detail=f"inspect rc={proc.returncode} for {ref}: "
+               f"{(proc.stderr or '').strip()[:300]}")
 
 
 def _unique_image_tag() -> tuple[str, str]:
     run_id = uuid.uuid4().hex
     return f"trustflow-m5-matcher-test:{run_id}", run_id
+
+
+def _unique_sentinel_tag() -> tuple[str, str]:
+    run_id = uuid.uuid4().hex
+    return f"trustflow-m5-sentinel:{run_id}", run_id
 
 
 def _owned_image_ok(labels: dict | None, image_id: str | None,
@@ -102,34 +164,56 @@ def _owned_image_ok(labels: dict | None, image_id: str | None,
         and labels.get(RUN_LABEL) == run_id
 
 
-def _image_inspect(ref: str) -> dict | None:
-    proc = _run(["docker", "image", "inspect", ref], timeout=120)
-    if proc.returncode != 0:
-        return None
-    items = json.loads(proc.stdout)
-    return items[0] if items else None
+def _fail_if_error(res: InspectResult, what: str) -> None:
+    """Fail closed when a safety-relevant inspection is inconclusive."""
+    if res.state is InspectState.ERROR:
+        raise AssertionError(f"{what}: inspection ERROR: {res.detail}")
 
 
-def _cleanup_owned_image(tag: str, run_id: str, expected_id: str | None) -> str:
-    """Remove only the verified image this invocation created.
+def _allocate_matcher_tag() -> tuple[str, str]:
+    """Allocate a tag only on confirmed NOT_FOUND; ERROR aborts."""
+    for _attempt in range(5):
+        tag, run_id = _unique_image_tag()
+        res = _inspect_image(tag)
+        if res.state is InspectState.NOT_FOUND:
+            return tag, run_id
+        if res.state is InspectState.ERROR:
+            raise AssertionError(
+                f"tag allocation aborted before build: {res.detail}")
+    raise AssertionError("could not allocate a non-existing image tag")
 
-    Returns "removed" / "absent" / "preserved-unverified" /
-    "cleanup-failed". Anything unverifiable is preserved and made
-    visible via a warning instead of risking foreign deletion.
+
+def _cleanup_owned_image(image_id: str | None, run_id: str | None) -> str:
+    """Delete only the recorded immutable image ID (never a tag).
+
+    Outcomes: "removed" / "absent" / "preserved-unverified" /
+    "preserved-conflict" / "cleanup-failed". Ownership is verified
+    against the image addressed by its own ID, so retagging any
+    mutable tag cannot redirect deletion. Docker refusals (multiple
+    tags, containers, conflicts) preserve the image; no force is
+    ever used. A removal timeout propagates visibly.
     """
-    current = _image_inspect(tag)
-    if current is None:
-        return "absent"
-    labels = (current.get("Config") or {}).get("Labels") or {}
-    if not _owned_image_ok(labels, current.get("Id"), run_id, expected_id):
-        warnings.warn(f"P2-05: preserving unverified image {tag} "
-                      f"(id={current.get('Id')}, labels={labels})", stacklevel=2)
+    if not image_id or not run_id:
+        warnings.warn(f"P2-05: preserving image with unrecorded identity "
+                      f"(id={image_id}, run={run_id})", stacklevel=2)
         return "preserved-unverified"
-    proc = _run(["docker", "rmi", tag], timeout=120)  # no -f: exact tag
-    if proc.returncode != 0:
-        warnings.warn(f"P2-05: cleanup of owned image {tag} failed: "
-                      f"{proc.stderr.strip()}", stacklevel=2)
+    res = _inspect_image(image_id)
+    if res.state is InspectState.NOT_FOUND:
+        return "absent"
+    if res.state is InspectState.ERROR:
+        warnings.warn(f"P2-05: cleanup inspection failed for "
+                      f"{image_id}: {res.detail}", stacklevel=2)
         return "cleanup-failed"
+    if not _owned_image_ok(res.labels, res.image_id, run_id, image_id):
+        warnings.warn(f"P2-05: preserving unverified image {image_id} "
+                      f"(labels={res.labels})", stacklevel=2)
+        return "preserved-unverified"
+    proc = _run(["docker", "rmi", image_id], timeout=120)  # ID, no -f
+    if proc.returncode != 0:
+        warnings.warn(f"P2-05: preserving {image_id}, docker refused "
+                      f"removal: {(proc.stderr or '').strip()[:300]}",
+                      stacklevel=2)
+        return "preserved-conflict"
     return "removed"
 
 
@@ -155,30 +239,41 @@ def _run_matcher_build(tmp_path: Path) -> tuple[str, str, set[str]]:
     (ctx / "Dockerfile").write_text(
         "FROM node:22-alpine\nCOPY . /ctx\n"
         "RUN find /ctx -type f | sort > /listing.txt\n", encoding="utf-8")
-    tag = run_id = ""
-    for _attempt in range(5):  # a fresh UUID tag must not pre-exist
-        tag, run_id = _unique_image_tag()
-        if _image_inspect(tag) is None:
-            break
-    else:
-        raise AssertionError("could not allocate a non-existing image tag")
+    tag, run_id = _allocate_matcher_tag()  # aborts on inspect ERROR
     image_id: str | None = None
+    result: tuple[str, str, set[str]] | None = None
+    primary: BaseException | None = None
     try:
         build = _run(["docker", "build", "--label", f"{RUN_LABEL}={run_id}",
                       "-t", tag, str(ctx)])
         assert build.returncode == 0, build.stderr[-2000:]
-        created = _image_inspect(tag)
-        assert created is not None, f"built image {tag} not inspectable"
-        image_id = created.get("Id")
-        labels = (created.get("Config") or {}).get("Labels") or {}
-        assert labels.get(RUN_LABEL) == run_id, labels
+        created = _inspect_image(tag)
+        if created.state is not InspectState.FOUND:
+            raise AssertionError(
+                f"post-build inspection {created.state.value} for {tag}: "
+                f"{created.detail}; image preserved under that tag")
+        image_id = created.image_id
+        if created.labels.get(RUN_LABEL) != run_id:
+            raise AssertionError(
+                f"ownership label mismatch on {image_id}: {created.labels}")
         out = _run(["docker", "run", "--rm", "--entrypoint", "cat",
                     tag, "/listing.txt"])
         assert out.returncode == 0, out.stderr
-        return tag, run_id, set(out.stdout.split())
-    finally:
-        outcome = _cleanup_owned_image(tag, run_id, image_id)
-        assert outcome in ("removed", "absent"), outcome
+        result = (tag, run_id, set(out.stdout.split()))
+    except BaseException as exc:  # cleanup below must not mask it
+        primary = exc
+    outcome = _cleanup_owned_image(image_id, run_id)
+    if primary is not None:
+        if outcome not in ("removed", "absent"):
+            warnings.warn(f"P2-05: matcher cleanup outcome={outcome} "
+                          f"for image_id={image_id} tag={tag}", stacklevel=2)
+        raise primary
+    if outcome not in ("removed", "absent"):
+        raise AssertionError(
+            f"matcher cleanup outcome={outcome} for image_id={image_id} "
+            f"tag={tag}; image preserved for controlled cleanup")
+    assert result is not None
+    return result
 
 
 def _assert_matcher_listing(listed: set[str]) -> None:
@@ -196,44 +291,144 @@ def test_real_docker_matcher_frontend_context(tmp_path):
     _assert_matcher_listing(listed)
 
 
-def test_matcher_preserves_preexisting_fixed_tag(tmp_path):
-    """P2-05 regression: the matcher run must never touch the legacy tag.
+def _build_labeled_image(tmp_path: Path, name: str,
+                         labels: dict[str, str]) -> tuple[str, str, str]:
+    """Build a tiny test-owned image; returns (tag, run_id, image_id)."""
+    ctx = tmp_path / name
+    ctx.mkdir()
+    label_lines = "".join(f'LABEL {k}="{v}"\n' for k, v in labels.items())
+    (ctx / "Dockerfile").write_text(
+        f"FROM node:22-alpine\n{label_lines}", encoding="utf-8")
+    run_id = labels[RUN_LABEL]
+    tag = f"trustflow-m5-sentinel:{run_id}"
+    build = _run(["docker", "build", "-t", tag, str(ctx)])
+    assert build.returncode == 0, build.stderr[-2000:]
+    created = _inspect_image(tag)
+    assert created.state is InspectState.FOUND and created.image_id
+    return tag, run_id, created.image_id
 
-    A sentinel is placed under the historical fixed tag only when that
-    tag is initially absent (created by this invocation, removed by
-    this invocation afterwards). A pre-existing tag is preserved and
-    only its identity is validated.
+
+def test_matcher_preserves_unrelated_images(tmp_path):
+    """P2-05 R2 sentinel design: tests never write the legacy tag.
+
+    A pre-existing legacy image is only inspected (identity recorded,
+    never modified); unknown legacy state fails closed. The sentinel
+    lives under a unique per-invocation tag and is cleaned up by ID.
     """
-    sentinel_ctx = tmp_path / "sentinel"
-    sentinel_ctx.mkdir()
-    (sentinel_ctx / "Dockerfile").write_text(
-        'FROM node:22-alpine\nLABEL trustflow.sentinel="m5-p2-05"\n',
-        encoding="utf-8")
-    pre = _image_inspect(LEGACY_FIXED_TAG)
-    created_here = False
-    if pre is None:
-        build = _run(["docker", "build", "-t", LEGACY_FIXED_TAG,
-                      str(sentinel_ctx)])
-        assert build.returncode == 0, build.stderr[-2000:]
-        created_here = True
-        pre = _image_inspect(LEGACY_FIXED_TAG)
-    assert pre is not None and pre.get("Id")
-    sentinel_id = pre["Id"]
+    legacy = _inspect_image(LEGACY_FIXED_TAG)
+    _fail_if_error(legacy, "legacy tag state unknown")
+    s_tag, s_run, s_id = _build_labeled_image(
+        tmp_path, "sentinel",
+        {RUN_LABEL: uuid.uuid4().hex, SENTINEL_LABEL: "m5-p2-05"})
+    assert s_tag != LEGACY_FIXED_TAG
     try:
         tag, _run_id, listed = _run_matcher_build(tmp_path)
         assert tag != LEGACY_FIXED_TAG
         _assert_matcher_listing(listed)
-        after = _image_inspect(LEGACY_FIXED_TAG)
-        assert after is not None and after.get("Id") == sentinel_id, (
-            "pre-existing fixed-tag image was overwritten or deleted")
+        after_s = _inspect_image(s_id)
+        assert after_s.state is InspectState.FOUND
+        assert after_s.image_id == s_id
+        assert after_s.labels.get(SENTINEL_LABEL) == "m5-p2-05"
+        if legacy.state is InspectState.FOUND:
+            after_l = _inspect_image(LEGACY_FIXED_TAG)
+            assert after_l.state is InspectState.FOUND
+            assert after_l.image_id == legacy.image_id
+            assert after_l.labels == legacy.labels
     finally:
-        if created_here:
-            # Only this invocation's own sentinel is cleanup-eligible;
-            # a genuinely pre-existing image would be preserved.
-            current = _image_inspect(LEGACY_FIXED_TAG)
-            if current is not None and current.get("Id") == sentinel_id:
-                proc = _run(["docker", "rmi", LEGACY_FIXED_TAG], timeout=120)
-                assert proc.returncode == 0, proc.stderr
+        outcome = _cleanup_owned_image(s_id, s_run)
+        assert outcome in ("removed", "absent"), outcome
+
+
+def test_inspect_states_against_real_docker(tmp_path):
+    missing_tag, _run_id = _unique_image_tag()
+    assert _inspect_image(missing_tag).state is InspectState.NOT_FOUND
+    _tag, _run, image_id = _build_labeled_image(
+        tmp_path, "found", {RUN_LABEL: uuid.uuid4().hex})
+    try:
+        found = _inspect_image(image_id)
+        assert found.state is InspectState.FOUND
+        assert found.image_id == image_id
+        assert found.labels.get(RUN_LABEL)
+    finally:
+        assert _cleanup_owned_image(image_id, _run) in ("removed", "absent")
+
+
+def test_retag_race_never_deletes_replacement(tmp_path):
+    """R2 regression on real Docker: cleanup follows the recorded ID."""
+    _ta, run_a, id_a = _build_labeled_image(
+        tmp_path, "race-a", {RUN_LABEL: uuid.uuid4().hex})
+    tag_b, run_b, id_b = _build_labeled_image(
+        tmp_path, "race-b", {RUN_LABEL: uuid.uuid4().hex})
+    run_tag = _ta
+    try:
+        # Controlled boundary: reassign the run tag to B, drop B's tag.
+        assert _run(["docker", "tag", id_b, run_tag]).returncode == 0
+        assert _run(["docker", "rmi", tag_b]).returncode == 0
+        outcome = _cleanup_owned_image(id_a, run_a)
+        assert outcome in ("removed", "absent", "preserved-conflict",
+                           "preserved-unverified"), outcome
+        b_after = _inspect_image(id_b)
+        assert b_after.state is InspectState.FOUND, (
+            "replacement image B was deleted by cleanup")
+        assert b_after.image_id == id_b
+        if outcome == "removed":
+            assert _inspect_image(id_a).state is InspectState.NOT_FOUND
+    finally:
+        _cleanup_owned_image(id_b, run_b)
+        # A is test-owned too: remove leftovers strictly by recorded ID.
+        left = _inspect_image(id_a)
+        if left.state is InspectState.FOUND \
+                and left.labels.get(RUN_LABEL) == run_a:
+            _run(["docker", "rmi", id_a], timeout=120)
+
+
+def test_cleanup_refuses_multiply_tagged_image(tmp_path):
+    _tag, run_id, image_id = _build_labeled_image(
+        tmp_path, "multi", {RUN_LABEL: uuid.uuid4().hex})
+    extra_tag, _extra_run = _unique_sentinel_tag()
+    try:
+        assert _run(["docker", "tag", image_id, extra_tag]).returncode == 0
+        outcome = _cleanup_owned_image(image_id, run_id)
+        assert outcome == "preserved-conflict", outcome  # no force used
+        still = _inspect_image(image_id)
+        assert still.state is InspectState.FOUND
+        assert still.image_id == image_id
+        # Teardown of our own fixture: drop the extra tag, then the
+        # verified ID cleanup succeeds.
+        assert _run(["docker", "rmi", extra_tag]).returncode == 0
+        assert _cleanup_owned_image(image_id, run_id) == "removed"
+    finally:
+        left = _inspect_image(image_id)
+        if left.state is InspectState.FOUND \
+                and left.labels.get(RUN_LABEL) == run_id:
+            _run(["docker", "rmi", extra_tag], timeout=120)
+            _cleanup_owned_image(image_id, run_id)
+
+
+def test_sequential_matcher_invocations_use_distinct_tags(tmp_path):
+    first = _run_matcher_build(tmp_path / "one")
+    second = _run_matcher_build(tmp_path / "two")
+    assert first[0] != second[0] and first[1] != second[1]
+    _assert_matcher_listing(first[2])
+    _assert_matcher_listing(second[2])
+    assert _inspect_image(first[0]).state is InspectState.NOT_FOUND
+
+
+def test_concurrent_matcher_invocations_do_not_interfere(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+
+    def work(name: str):
+        return _run_matcher_build(tmp_path / name)
+
+    (tmp_path / "c1").mkdir()
+    (tmp_path / "c2").mkdir()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(work, ["c1", "c2"]))
+    assert results[0][0] != results[1][0]
+    assert results[0][1] != results[1][1]
+    for _tag, _run_id, listed in results:
+        _assert_matcher_listing(listed)
+        assert _inspect_image(_tag).state is InspectState.NOT_FOUND
 
 
 def _non_loopback_ipv4() -> str | None:
