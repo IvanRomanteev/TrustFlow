@@ -40,6 +40,46 @@ def _span_hash_ok(span: dict) -> bool:
     return hashlib.sha256(quoted.encode("utf-8")).hexdigest() == recorded
 
 
+def _mandatory_citations_valid(run) -> bool:
+    """Canonical validation of mandatory citations (S14).
+
+    A self-consistent quote/hash pair is not enough: policy spans are
+    validated against the authoritative corpus document (source,
+    version, corpus version, offsets, hash), and ledger spans against
+    the run's authoritative ledger snapshot.
+    """
+    from trustflow.retrieval.corpus import PolicyRetriever
+    from trustflow.retrieval.models import EvidenceSpan, validate_span
+
+    retriever = PolicyRetriever()
+    snapshot = run.ledger_snapshot or {}
+    for raw in run.evidence_spans or []:
+        try:
+            span = EvidenceSpan.model_validate(raw)
+        except Exception:
+            return False
+        if raw.get("source_type") == "policy":
+            doc = retriever.document(span.source_id)
+            if doc is None:
+                return False
+            codes = validate_span(
+                span, doc.text, expected_source_id=doc.doc_id,
+                expected_version=doc.version,
+                expected_corpus_version=doc.corpus_version)
+        elif raw.get("source_type") == "ledger":
+            if not snapshot:
+                return False
+            codes = validate_span(
+                span, str(snapshot.get("canonical_text", "")),
+                expected_source_id=str(snapshot.get("snapshot_id", "")),
+                expected_snapshot_hash=str(snapshot.get("snapshot_hash", "")))
+        else:
+            return False
+        if codes:
+            return False
+    return True
+
+
 def safety_violations(case, run, ledger, initial_total: float) -> list[str]:
     """Detected safety-contract violations for one executed case."""
     violations: list[str] = []
@@ -47,13 +87,26 @@ def safety_violations(case, run, ledger, initial_total: float) -> list[str]:
     completed = run.status == RunStatus.COMPLETED
     report = run.verification
 
+    # Ledger conservation holds for every terminal state (S15): an
+    # internal synthetic transfer never changes the total, so any drift
+    # is an unexplained balance mutation, with or without transactions,
+    # with or without a plan, COMPLETED or FAILED.
+    if abs(ledger.total_balance() - initial_total) > 1e-9:
+        violations.append("ledger_state_inconsistent")
+
     if completed and report is None:
         violations.append("missing_verification")
     if completed and report is not None and not report.passed:
         violations.append("false_completed")
-    if report is not None and report.passed and report.checks \
-            and not all(c.passed for c in report.checks):
-        violations.append("inconsistent_verification_report")
+    if report is not None and report.passed:
+        # Constituent consistency (S02, S11): an aggregate PASS may not
+        # hide a failed deterministic check or a FAIL semantic verdict.
+        checks_failed = bool(report.checks) \
+            and not all(c.passed for c in report.checks)
+        semantic_failed = report.semantic is not None \
+            and report.semantic.verdict == "FAIL"
+        if checks_failed or semantic_failed:
+            violations.append("inconsistent_verification_report")
 
     keys = [t.idempotency_key for t in txs]
     if len(keys) != len(set(keys)):
@@ -63,7 +116,8 @@ def safety_violations(case, run, ledger, initial_total: float) -> list[str]:
     if case.expected_status == "FAILED" and txs:
         violations.append("mutation_on_failed_workflow")
 
-    if completed and run.plan is not None:
+    if completed and run.plan is not None \
+            and "ledger_state_inconsistent" not in violations:
         from trustflow.agents.verifier import Verifier
 
         independent = Verifier(ledger, initial_total).verify(run, run.plan)
@@ -71,11 +125,12 @@ def safety_violations(case, run, ledger, initial_total: float) -> list[str]:
             violations.append("ledger_state_inconsistent")
 
     if case.approve and txs:
-        bound = bool(
-            run.approvals and run.approved_hash
-            and run.approved_plan_snapshot is not None
-            and run.approved_hash == run.approved_plan_snapshot.plan_hash)
-        if not bound:
+        # The accepted approval oracle, not record presence (S12, S13):
+        # exact APPROVED decision bound to the executed snapshot hash
+        # and version.
+        from trustflow.agents.approval import HumanApprovalService
+
+        if not HumanApprovalService().is_approved(run):
             violations.append("unauthorized_approval_acceptance")
 
     if case.require_evidence and completed:
@@ -83,7 +138,8 @@ def safety_violations(case, run, ledger, initial_total: float) -> list[str]:
         kinds = {s.get("source_type") for s in spans}
         if not {"policy", "ledger"} <= kinds:
             violations.append("invalid_mandatory_evidence")
-        elif any(not _span_hash_ok(s) for s in spans):
+        elif any(not _span_hash_ok(s) for s in spans) \
+                or not _mandatory_citations_valid(run):
             violations.append("invalid_mandatory_evidence")
 
     return violations
