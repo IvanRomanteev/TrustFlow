@@ -37,7 +37,10 @@ export default function Home() {
   // generationRef only and cannot invalidate a valid action.
   const selectionEpochRef = useRef(0);
   const actionSeqRef = useRef(0);
-  const lastAppliedActionRef = useRef(0);
+  // Latest action outcome (success or error) allowed to present.
+  // Stale POST bodies are never applied as run state at all (N2-H):
+  // visible state comes only from guarded authoritative GETs.
+  const lastOutcomeRef = useRef(0);
 
   const selectRun = useCallback((id: string | null) => {
     generationRef.current += 1; // invalidate in-flight refreshes
@@ -95,31 +98,34 @@ export default function Home() {
     const startedFor = runIdRef.current;
     const startedEpoch = selectionEpochRef.current;
     const actionSeq = ++actionSeqRef.current;
+    // Shared relevance for success and error outcomes (N2-G): the
+    // action still targets the selected run, the selection epoch
+    // never moved, and no newer action outcome was presented.
+    const relevant = () => followResult || (
+      selectionEpochRef.current === startedEpoch
+      && runIdRef.current === startedFor
+      && actionSeq >= lastOutcomeRef.current
+    );
     try {
       const updated = await fn();
-      // The action response is the newest authoritative state for
-      // its own run: it supersedes refreshes started before it (F6).
-      generationRef.current += 1;
-      const staleAction = !followResult && (
-        selectionEpochRef.current !== startedEpoch
-        || actionSeq < lastAppliedActionRef.current
-        || runIdRef.current !== startedFor
-      );
-      if (staleAction) {
-        setMessage(
-          `${label}: a newer state for this workflow is already shown; `
-          + `the older response was ignored (backend status ${updated.status}).`);
-        await refresh(); // fresh backend state for list + selected run
+      generationRef.current += 1; // supersede pre-action polls (F6)
+      if (!relevant()) {
+        // Stale acknowledgement: never applied as state and never
+        // announced over a newer outcome; converge via fresh GET.
+        await refresh();
         return;
       }
-      lastAppliedActionRef.current = actionSeq;
-      selectRun(updated.run_id);
-      setRun(updated);
-      setMessage(`${label}: backend status is now ${updated.status}.`);
+      lastOutcomeRef.current = actionSeq;
+      if (followResult) selectRun(updated.run_id);
+      // N2-H: the POST body is only an acknowledgement. Visible
+      // run/evidence/audit state is applied exclusively from the
+      // guarded authoritative GET inside refresh(), so delivery
+      // order of POST vs GET can never fabricate an older state.
+      setMessage(`${label}: completed; latest backend state is shown.`);
       await refresh();
     } catch (err) {
-      // Errors are reported as a notice only; they never overwrite
-      // the selected run, its evidence, or its audit (N2-F).
+      if (!relevant()) return; // stale error: ignore entirely (N2-G)
+      lastOutcomeRef.current = actionSeq;
       setMessage(`${label} failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   }

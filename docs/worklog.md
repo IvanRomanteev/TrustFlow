@@ -1,5 +1,28 @@
 # TrustFlow Worklog
 
+## M3 remediation round 4 (independent re-review of cbca437: N2-H + N2-G)
+Independent re-review VERIFIED FIXED N2-F and all backend gates,
+with two residual UI ordering items (review preserved at
+TrustFlow-context/review-m3-cbca437-acceptance-a8f67c20/). One
+coherent frontend freshness policy closes both: POST responses are
+acknowledgements only and visible run/evidence/audit state is
+applied exclusively from guarded authoritative GETs, so a stale
+POST after a polling-confirmed COMPLETED can no longer roll the UI
+back (N2-H); success and error outcomes share one relevance check
+(captured run id, selection epoch, action sequence, last-outcome
+watermark), so a held Approve(A) HTTP 403 no longer replaces the
+current Reject(B) notice (N2-G), while current errors still show.
+RED reproduced first in headless Chrome with real FastAPI
+responses; after the fix H, the original N2-F A→B→A scenario and G
+are all GREEN (backend COMPLETED, attempts=3, one transfer).
+Backend untouched. Checks: pytest 289 passed, Ruff clean, mypy
+clean, frontend build green, isolated Docker Compose build/run
+smoke passed on this candidate (project tf-m3-n2hg-final, removed
+afterwards with its volume). No existing test changed;
+conversation files preserved; no push, merge, deploy or paid
+calls. Status: READY FOR INDEPENDENT CODEX RE-REVIEW; M3 not
+accepted.
+
 ## M3 remediation round 3 (independent re-review of cb5688c: N2-F only)
 Independent re-review VERIFIED FIXED N1 and kept every F1–F7 gate,
 with one residual P2: after A→B→A a stale first verify-retry
