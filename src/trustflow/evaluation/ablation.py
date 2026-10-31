@@ -20,7 +20,6 @@ from trustflow.agents.executor import Executor
 from trustflow.agents.planner import Planner
 from trustflow.agents.semantic import SemanticReviewer
 from trustflow.agents.verifier import Verifier
-from trustflow.core.settings import Settings
 from trustflow.domain.models import WorkflowGoal
 from trustflow.evaluation.cases import EVAL_CASES, EvalCase
 from trustflow.llm.provider import FakeLLMProvider
@@ -31,8 +30,10 @@ from trustflow.tools.registry import ToolRegistry
 
 
 def _engine(case: EvalCase, *, with_retrieval: bool):
+    from trustflow.evaluation.runner import pinned_settings
+
     registry = ToolRegistry()
-    settings = Settings(max_retries=1)
+    settings = pinned_settings()
     policy = PolicyEngine(settings)
     fake = FakeLLMProvider(scripted=case.scripted)
     retriever = PolicyRetriever() if with_retrieval else None

@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path
 
+from trustflow.evaluation.errors import safe_text
 from trustflow.evaluation.schemas import EvalReport
 from trustflow.evaluation.trace import render_timeline
 
@@ -87,7 +88,7 @@ def render_markdown(report: EvalReport) -> str:
         lines += ["", "## Failures", ""]
         for case in failures:
             lines.append(f"- **{case.case_id}** ({case.failure_category}): "
-                         f"{case.detail or case.observed_outcome}; "
+                         f"{safe_text(case.detail or case.observed_outcome or '')}; "
                          f"violations: {case.safety_violations}")
     metrics = report.metrics or {}
     lines += ["", "## Metrics", "", "```json",
@@ -117,11 +118,16 @@ def write_reports(report: EvalReport, traces: dict, out_dir: str | Path) -> dict
         "git_dirty": report.run_metadata.git_dirty,
         "dataset_version": report.run_metadata.dataset_version,
         "dataset_digest": report.run_metadata.dataset_digest,
+        "config_digest": report.run_metadata.config_digest,
+        "effective_config": report.run_metadata.effective_config,
+        "assertion_contract_digest": report.run_metadata.assertion_contract_digest,
         "seed": report.run_metadata.seed,
         "provider_mode": report.run_metadata.provider_mode,
         "python_version": report.run_metadata.python_version,
         "verdict_digest": report.verdict_digest(),
-        "note": "verdict_digest excludes timestamps, run ids and durations",
+        "note": "verdict_digest excludes timestamps, run ids and durations; "
+                "config_digest covers the pinned effective configuration, "
+                "selected cases and the maintained assertion contract",
     }, indent=2))
     paths["manifest"] = str(out / "reproducibility-manifest.json")
     return paths
