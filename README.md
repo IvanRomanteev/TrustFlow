@@ -59,6 +59,22 @@ SQLite and survives restarts; see [docs/m3.md](docs/m3.md).
 - Retries, steps, and step timeouts are bounded in `Settings`.
 - API keys come only from `TRUSTFLOW_LLM_API_KEY`; logs redact secret-looking values.
 
+## M4 offline evaluation
+
+One command runs the maintained 33-case offline evaluation (fake
+provider, no network, no paid calls) and writes JSON/CSV/Markdown
+reports, per-run traces and a reproducibility manifest:
+
+```powershell
+.\.venv\Scripts\python.exe -m trustflow.evaluation --out artifacts/m4-eval --repeat 2 --ablations
+```
+
+Exit codes: 0 = all pass and zero safety violations, 1 = case
+failures, 2 = safety violations, 3 = harness errors, 4 = verdicts not
+reproducible across repeats. These are offline workflow safety
+regression results, not live-model performance. See
+[docs/m4.md](docs/m4.md).
+
 ## Tests
 
 ```powershell

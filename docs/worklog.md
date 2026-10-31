@@ -603,3 +603,20 @@ that replaces IntentRecords or resets `ever_authorized`; replacement
 needs trusted in-process memory access (documented boundary, M3 owns
 persistence). Full suite 133 tests, ruff/mypy clean, offline only.
 Status: candidate for a separate adversarial audit (not accepted).
+
+## M4 evaluation & observability (branch m4/eval-observability)
+
+Base: accepted M3 4662ac3afdd7823b4a242e961b4aa035b2ed348f; local tag
+m3-offline-pass created at that SHA (was absent). Baseline on this
+machine: pytest 289 passed (matches accepted M3 report), ruff/mypy
+PASS; sandbox blocks socket binds, so full runs execute outside it.
+Added src/trustflow/evaluation/ (cases registry for the maintained 33
+cases with drift guard, offline runner over the existing engine,
+versioned schemas, trace export from the audit log, metrics with
+explicit denominators, two shadow ablations, JSON/CSV/Markdown
+reports, CLI with safety-gate exit codes) and
+tests/unit/test_m4_evaluation.py (10 tests). No accepted M1-M3 code
+changed. Candidate validation: pytest 299 passed, evaluation 33/33
+PASS with 0 critical safety violations and identical verdict digests
+across repeats, ruff/mypy PASS, frontend build PASS. See docs/m4.md.
+Status: M4 IMPLEMENTATION COMPLETE - INDEPENDENT ACCEPTANCE PENDING.
