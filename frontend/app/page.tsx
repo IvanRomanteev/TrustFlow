@@ -29,9 +29,19 @@ export default function Home() {
   // completed stale response can never overwrite newer state, even
   // when its fetch finished before a mutation but resolves after it.
   const generationRef = useRef(0);
+  // N2-F: selection epoch + per-action sequence. Every explicit run
+  // selection bumps the epoch (including A->B->A, where the run id
+  // alone cannot distinguish generations), and every action gets a
+  // monotonic sequence; a response older than the latest applied
+  // action can never overwrite newer state. Ordinary polling uses
+  // generationRef only and cannot invalidate a valid action.
+  const selectionEpochRef = useRef(0);
+  const actionSeqRef = useRef(0);
+  const lastAppliedActionRef = useRef(0);
 
   const selectRun = useCallback((id: string | null) => {
     generationRef.current += 1; // invalidate in-flight refreshes
+    selectionEpochRef.current += 1; // explicit selection generation
     runIdRef.current = id;
     if (id) localStorage.setItem(RUN_KEY, id);
     else localStorage.removeItem(RUN_KEY);
@@ -77,23 +87,32 @@ export default function Home() {
 
   async function act(label: string, fn: () => Promise<WorkflowRun>,
                       followResult = false) {
-    // N2: capture the selected run before awaiting. A late action
-    // response must never steal a newer user selection: it may only
-    // update the visible run when that run is still selected (or the
-    // action explicitly creates/selects its result, e.g. Create).
+    // N2/N2-F: capture selection identity AND its epoch, plus this
+    // action's monotonic sequence, before awaiting. A late response
+    // applies only when the selection never moved meanwhile (A->B->A
+    // changes the epoch even though the run id matches again) and no
+    // newer action result was already applied.
     const startedFor = runIdRef.current;
+    const startedEpoch = selectionEpochRef.current;
+    const actionSeq = ++actionSeqRef.current;
     try {
       const updated = await fn();
       // The action response is the newest authoritative state for
       // its own run: it supersedes refreshes started before it (F6).
       generationRef.current += 1;
-      if (!followResult && runIdRef.current !== startedFor) {
+      const staleAction = !followResult && (
+        selectionEpochRef.current !== startedEpoch
+        || actionSeq < lastAppliedActionRef.current
+        || runIdRef.current !== startedFor
+      );
+      if (staleAction) {
         setMessage(
-          `${label}: finished for a previously selected run `
-          + `(backend status ${updated.status}); your current selection is unchanged.`);
-        await refresh(); // refreshes list + currently selected run only
+          `${label}: a newer state for this workflow is already shown; `
+          + `the older response was ignored (backend status ${updated.status}).`);
+        await refresh(); // fresh backend state for list + selected run
         return;
       }
+      lastAppliedActionRef.current = actionSeq;
       selectRun(updated.run_id);
       setRun(updated);
       setMessage(`${label}: backend status is now ${updated.status}.`);

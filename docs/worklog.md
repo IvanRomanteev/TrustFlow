@@ -1,5 +1,29 @@
 # TrustFlow Worklog
 
+## M3 remediation round 3 (independent re-review of cb5688c: N2-F only)
+Independent re-review VERIFIED FIXED N1 and kept every F1–F7 gate,
+with one residual P2: after A→B→A a stale first verify-retry
+response (PENDING/attempts=2) overwrote the newer COMPLETED state
+(semantic PASS/attempts=3) because the round-2 guard compared only
+run identity (review preserved at
+TrustFlow-context/review-m3-cb5688c-independent-095398b5/). Frontend
+only fix: monotonic selectionEpoch bumped on every explicit
+selection plus per-action sequence with a last-applied watermark;
+act() captures run id, epoch and sequence before awaiting and
+ignores stale responses with a notice, polling fresh backend state
+instead. Reproduced RED first in headless Chrome with real FastAPI
+responses (held first retry, A→B→A, second retry COMPLETED, stale
+delivery with the next GET held: status rolled back to
+VERIFICATION_PENDING); GREEN after the fix (stays COMPLETED,
+semantic PASS, attempts=3, one transfer), and the delayed-approve
+A→B control still passes. Backend untouched. Checks: pytest 289
+passed, Ruff clean, mypy clean, frontend build green; Docker
+daemon unavailable in this session (runtime NOT VERIFIED here;
+independently verified for cb5688c). No existing test changed;
+conversation files preserved; no push, merge, deploy or paid
+calls. Status: READY FOR INDEPENDENT CODEX RE-REVIEW; M3 not
+accepted.
+
 ## M3 remediation round 2 (independent re-review of 8143dbc: N1 + N2)
 Independent re-review VERIFIED FIXED F1–F4, original F6 and F7, and
 kept the gate BLOCKED on two items (review preserved at
