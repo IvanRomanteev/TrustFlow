@@ -604,19 +604,120 @@ def test_compose_teardown_timeout_aggregates_with_primary(
     run.ownership_verified = True
 
     def handler(args, **_kwargs):
-        if "down" in args:
-            raise _sp.TimeoutExpired(args, 300)
+        if args[:3] == ["docker", "network", "ls"]:
+            raise _sp.TimeoutExpired(args, 120)
         return _cp(0, "")
 
     monkeypatch.setattr(module, "_run", handler)
     failures = run.teardown()
-    assert failures, "teardown timeout must become a cleanup failure"
-    assert "TimeoutExpired" in str(failures[0])
+    assert failures, "inventory timeout must become a cleanup failure"
+    assert any("TimeoutExpired" in str(f) for f in failures)
     with pytest.raises(ExceptionGroup) as excinfo:
         module._raise_stack_result(
             AssertionError("PRIMARY_MARKER"), failures)
     assert "PRIMARY_MARKER" in str(excinfo.value.__cause__)
-    assert failures[0] in excinfo.value.exceptions
+    assert any(f in excinfo.value.exceptions for f in failures[:1])
+
+
+def test_compose_discovery_classifies_foreign_resources(
+        monkeypatch, tmp_path):
+    module = _docker_e2e_module()
+    run = module._StackRun(tmp_path)
+    project, run_id = run.project, run.run_id
+
+    def handler(args, **_kwargs):
+        if args[:2] == ["docker", "ps"]:
+            return _cp(0, "cid-own\ncid-foreign\n")
+        if args[:3] == ["docker", "network", "ls"]:
+            return _cp(0, "net-foreign\n")
+        if args[:2] == ["docker", "inspect"]:
+            if "cid-own" in args:
+                return _cp(0, _json.dumps([{
+                    "Id": "cid-own", "Name": "/own",
+                    "Config": {"Labels": {
+                        module.PROJECT_LABEL: project,
+                        module.RUN_LABEL: run_id}},
+                    "State": {"Running": False}}]))
+            if "cid-foreign" in args:
+                return _cp(0, _json.dumps([{
+                    "Id": "cid-foreign", "Name": "/foreign",
+                    "Config": {"Labels": {
+                        module.PROJECT_LABEL: project,
+                        module.RUN_LABEL: "other-run"}},
+                    "State": {"Running": False}}]))
+            return _cp(0, _json.dumps([{
+                "Id": "net-foreign", "Name": "n",
+                "Labels": {module.PROJECT_LABEL: project,
+                           module.RUN_LABEL: "other-run"}}]))
+        return _cp(0, "")
+
+    monkeypatch.setattr(module, "_run", handler)
+    owned, foreign, failures = run._discover()
+    assert not failures
+    assert [r["id"] for r in owned["containers"]] == ["cid-own"]
+    assert {r["id"] for r in foreign} == {"cid-foreign", "net-foreign"}
+
+
+def test_stack_full_function_preserves_all_failures(
+        monkeypatch, tmp_path):
+    """N3 graph: primary + cleanup-op + discovery failures coexist."""
+    module = _docker_e2e_module()
+    state: dict = {"run_id": None, "project": None, "up_seen": False}
+
+    def handler(args, **_kwargs):
+        import re as _re
+        from pathlib import Path as _p
+
+        argv = list(args)
+        if argv[:2] == ["docker", "compose"]:
+            if "-p" in argv:
+                state["project"] = argv[argv.index("-p") + 1]
+            for token in argv:
+                if "override-" in token and token.endswith(".yml"):
+                    match = _re.search(r"trustflow\.test-run=([0-9a-f]+)",
+                                       _p(token).read_text())
+                    if match:
+                        state["run_id"] = match.group(1)
+            if "up" in argv:
+                state["up_seen"] = True
+                return _cp(1, "", "PRIMARY_SETUP_MARKER")
+            return _cp(0, "")
+        if argv[:2] == ["docker", "ps"]:
+            return _cp(0, "cid0001\n") if state["up_seen"] else _cp(0, "")
+        if argv[:3] == ["docker", "image", "ls"]:
+            if state["up_seen"] and "--filter" in argv:
+                return _cp(0, _IMG + "\n")
+            return _cp(0, "")
+        if argv[:2] == ["docker", "inspect"]:
+            if argv[2] == "net0001":
+                return _cp(0, _json.dumps([{
+                    "Id": "net0001", "Name": "n",
+                    "Labels": {
+                        module.PROJECT_LABEL: state["project"],
+                        module.RUN_LABEL: state["run_id"] or "?"}}]))
+            return _cp(0, _json.dumps([{
+                "Id": "cid0001", "Name": "/c",
+                "Config": {"Labels": {
+                    module.PROJECT_LABEL: state["project"],
+                    module.RUN_LABEL: state["run_id"] or "?"}},
+                "State": {"Running": True}}]))
+        if argv[:3] == ["docker", "network", "ls"]:
+            return _cp(0, "net0001\n") if state["up_seen"] else _cp(0, "")
+        if argv[:3] == ["docker", "network", "rm"]:
+            return _cp(1, "", "DOWN_NONZERO_MARKER")
+        if argv[:2] == ["docker", "stop"]:
+            return _cp(1, "", "DOWN_NONZERO_MARKER")
+        if argv[:3] == ["docker", "image", "inspect"]:
+            raise PermissionError("INSPECT_PERMISSION_MARKER")
+        return _cp(0, "")
+
+    monkeypatch.setattr(module, "_run", handler)
+    with pytest.raises(BaseException) as excinfo:
+        module._run_stack_test(tmp_path)
+    full = module._exception_graph_text(excinfo.value)
+    assert "PRIMARY_SETUP_MARKER" in full
+    assert "DOWN_NONZERO_MARKER" in full
+    assert "INSPECT_PERMISSION_MARKER" in full
 
 
 def test_compose_postcondition_catches_rc0_leftover_image(
