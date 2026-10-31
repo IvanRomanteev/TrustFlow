@@ -567,14 +567,76 @@ def test_retag_attack_mocked_preserves_full_mapping(monkeypatch):
 
 def test_compose_teardown_failure_is_enforceable():
     module = _docker_e2e_module()
-    with pytest.raises(AssertionError):
-        module._finish_stack(None, 1, "boom", "proj-x")
+    failure = module.CleanupFailure(
+        "compose-down", None, "run-x", "docker compose down -v",
+        "rc=1", preserved=True)
+    with pytest.raises(ExceptionGroup):
+        module._raise_stack_result(None, [failure])
     with pytest.raises(ExceptionGroup) as excinfo:
-        module._finish_stack(ValueError("primary"), 1, "boom", "proj-x")
+        module._raise_stack_result(ValueError("primary"), [failure])
     assert isinstance(excinfo.value.__cause__, ValueError)
     with pytest.raises(ValueError):
-        module._finish_stack(ValueError("primary"), 0, "", "proj-x")
-    module._finish_stack(None, 0, "", "proj-x")  # must not raise
+        module._raise_stack_result(ValueError("primary"), [])
+    module._raise_stack_result(None, [])  # must not raise
+
+
+def test_compose_preflight_rejects_occupied_namespace(monkeypatch):
+    module = _docker_e2e_module()
+
+    def handler(args):
+        if args[:2] == ["docker", "ps"]:
+            return _cp(0, "deadbeefcafe\n")
+        return _cp(0, "")
+
+    calls = _scripted(module, monkeypatch, handler)
+    with pytest.raises(module.NamespaceConflict):
+        module._compose_preflight("tf-m5-it-forced")
+    # Only read-only namespace queries ran: no up/down/build mutation.
+    assert calls and all(
+        c[1] in ("ps", "image", "network", "volume") for c in calls)
+    assert not any("compose" in c for c in calls)
+
+
+def test_compose_teardown_timeout_aggregates_with_primary(
+        monkeypatch, tmp_path):
+    module = _docker_e2e_module()
+    run = module._StackRun(tmp_path)
+    run.ownership_verified = True
+
+    def handler(args, **_kwargs):
+        if "down" in args:
+            raise _sp.TimeoutExpired(args, 300)
+        return _cp(0, "")
+
+    monkeypatch.setattr(module, "_run", handler)
+    failures = run.teardown()
+    assert failures, "teardown timeout must become a cleanup failure"
+    assert "TimeoutExpired" in str(failures[0])
+    with pytest.raises(ExceptionGroup) as excinfo:
+        module._raise_stack_result(
+            AssertionError("PRIMARY_MARKER"), failures)
+    assert "PRIMARY_MARKER" in str(excinfo.value.__cause__)
+    assert failures[0] in excinfo.value.exceptions
+
+
+def test_compose_postcondition_catches_rc0_leftover_image(
+        monkeypatch, tmp_path):
+    module = _docker_e2e_module()
+    run = module._StackRun(tmp_path)
+    run.ownership_verified = True
+    run.image_ids = {"backend": _IMG}
+
+    def handler(args, **_kwargs):
+        if args[:3] == ["docker", "image", "inspect"]:
+            return _found(labels={module.RUN_LABEL: run.run_id})
+        return _cp(0, "")  # down and rmi both claim success
+
+    monkeypatch.setattr(module, "_run", handler)
+    failures = run.teardown()
+    # rc=0 everywhere, yet the owned image is still present: the
+    # postcondition (not the exit code) decides mandatory cleanup.
+    assert failures
+    assert any(_IMG in str(f) for f in failures)
 
 
 def test_no_mutable_tag_operations_in_integration_source():

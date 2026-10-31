@@ -369,7 +369,8 @@ def _tiny_context(tmp_path: Path, name: str) -> Path:
 
 
 def _raw_inspect(ref: str) -> dict:
-    proc = _run(["docker", "image", "inspect", ref], timeout=120)
+    # Generic inspect: valid for images and containers alike.
+    proc = _run(["docker", "inspect", ref], timeout=120)
     assert proc.returncode == 0, proc.stderr
     items = json.loads(proc.stdout)
     assert isinstance(items, list) and len(items) == 1
@@ -531,53 +532,129 @@ def _non_loopback_ipv4() -> str | None:
     return None
 
 
-def _finish_stack(primary: BaseException | None, down_rc: int,
-                  down_detail: str, project: str) -> None:
-    """Enforceable Compose teardown semantics (P3-C).
+PROJECT_LABEL = "com.docker.compose.project"
 
-    A failed mandatory teardown fails the test; with an existing
-    primary failure both remain visible (ExceptionGroup, primary as
-    cause). Never swallowed, never a warning-only pass.
+
+class NamespaceConflict(AssertionError):
+    """The proposed Compose namespace is already occupied."""
+
+
+def _labelled_ids(argv: list[str]) -> list[str]:
+    proc = _run(argv, timeout=120)
+    assert proc.returncode == 0, proc.stderr
+    return [line for line in proc.stdout.split() if line.strip()]
+
+
+def _compose_preflight(project: str) -> None:
+    """Fail closed BEFORE any mutation if the namespace is occupied.
+
+    UUID uniqueness alone is never the ownership proof: any existing
+    container/image/network/volume carrying the Compose project
+    label for the proposed namespace rejects it outright, and no
+    teardown is ever aimed at it.
     """
-    if down_rc != 0:
-        error = AssertionError(
-            f"mandatory compose teardown failed for project "
-            f"{project}: rc={down_rc}: {down_detail[-300:]}")
-        if primary is not None:
-            raise ExceptionGroup(
-                "stack failure plus compose teardown failure",
-                [error]) from primary
-        raise error
+    occupied = {
+        "containers": _labelled_ids(
+            ["docker", "ps", "-a", "-q", "--filter",
+             f"label={PROJECT_LABEL}={project}"]),
+        "images": _labelled_ids(
+            ["docker", "image", "ls", "-q", "--filter",
+             f"label={PROJECT_LABEL}={project}"]),
+        "networks": _labelled_ids(
+            ["docker", "network", "ls", "-q", "--filter",
+             f"label={PROJECT_LABEL}={project}"]),
+        "volumes": _labelled_ids(
+            ["docker", "volume", "ls", "-q", "--filter",
+             f"label={PROJECT_LABEL}={project}"]),
+    }
+    found = {k: v for k, v in occupied.items() if v}
+    if found:
+        raise NamespaceConflict(
+            f"compose namespace {project} already occupied: {found}; "
+            f"refusing adoption or teardown of unowned resources")
+
+
+def _raise_stack_result(primary: BaseException | None,
+                        failures: list[BaseException]) -> None:
+    """Aggregate primary + cleanup failures; neither is ever lost."""
+    if primary is not None and failures:
+        raise ExceptionGroup(
+            "stack failure plus cleanup failures", failures) from primary
     if primary is not None:
         raise primary
+    if failures:
+        raise ExceptionGroup("stack cleanup failed", failures)
 
 
-def test_stack_loopback_binding_flow_and_negative_probe(tmp_path):
-    backend_port, frontend_port = _free_port(), _free_port()
-    project = f"tf-m5-it-{os.getpid()}"
-    override = tmp_path / "override.yml"
-    override.write_text(
-        "services:\n"
-        "  backend:\n"
-        "    environment:\n"
-        f"      TRUSTFLOW_CORS_ORIGINS: '[\"http://127.0.0.1:{frontend_port}\","
-        f"\"http://localhost:{frontend_port}\"]'\n"
-        "    ports: !override\n"
-        f"      - \"127.0.0.1:{backend_port}:8000\"\n"
-        "  frontend:\n"
-        "    build:\n"
-        "      args:\n"
-        f"        NEXT_PUBLIC_API_URL: \"http://127.0.0.1:{backend_port}\"\n"
-        "    ports: !override\n"
-        f"      - \"127.0.0.1:{frontend_port}:3000\"\n",
-        encoding="utf-8")
-    base = ["docker", "compose", "-p", project,
-            "-f", str(ROOT / "docker-compose.yml"), "-f", str(override)]
-    primary: BaseException | None = None
-    try:
-        up = _run([*base, "up", "-d", "--build"])
+class _StackRun:
+    """One UUID-owned Compose stack invocation (R5 F1/F2/F3).
+
+    Ownership = empty namespace at preflight + per-invocation run
+    label present on containers/networks/volumes/build images +
+    image IDs recorded and verified after creation. Teardown never
+    runs against an unverified namespace; image cleanup is by
+    recorded immutable ID only (no --rmi, no force, no prune).
+    """
+
+    def __init__(self, tmp_path: Path, *, project: str | None = None,
+                 run_id: str | None = None) -> None:
+        self.run_id = run_id or uuid.uuid4().hex
+        self.project = project or f"tf-m5-it-{self.run_id}"
+        self.backend_port = _free_port()
+        self.frontend_port = _free_port()
+        label = f"{RUN_LABEL}={self.run_id}"
+        override = tmp_path / f"override-{self.run_id}.yml"
+        override.write_text(
+            "services:\n"
+            "  backend:\n"
+            "    build:\n"
+            "      labels:\n"
+            f"        - \"{label}\"\n"
+            "    labels:\n"
+            f"      - \"{label}\"\n"
+            "    environment:\n"
+            f"      TRUSTFLOW_CORS_ORIGINS: "
+            f"'[\"http://127.0.0.1:{self.frontend_port}\","
+            f"\"http://localhost:{self.frontend_port}\"]'\n"
+            "    ports: !override\n"
+            f"      - \"127.0.0.1:{self.backend_port}:8000\"\n"
+            "  frontend:\n"
+            "    build:\n"
+            "      args:\n"
+            f"        NEXT_PUBLIC_API_URL: "
+            f"\"http://127.0.0.1:{self.backend_port}\"\n"
+            "      labels:\n"
+            f"        - \"{label}\"\n"
+            "    labels:\n"
+            f"      - \"{label}\"\n"
+            "    ports: !override\n"
+            f"      - \"127.0.0.1:{self.frontend_port}:3000\"\n"
+            "networks:\n"
+            "  default:\n"
+            "    labels:\n"
+            f"      - \"{label}\"\n"
+            "volumes:\n"
+            "  tf-data:\n"
+            "    labels:\n"
+            f"      - \"{label}\"\n",
+            encoding="utf-8")
+        self.base = ["docker", "compose", "-p", self.project,
+                     "-f", str(ROOT / "docker-compose.yml"),
+                     "-f", str(override)]
+        self.preflight_inventory: dict[str, dict] = {}
+        self.image_ids: dict[str, str] = {}
+        self.ownership_verified = False
+
+    def up(self) -> None:
+        _compose_preflight(self.project)  # before ANY mutation
+        self.preflight_inventory = _image_inventory()
+        up = _run([*self.base, "up", "-d", "--build"])
         assert up.returncode == 0, up.stderr[-2000:]
-        health = f"http://127.0.0.1:{backend_port}/health"
+        self._wait_health()
+        self._verify_ownership()
+
+    def _wait_health(self) -> None:
+        health = f"http://127.0.0.1:{self.backend_port}/health"
         deadline = time.time() + 120
         status, body = 0, {}
         while time.time() < deadline:
@@ -591,9 +668,37 @@ def test_stack_loopback_binding_flow_and_negative_probe(tmp_path):
         assert status == 200 and body.get("llm_mode") == "fake", body
         assert body.get("persistence") == "sqlite"
 
-        for service, port in (("backend", backend_port), ("frontend", frontend_port)):
-            cid = _run([*base, "ps", "-q", service]).stdout.strip()
-            assert cid, service
+    def _container_id(self, service: str) -> str:
+        cid = _run([*self.base, "ps", "-q", service]).stdout.strip()
+        assert cid, service
+        return cid
+
+    def _verify_ownership(self) -> None:
+        for service in ("backend", "frontend"):
+            cid = self._container_id(service)
+            raw = _raw_inspect(cid)
+            labels = (raw.get("Config") or {}).get("Labels") or {}
+            assert labels.get(PROJECT_LABEL) == self.project, labels
+            assert labels.get(RUN_LABEL) == self.run_id, labels
+            image_id = raw.get("Image")
+            assert isinstance(image_id, str) and image_id
+            assert image_id not in self.preflight_inventory
+            self.image_ids[service] = image_id
+        for image_id in self.image_ids.values():
+            res = _inspect_image(image_id)
+            assert res.state is InspectState.FOUND, res.detail
+            assert res.labels.get(RUN_LABEL) == self.run_id, res.labels
+            assert res.labels.get(PROJECT_LABEL) == self.project
+        self.ownership_verified = True
+
+
+    def exercise(self) -> None:
+        backend_port, frontend_port = self.backend_port, self.frontend_port
+        base, health = self.base, \
+            f"http://127.0.0.1:{self.backend_port}/health"
+        for service, port in (("backend", backend_port),
+                              ("frontend", frontend_port)):
+            cid = self._container_id(service)
             ports = json.loads(_run(
                 ["docker", "inspect", "-f",
                  "{{json .NetworkSettings.Ports}}", cid]).stdout)
@@ -623,6 +728,7 @@ def test_stack_loopback_binding_flow_and_negative_probe(tmp_path):
         # Restart: durable, single transfer, replay rejected.
         _run([*base, "restart", "backend"])
         deadline = time.time() + 60
+        status = 0
         while time.time() < deadline:
             try:
                 if _http("GET", health, timeout=5)[0] == 200:
@@ -630,28 +736,206 @@ def test_stack_loopback_binding_flow_and_negative_probe(tmp_path):
             except OSError:
                 pass
             time.sleep(2)
-        status, after = _http("GET", f"http://127.0.0.1:{backend_port}/workflows/{run_id}")
+        status, after = _http(
+            "GET", f"http://127.0.0.1:{backend_port}/workflows/{run_id}")
         assert after.get("status") == "COMPLETED"
         assert [r["data"]["tx_id"] for r in after["step_results"]
                 if r.get("data", {}).get("tx_id")] == txs
         status, _ = _http(
             "POST", f"http://127.0.0.1:{backend_port}/workflows/{run_id}/approve",
-            {"actor": "mgr", "plan_hash": plan_hash}, {"X-Approval-Token": TOKEN})
+            {"actor": "mgr", "plan_hash": plan_hash},
+            {"X-Approval-Token": TOKEN})
         assert status == 409
 
         # Negative: the published services must not answer on Ethernet.
         lan_ip = _non_loopback_ipv4()
         if lan_ip is None:
-            pytest.skip("no non-loopback host IPv4 available for negative probe")
+            pytest.skip("no non-loopback host IPv4 available")
         for port in (backend_port, frontend_port):
             with pytest.raises(OSError):
                 _http("GET", f"http://{lan_ip}:{port}/health"
                       if port == backend_port else f"http://{lan_ip}:{port}/",
                       timeout=3)
+
+    def _collect_owned(self) -> dict[str, list[str]]:
+        def ids(argv: list[str]) -> list[str]:
+            try:
+                proc = _run(argv, timeout=120)
+            except BaseException:
+                return []
+            if proc.returncode != 0:
+                return []
+            return [x for x in proc.stdout.split() if x.strip()]
+
+        label = f"label={RUN_LABEL}={self.run_id}"
+        return {
+            "containers": ids(["docker", "ps", "-a", "-q",
+                               "--filter", label]),
+            "networks": ids(["docker", "network", "ls", "-q",
+                             "--filter", label]),
+            "volumes": ids(["docker", "volume", "ls", "-q",
+                            "--filter", label]),
+            "images": ids(["docker", "image", "ls", "-q",
+                           "--filter", label]),
+        }
+
+    def teardown(self) -> list[BaseException]:
+        """Verified teardown; returns failures, never raises raw.
+
+        No destructive command runs against a namespace this
+        invocation never owned. Image cleanup is by recorded ID;
+        postconditions are verified, not inferred from exit codes.
+        """
+        failures: list[BaseException] = []
+
+        def fail(op: str, image_id: str | None, cmd: str, reason: str):
+            failures.append(CleanupFailure(
+                op, image_id, self.run_id, cmd, reason, preserved=True))
+
+        owned = self._collect_owned()
+        if not self.ownership_verified \
+                and not any(owned.values()):
+            return failures  # never owned: nothing may be destroyed
+        down_cmd = " ".join([*self.base, "down", "-v"])
+        try:
+            down = _run([*self.base, "down", "-v"], timeout=300)
+            if down.returncode != 0:
+                fail("compose-down", None, down_cmd,
+                     f"rc={down.returncode}: "
+                     f"{(down.stderr or '')[-300:]}")
+        except BaseException as exc:  # incl. TimeoutExpired (F3)
+            fail("compose-down", None, down_cmd,
+                 f"{type(exc).__name__}: {exc}")
+        # Image cleanup by recorded ID; images of a partially built
+        # stack are also collected via the run label and positively
+        # label-verified before any deletion is attempted.
+        targets: dict[str, str] = dict(self.image_ids)
+        for ref in owned["images"]:
+            res = _inspect_image(ref)
+            if res.state is InspectState.FOUND and res.image_id \
+                    and res.labels.get(RUN_LABEL) == self.run_id:
+                targets.setdefault(res.image_id, res.image_id)
+        for image_id in dict.fromkeys(targets.values()):
+            service = image_id
+            try:
+                outcome = _cleanup_owned_image(image_id, self.run_id)
+            except BaseException as exc:
+                fail(f"image-cleanup:{service}", image_id,
+                     f"docker rmi {image_id}",
+                     f"{type(exc).__name__}: {exc}")
+                continue
+            if outcome not in ("removed", "absent"):
+                fail(f"image-cleanup:{service}", image_id,
+                     f"docker rmi {image_id}", f"outcome={outcome}")
+        try:
+            remaining = self._collect_owned()
+            for kind in ("containers", "networks", "volumes", "images"):
+                if remaining[kind]:
+                    fail(f"postcondition:{kind}", None, down_cmd,
+                         f"still present: {remaining[kind]}")
+            for image_id in self.image_ids.values():
+                if _inspect_image(image_id).state is InspectState.FOUND:
+                    fail("postcondition:image", image_id,
+                         f"docker rmi {image_id}",
+                         "image still present after cleanup")
+            after = _image_inventory()
+            for old_id, meta in self.preflight_inventory.items():
+                if after.get(old_id) != meta:
+                    fail("postcondition:preexisting", old_id,
+                         "inventory-compare",
+                         "pre-existing image mapping changed")
+        except BaseException as exc:
+            fail("postcondition", None, down_cmd,
+                 f"{type(exc).__name__}: {exc}")
+        return failures
+
+
+def _run_stack_test(tmp_path: Path) -> None:
+    run = _StackRun(tmp_path)
+    primary: BaseException | None = None
+    try:
+        run.up()
+        run.exercise()
     except BaseException as exc:
         primary = exc
-    # --rmi local removes only this isolated project's own built
-    # images, so repeated stack runs do not accumulate them.
-    down = _run([*base, "down", "-v", "--rmi", "local"], timeout=300)
-    _finish_stack(primary, down.returncode,
-                  down.stderr or "", project)
+    failures: list[BaseException] = []
+    if not isinstance(primary, NamespaceConflict):
+        failures = run.teardown()
+    _raise_stack_result(primary, failures)
+
+
+def test_stack_loopback_binding_flow_and_negative_probe(tmp_path):
+    _run_stack_test(tmp_path)
+
+
+def test_stack_rejects_preexisting_namespace(tmp_path):
+    """F1 regression: an occupied UUID namespace is never adopted.
+
+    The victim image/network/volume are created by THIS test (own
+    invocation resources) and removed by recorded identity at the
+    end; the candidate session must refuse before any mutation.
+    """
+    victim = f"tf-m5-victim-{uuid.uuid4().hex[:16]}"
+    net_name, vol_name = f"{victim}_default", f"{victim}_tf-data"
+    with ImageLifecycle() as lifecycle:
+        image_id = lifecycle.build_image(
+            _tiny_context(tmp_path, "victim"), "victim",
+            {PROJECT_LABEL: victim, "trustflow.review": "victim"})
+        proc_net = _run(["docker", "network", "create", "--label",
+                         f"{PROJECT_LABEL}={victim}", net_name])
+        assert proc_net.returncode == 0, proc_net.stderr
+        proc_vol = _run(["docker", "volume", "create", "--label",
+                         f"{PROJECT_LABEL}={victim}", vol_name])
+        assert proc_vol.returncode == 0, proc_vol.stderr
+        try:
+            candidate = _StackRun(tmp_path, project=victim)
+            with pytest.raises(NamespaceConflict):
+                candidate.up()
+            # Nothing pre-existing was mutated or torn down.
+            assert _inspect_image(image_id).state is InspectState.FOUND
+            assert _labelled_ids(
+                ["docker", "network", "ls", "-q", "--filter",
+                 f"label={PROJECT_LABEL}={victim}"])
+            assert _labelled_ids(
+                ["docker", "volume", "ls", "-q", "--filter",
+                 f"label={PROJECT_LABEL}={victim}"])
+        finally:
+            _run(["docker", "network", "rm", net_name], timeout=120)
+            _run(["docker", "volume", "rm", vol_name], timeout=120)
+    assert _inspect_image(image_id).state is not InspectState.FOUND
+
+
+def test_stack_shared_image_refusal_fails_cleanup(tmp_path):
+    """F2 regression: a shared owned image blocks mandatory cleanup.
+
+    The unrelated stopped container is created by THIS test from the
+    recorded backend image ID; teardown must preserve both, report
+    FAILED cleanup (never PASS), and controlled cleanup afterwards
+    restores the inventory.
+    """
+    run = _StackRun(tmp_path)
+    container_id: str | None = None
+    completed = False
+    try:
+        run.up()
+        backend_id = run.image_ids["backend"]
+        created = _run(["docker", "create", backend_id], timeout=120)
+        assert created.returncode == 0, created.stderr
+        container_id = created.stdout.strip()
+        run.exercise()
+        failures = run.teardown()
+        assert failures, "mandatory cleanup must FAIL on shared image"
+        assert any(backend_id in str(f) for f in failures), failures
+        assert _inspect_image(backend_id).state is InspectState.FOUND
+        alive = _run(["docker", "inspect", "-f", "{{.Id}}",
+                      container_id], timeout=120)
+        assert alive.returncode == 0  # unrelated container intact
+        completed = True
+    finally:
+        if container_id is not None:
+            _run(["docker", "rm", container_id], timeout=120)
+        if not completed:
+            run.teardown()  # own resources only; outcome already failing
+    # Controlled cleanup of the now-unshared owned image by ID.
+    assert _cleanup_owned_image(backend_id, run.run_id) == "removed"
+    assert _inspect_image(backend_id).state is not InspectState.FOUND
