@@ -53,6 +53,7 @@ def _sanitize_key(key) -> str:
     """
     key_type = type(key)
     if key_type is str:
+        text: str
         if _LABEL_KEY.fullmatch(key) and not any(ch.isdigit() for ch in key):
             text = key
         else:
