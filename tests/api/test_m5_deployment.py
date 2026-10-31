@@ -136,6 +136,41 @@ def test_dockerignore_backend_effective_rules():
         assert not _ignored(rules, required), required
 
 
+# --- P2-05: matcher image ownership helpers (pure logic, no daemon) ---
+
+
+def _docker_e2e_module():
+    import importlib.util
+
+    path = ROOT / "tests" / "integration" / "test_m5_docker_e2e.py"
+    spec = importlib.util.spec_from_file_location("tf_m5_docker_e2e", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_matcher_image_tags_are_unique_and_never_the_fixed_tag():
+    module = _docker_e2e_module()
+    tags = {module._unique_image_tag() for _ in range(8)}
+    assert len(tags) == 8  # (tag, run_id) pairs all distinct
+    for tag, run_id in tags:
+        assert tag == f"trustflow-m5-matcher-test:{run_id}"
+        assert tag != module.LEGACY_FIXED_TAG
+        assert len(run_id) == 32  # uuid4 hex: collision-resistant
+
+
+def test_owned_image_cleanup_requires_label_and_identity():
+    module = _docker_e2e_module()
+    labels = {module.RUN_LABEL: "run-1"}
+    assert module._owned_image_ok(labels, "sha256:a", "run-1", "sha256:a")
+    assert not module._owned_image_ok(labels, "sha256:b", "run-1", "sha256:a")
+    assert not module._owned_image_ok(labels, "sha256:a", "run-2", "sha256:a")
+    assert not module._owned_image_ok({}, "sha256:a", "run-1", "sha256:a")
+    assert not module._owned_image_ok(None, "sha256:a", "run-1", "sha256:a")
+    assert not module._owned_image_ok(labels, None, "run-1", None)
+
+
 def test_compose_publishes_loopback_only():
     import re
 

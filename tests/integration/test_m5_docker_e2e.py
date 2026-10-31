@@ -19,6 +19,8 @@ import subprocess
 import time
 import urllib.error
 import urllib.request
+import uuid
+import warnings
 from pathlib import Path
 
 import pytest
@@ -77,7 +79,67 @@ def test_compose_default_config_binds_loopback_only():
             assert port.get("host_ip") == "127.0.0.1", (service, port)
 
 
-def test_real_docker_matcher_frontend_context(tmp_path):
+# --- Per-invocation image ownership (P2-05) ---------------------------
+# The historical matcher test built into the shared fixed tag
+# `trustflow-m5-matcher-test:latest` and removed it unconditionally,
+# destroying a pre-existing image owned by someone else. Now every
+# invocation builds into a UUID tag carrying an ownership label; the
+# created image ID is recorded, and cleanup re-verifies label + ID
+# before removing exactly that tag (never `-f`, never a shared tag).
+
+RUN_LABEL = "trustflow.test-run"
+LEGACY_FIXED_TAG = "trustflow-m5-matcher-test:latest"  # never built now
+
+
+def _unique_image_tag() -> tuple[str, str]:
+    run_id = uuid.uuid4().hex
+    return f"trustflow-m5-matcher-test:{run_id}", run_id
+
+
+def _owned_image_ok(labels: dict | None, image_id: str | None,
+                    run_id: str, expected_id: str | None) -> bool:
+    return bool(image_id) and image_id == expected_id and bool(labels) \
+        and labels.get(RUN_LABEL) == run_id
+
+
+def _image_inspect(ref: str) -> dict | None:
+    proc = _run(["docker", "image", "inspect", ref], timeout=120)
+    if proc.returncode != 0:
+        return None
+    items = json.loads(proc.stdout)
+    return items[0] if items else None
+
+
+def _cleanup_owned_image(tag: str, run_id: str, expected_id: str | None) -> str:
+    """Remove only the verified image this invocation created.
+
+    Returns "removed" / "absent" / "preserved-unverified" /
+    "cleanup-failed". Anything unverifiable is preserved and made
+    visible via a warning instead of risking foreign deletion.
+    """
+    current = _image_inspect(tag)
+    if current is None:
+        return "absent"
+    labels = (current.get("Config") or {}).get("Labels") or {}
+    if not _owned_image_ok(labels, current.get("Id"), run_id, expected_id):
+        warnings.warn(f"P2-05: preserving unverified image {tag} "
+                      f"(id={current.get('Id')}, labels={labels})", stacklevel=2)
+        return "preserved-unverified"
+    proc = _run(["docker", "rmi", tag], timeout=120)  # no -f: exact tag
+    if proc.returncode != 0:
+        warnings.warn(f"P2-05: cleanup of owned image {tag} failed: "
+                      f"{proc.stderr.strip()}", stacklevel=2)
+        return "cleanup-failed"
+    return "removed"
+
+
+def _run_matcher_build(tmp_path: Path) -> tuple[str, str, set[str]]:
+    """Build the poisoned-context fixture into a unique owned image.
+
+    Returns (tag, run_id, listed paths). The image is cleaned up
+    (ownership-verified) before returning; tag/run_id identify what
+    this invocation created.
+    """
     ctx = tmp_path / "ctx"
     fixtures = ["node_modules/next/dist/bin/next", ".next/BUILD_ID",
                 "packages/p/node_modules/NESTED_NODE",
@@ -93,21 +155,85 @@ def test_real_docker_matcher_frontend_context(tmp_path):
     (ctx / "Dockerfile").write_text(
         "FROM node:22-alpine\nCOPY . /ctx\n"
         "RUN find /ctx -type f | sort > /listing.txt\n", encoding="utf-8")
-    tag = "trustflow-m5-matcher-test:latest"
+    tag = run_id = ""
+    for _attempt in range(5):  # a fresh UUID tag must not pre-exist
+        tag, run_id = _unique_image_tag()
+        if _image_inspect(tag) is None:
+            break
+    else:
+        raise AssertionError("could not allocate a non-existing image tag")
+    image_id: str | None = None
     try:
-        build = _run(["docker", "build", "-t", tag, str(ctx)])
+        build = _run(["docker", "build", "--label", f"{RUN_LABEL}={run_id}",
+                      "-t", tag, str(ctx)])
         assert build.returncode == 0, build.stderr[-2000:]
-        out = _run(["docker", "run", "--rm", "--entrypoint", "cat", tag, "/listing.txt"])
+        created = _image_inspect(tag)
+        assert created is not None, f"built image {tag} not inspectable"
+        image_id = created.get("Id")
+        labels = (created.get("Config") or {}).get("Labels") or {}
+        assert labels.get(RUN_LABEL) == run_id, labels
+        out = _run(["docker", "run", "--rm", "--entrypoint", "cat",
+                    tag, "/listing.txt"])
         assert out.returncode == 0, out.stderr
-        listed = set(out.stdout.split())
-        for artifact in ("node_modules", ".next", "NESTED_NODE", "NESTED_NEXT",
-                         "npm-debug.log.1"):
-            assert not any(artifact in p for p in listed), (artifact, listed)
-        for required in ("/ctx/package.json", "/ctx/package-lock.json",
-                         "/ctx/app/page.tsx", "/ctx/lib/api.ts"):
-            assert required in listed, listed
+        return tag, run_id, set(out.stdout.split())
     finally:
-        _run(["docker", "rmi", "-f", tag], timeout=120)
+        outcome = _cleanup_owned_image(tag, run_id, image_id)
+        assert outcome in ("removed", "absent"), outcome
+
+
+def _assert_matcher_listing(listed: set[str]) -> None:
+    for artifact in ("node_modules", ".next", "NESTED_NODE", "NESTED_NEXT",
+                     "npm-debug.log.1"):
+        assert not any(artifact in p for p in listed), (artifact, listed)
+    for required in ("/ctx/package.json", "/ctx/package-lock.json",
+                     "/ctx/app/page.tsx", "/ctx/lib/api.ts"):
+        assert required in listed, listed
+
+
+def test_real_docker_matcher_frontend_context(tmp_path):
+    tag, _run_id, listed = _run_matcher_build(tmp_path)
+    assert tag != LEGACY_FIXED_TAG
+    _assert_matcher_listing(listed)
+
+
+def test_matcher_preserves_preexisting_fixed_tag(tmp_path):
+    """P2-05 regression: the matcher run must never touch the legacy tag.
+
+    A sentinel is placed under the historical fixed tag only when that
+    tag is initially absent (created by this invocation, removed by
+    this invocation afterwards). A pre-existing tag is preserved and
+    only its identity is validated.
+    """
+    sentinel_ctx = tmp_path / "sentinel"
+    sentinel_ctx.mkdir()
+    (sentinel_ctx / "Dockerfile").write_text(
+        'FROM node:22-alpine\nLABEL trustflow.sentinel="m5-p2-05"\n',
+        encoding="utf-8")
+    pre = _image_inspect(LEGACY_FIXED_TAG)
+    created_here = False
+    if pre is None:
+        build = _run(["docker", "build", "-t", LEGACY_FIXED_TAG,
+                      str(sentinel_ctx)])
+        assert build.returncode == 0, build.stderr[-2000:]
+        created_here = True
+        pre = _image_inspect(LEGACY_FIXED_TAG)
+    assert pre is not None and pre.get("Id")
+    sentinel_id = pre["Id"]
+    try:
+        tag, _run_id, listed = _run_matcher_build(tmp_path)
+        assert tag != LEGACY_FIXED_TAG
+        _assert_matcher_listing(listed)
+        after = _image_inspect(LEGACY_FIXED_TAG)
+        assert after is not None and after.get("Id") == sentinel_id, (
+            "pre-existing fixed-tag image was overwritten or deleted")
+    finally:
+        if created_here:
+            # Only this invocation's own sentinel is cleanup-eligible;
+            # a genuinely pre-existing image would be preserved.
+            current = _image_inspect(LEGACY_FIXED_TAG)
+            if current is not None and current.get("Id") == sentinel_id:
+                proc = _run(["docker", "rmi", LEGACY_FIXED_TAG], timeout=120)
+                assert proc.returncode == 0, proc.stderr
 
 
 def _non_loopback_ipv4() -> str | None:
