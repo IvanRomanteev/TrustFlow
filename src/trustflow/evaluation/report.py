@@ -12,9 +12,14 @@ import json
 import os
 from pathlib import Path
 
-from trustflow.evaluation.errors import safe_text
+from trustflow.evaluation.errors import safe_text, sanitize_payload
 from trustflow.evaluation.schemas import EvalReport
 from trustflow.evaluation.trace import render_timeline
+
+
+def sanitized_report(report: EvalReport) -> EvalReport:
+    """The single finalized safe representation all outputs derive from."""
+    return EvalReport.model_validate(sanitize_payload(report.model_dump()))
 
 _CSV_FIELDS = ["case_id", "category", "status", "expected_outcome",
                "observed_outcome", "duration_ms", "tx_count",
@@ -97,7 +102,15 @@ def render_markdown(report: EvalReport) -> str:
 
 
 def write_reports(report: EvalReport, traces: dict, out_dir: str | Path) -> dict[str, str]:
-    """Write all artifacts; returns artifact name -> path. Raises on failure."""
+    """Write all artifacts; returns artifact name -> path. Raises on failure.
+
+    Every payload crosses the defensive sanitization boundary here:
+    the report, traces and manifest are published only as sanitized,
+    bounded presentation copies derived from one finalized safe
+    representation. Authoritative records are never mutated.
+    """
+    report = sanitized_report(report)
+    traces = sanitize_payload(traces)
     out = Path(out_dir)
     paths: dict[str, str] = {}
     _atomic_write(out / "evaluation-results.json",
