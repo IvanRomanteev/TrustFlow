@@ -146,11 +146,65 @@ EVAL_CASES: list[EvalCase] = [*_M1, *_M2]
 CASES_BY_ID: dict[str, EvalCase] = {c.case_id: c for c in EVAL_CASES}
 
 
-def dataset_digest() -> str:
-    """Stable SHA-256 over the canonical case definitions."""
+def dataset_digest(cases: list[EvalCase] | None = None) -> str:
+    """Stable SHA-256 over the canonical definitions of the selected cases.
+
+    Defaults to the full maintained registry; a subset run is identified
+    by the digest of the cases it actually selected (never by the full
+    registry digest).
+    """
     import hashlib
     import json
 
-    payload = json.dumps([c.model_dump() for c in EVAL_CASES],
+    selected = EVAL_CASES if cases is None else cases
+    payload = json.dumps([c.model_dump() for c in selected],
                          sort_keys=True, default=str)
     return hashlib.sha256(payload.encode()).hexdigest()
+
+
+# Kinds the runner can dispatch. Anything else is an input error (F7),
+# never a silent fallback to another probe.
+CASE_KINDS = frozenset({"workflow", "retrieval", "evidence", "ledger_span"})
+
+
+def validate_cases(cases: list[EvalCase]) -> None:
+    """Controlled input validation for an evaluation suite (F7).
+
+    Raises ValueError with a safe, bounded message on an empty suite,
+    duplicate case IDs, or an unknown case kind.
+    """
+    if not cases:
+        raise ValueError("evaluation suite is empty: at least one case is required")
+    seen: set[str] = set()
+    for case in cases:
+        if case.case_id in seen:
+            raise ValueError(f"duplicate evaluation case id: {case.case_id}")
+        seen.add(case.case_id)
+        if case.kind not in CASE_KINDS:
+            raise ValueError(
+                f"case {case.case_id}: unknown kind {case.kind!r}; "
+                f"expected one of {sorted(CASE_KINDS)}")
+
+
+def assertion_contract_digest() -> str:
+    """Digest of the maintained pytest assertions this runner mirrors.
+
+    Covers the two maintained eval test files plus the registry itself,
+    so a semantic change to the pytest assertions (not just case IDs)
+    changes the published provenance (F1/D02). When the test files are
+    not present (installed package without the repo tests), falls back
+    to the registry definitions alone and says so via the registry part.
+    """
+    import hashlib
+    from pathlib import Path
+
+    hasher = hashlib.sha256()
+    hasher.update(dataset_digest().encode())
+    root = Path(__file__).resolve().parents[3]
+    for rel in ("tests/eval/test_scenarios.py", "tests/eval/test_m2_scenarios.py"):
+        path = root / rel
+        if path.exists():
+            hasher.update(path.read_bytes())
+        else:
+            hasher.update(f"missing:{rel}".encode())
+    return hasher.hexdigest()

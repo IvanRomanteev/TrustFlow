@@ -16,10 +16,17 @@ class CaseUsage(BaseModel):
     transport_attempts: int = 0
     input_tokens: int | None = None
     output_tokens: int | None = None
-    # True when at least one call reported no token usage at all.
+    # True when at least one record lacks complete token usage.
     usage_unknown: bool = False
     provider: str = "fake"
+    # The single model when all records share one; otherwise None and
+    # the full attribution lives in ``models``.
     model: str | None = None
+    models: list[str] = Field(default_factory=list)
+    # Sum over fully priced records only; never presented as the total.
+    partial_known_cost_usd: float | None = None
+    unpriced_records: int = 0
+    unknown_token_records: int = 0
 
 
 class CaseResult(BaseModel):
@@ -53,6 +60,9 @@ class RunMetadata(BaseModel):
     dataset_version: str = ""
     dataset_digest: str = ""
     config_digest: str = ""
+    # Allowlisted effective configuration actually used (no secrets).
+    effective_config: dict = Field(default_factory=dict)
+    assertion_contract_digest: str = ""
     seed: int = 42
     provider_mode: str = "fake"
     model: str | None = None
