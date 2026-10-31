@@ -13,6 +13,7 @@ named volume, and removes only its own project resources afterwards.
 
 import json
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -107,13 +108,20 @@ class InspectResult:
     detail: str = ""
 
 
+_IMAGE_ID_RE = re.compile(r"sha256:[0-9a-f]{64}")
+
+
 def _inspect_image(ref: str) -> InspectResult:
     """Three-state image inspection; never guesses absence.
 
-    NOT_FOUND requires every confirmed-absence signal the real Docker
-    CLI produces (nonzero exit, stdout exactly ``[]``, and the
-    daemon's ``No such image: <ref>`` message). Daemon, permission,
-    transport, timeout and malformed-output failures are ERROR.
+    NOT_FOUND requires every confirmed-absence signal together:
+    nonzero exit, stdout exactly ``[]``, and stderr consisting of
+    exactly one complete line equal to the daemon's authoritative
+    ``Error response from daemon: No such image: <ref>`` for the
+    exact requested ref (anchored full-message equality — no
+    substring, quoted, mixed, extra-line or prefix/suffix match).
+    FOUND requires strictly valid metadata. Everything else,
+    including unknown CLI wording, is ERROR.
     """
     try:
         proc = _run(["docker", "image", "inspect", ref], timeout=120)
@@ -130,17 +138,28 @@ def _inspect_image(ref: str) -> InspectResult:
                 or not isinstance(items[0], dict):
             return InspectResult(InspectState.ERROR,
                                  detail=f"unexpected inspect result for {ref}")
-        image_id = items[0].get("Id")
-        labels = (items[0].get("Config") or {}).get("Labels") or {}
+        item = items[0]
+        image_id = item.get("Id")
+        config = item.get("Config")
         if not isinstance(image_id, str) \
-                or not image_id.startswith("sha256:") \
-                or not isinstance(labels, dict):
+                or not _IMAGE_ID_RE.fullmatch(image_id) \
+                or not isinstance(config, dict):
             return InspectResult(InspectState.ERROR,
                                  detail=f"invalid inspect metadata for {ref}")
+        labels = config.get("Labels")
+        if labels is None:
+            labels = {}
+        if not isinstance(labels, dict) or not all(
+                isinstance(k, str) and isinstance(v, str)
+                for k, v in labels.items()):
+            return InspectResult(InspectState.ERROR,
+                                 detail=f"invalid inspect labels for {ref}")
         return InspectResult(InspectState.FOUND, image_id=image_id,
                              labels=dict(labels))
-    if (proc.stdout or "").strip() == "[]" \
-            and f"No such image: {ref}" in (proc.stderr or ""):
+    lines = [line.strip() for line in (proc.stderr or "").splitlines()
+             if line.strip()]
+    expected = f"Error response from daemon: No such image: {ref}"
+    if (proc.stdout or "").strip() == "[]" and lines == [expected]:
         return InspectResult(InspectState.NOT_FOUND)
     return InspectResult(
         InspectState.ERROR,
@@ -251,7 +270,9 @@ def _run_matcher_build(tmp_path: Path) -> tuple[str, str, set[str]]:
         if created.state is not InspectState.FOUND:
             raise AssertionError(
                 f"post-build inspection {created.state.value} for {tag}: "
-                f"{created.detail}; image preserved under that tag")
+                f"{created.detail}; ownership unknown, cleanup "
+                f"intentionally not attempted, image preserved under "
+                f"tag {tag}")
         image_id = created.image_id
         if created.labels.get(RUN_LABEL) != run_id:
             raise AssertionError(
@@ -292,19 +313,33 @@ def test_real_docker_matcher_frontend_context(tmp_path):
 
 
 def _build_labeled_image(tmp_path: Path, name: str,
-                         labels: dict[str, str]) -> tuple[str, str, str]:
-    """Build a tiny test-owned image; returns (tag, run_id, image_id)."""
+                         labels: dict[str, str],
+                         tag: str | None = None) -> tuple[str, str, str]:
+    """Build a tiny test-owned image; returns (tag, run_id, image_id).
+
+    Lifecycle guard (P3-B): any build/inspection failure raises with
+    the unique tag and the underlying detail; an image whose
+    ownership cannot be proven is preserved and never deleted here.
+    """
     ctx = tmp_path / name
     ctx.mkdir()
     label_lines = "".join(f'LABEL {k}="{v}"\n' for k, v in labels.items())
     (ctx / "Dockerfile").write_text(
         f"FROM node:22-alpine\n{label_lines}", encoding="utf-8")
     run_id = labels[RUN_LABEL]
-    tag = f"trustflow-m5-sentinel:{run_id}"
+    tag = tag or f"trustflow-m5-sentinel:{run_id}"
     build = _run(["docker", "build", "-t", tag, str(ctx)])
-    assert build.returncode == 0, build.stderr[-2000:]
+    if build.returncode != 0:
+        raise AssertionError(
+            f"fixture build failed for tag {tag}: "
+            f"{(build.stderr or '')[-500:]}")
     created = _inspect_image(tag)
-    assert created.state is InspectState.FOUND and created.image_id
+    if created.state is not InspectState.FOUND or not created.image_id:
+        raise AssertionError(
+            f"post-build inspection failed for tag {tag}: "
+            f"state={created.state.value} detail={created.detail}; "
+            f"ownership unknown, cleanup intentionally not attempted, "
+            f"image preserved under tag {tag}")
     return tag, run_id, created.image_id
 
 
@@ -353,17 +388,37 @@ def test_inspect_states_against_real_docker(tmp_path):
         assert _cleanup_owned_image(image_id, _run) in ("removed", "absent")
 
 
+def _move_tag_to_scratch(tmp_path: Path, name: str,
+                         tag: str) -> tuple[str, str]:
+    """Reassign `tag` to a fresh scratch image by building over it.
+
+    Tag *writes* cannot delete any image; this is the only way the
+    fixtures retire an extra tag on a shared daemon. Tag *deletion*
+    (`docker rmi <tag>`) is never used outside the ID-addressed
+    cleanup helper. Returns (scratch run_id, scratch image_id).
+    """
+    _t, run_id, image_id = _build_labeled_image(
+        tmp_path, name, {RUN_LABEL: uuid.uuid4().hex}, tag=tag)
+    return run_id, image_id
+
+
+def _assert_cleanup_ok(outcomes: list[str]) -> None:
+    bad = [o for o in outcomes if o not in ("removed", "absent")]
+    assert not bad, f"fixture cleanup outcomes: {outcomes}"
+
+
 def test_retag_race_never_deletes_replacement(tmp_path):
     """R2 regression on real Docker: cleanup follows the recorded ID."""
-    _ta, run_a, id_a = _build_labeled_image(
+    tag_a, run_a, id_a = _build_labeled_image(
         tmp_path, "race-a", {RUN_LABEL: uuid.uuid4().hex})
     tag_b, run_b, id_b = _build_labeled_image(
         tmp_path, "race-b", {RUN_LABEL: uuid.uuid4().hex})
-    run_tag = _ta
+    primary: BaseException | None = None
+    outcomes: list[str] = []
     try:
-        # Controlled boundary: reassign the run tag to B, drop B's tag.
-        assert _run(["docker", "tag", id_b, run_tag]).returncode == 0
-        assert _run(["docker", "rmi", tag_b]).returncode == 0
+        # Controlled boundary: reassign the run tag to B (tag write;
+        # no tag is deleted anywhere in this module's fixtures).
+        assert _run(["docker", "tag", id_b, tag_a]).returncode == 0
         outcome = _cleanup_owned_image(id_a, run_a)
         assert outcome in ("removed", "absent", "preserved-conflict",
                            "preserved-unverified"), outcome
@@ -371,38 +426,72 @@ def test_retag_race_never_deletes_replacement(tmp_path):
         assert b_after.state is InspectState.FOUND, (
             "replacement image B was deleted by cleanup")
         assert b_after.image_id == id_b
+        assert b_after.labels.get(RUN_LABEL) == run_b
         if outcome == "removed":
             assert _inspect_image(id_a).state is InspectState.NOT_FOUND
-    finally:
-        _cleanup_owned_image(id_b, run_b)
-        # A is test-owned too: remove leftovers strictly by recorded ID.
+    except BaseException as exc:
+        primary = exc
+    # Checked teardown (P3-C): B carries tag_b + tag_a; move tag_a to
+    # scratch, delete strictly by recorded IDs, keep failures visible.
+    try:
+        s_run, s_id = _move_tag_to_scratch(tmp_path, "race-scratch", tag_a)
+        outcomes.append(_cleanup_owned_image(id_b, run_b))
+        outcomes.append(_cleanup_owned_image(s_id, s_run))
         left = _inspect_image(id_a)
         if left.state is InspectState.FOUND \
                 and left.labels.get(RUN_LABEL) == run_a:
-            _run(["docker", "rmi", id_a], timeout=120)
+            outcomes.append(_cleanup_owned_image(id_a, run_a))
+    except BaseException as exc:
+        outcomes.append(f"teardown-raised:{type(exc).__name__}")
+        if primary is None:
+            primary = exc
+    if primary is not None:
+        raise primary
+    _assert_cleanup_ok(outcomes)
 
 
 def test_cleanup_refuses_multiply_tagged_image(tmp_path):
+    """Multi-tag conflict: ID deletion refuses; teardown never rmi-tags."""
     _tag, run_id, image_id = _build_labeled_image(
         tmp_path, "multi", {RUN_LABEL: uuid.uuid4().hex})
     extra_tag, _extra_run = _unique_sentinel_tag()
-    try:
-        assert _run(["docker", "tag", image_id, extra_tag]).returncode == 0
-        outcome = _cleanup_owned_image(image_id, run_id)
-        assert outcome == "preserved-conflict", outcome  # no force used
-        still = _inspect_image(image_id)
-        assert still.state is InspectState.FOUND
-        assert still.image_id == image_id
-        # Teardown of our own fixture: drop the extra tag, then the
-        # verified ID cleanup succeeds.
-        assert _run(["docker", "rmi", extra_tag]).returncode == 0
-        assert _cleanup_owned_image(image_id, run_id) == "removed"
-    finally:
-        left = _inspect_image(image_id)
-        if left.state is InspectState.FOUND \
-                and left.labels.get(RUN_LABEL) == run_id:
-            _run(["docker", "rmi", extra_tag], timeout=120)
-            _cleanup_owned_image(image_id, run_id)
+    assert _run(["docker", "tag", image_id, extra_tag]).returncode == 0
+    outcome = _cleanup_owned_image(image_id, run_id)
+    assert outcome == "preserved-conflict", outcome  # no force used
+    still = _inspect_image(image_id)
+    assert still.state is InspectState.FOUND
+    assert still.image_id == image_id
+    # Safe teardown: reassign the extra tag to scratch by building
+    # over it, then the verified ID cleanup succeeds. No `rmi <tag>`.
+    s_run, s_id = _move_tag_to_scratch(tmp_path, "multi-scratch", extra_tag)
+    _assert_cleanup_ok([_cleanup_owned_image(image_id, run_id),
+                        _cleanup_owned_image(s_id, s_run)])
+    assert _inspect_image(image_id).state is InspectState.NOT_FOUND
+
+
+def test_multitag_teardown_survives_retag_attack(tmp_path):
+    """P2-B regression: retagging extra_tag to B at teardown deletes
+    nothing foreign; A is removed only by its recorded ID when safe."""
+    _t1, run_a, id_a = _build_labeled_image(
+        tmp_path, "attack-a", {RUN_LABEL: uuid.uuid4().hex})
+    _tb, run_b, id_b = _build_labeled_image(
+        tmp_path, "attack-b", {RUN_LABEL: uuid.uuid4().hex})
+    extra_tag, _er = _unique_sentinel_tag()
+    assert _run(["docker", "tag", id_a, extra_tag]).returncode == 0
+    assert _cleanup_owned_image(id_a, run_a) == "preserved-conflict"
+    # Attack boundary: another process points extra_tag at B.
+    assert _run(["docker", "tag", id_b, extra_tag]).returncode == 0
+    # Teardown under attack: move extra_tag to scratch (tag write),
+    # then delete only recorded IDs. B must remain fully intact.
+    s_run, s_id = _move_tag_to_scratch(tmp_path, "attack-scratch", extra_tag)
+    _assert_cleanup_ok([_cleanup_owned_image(id_a, run_a),
+                        _cleanup_owned_image(s_id, s_run)])
+    b_after = _inspect_image(id_b)
+    assert b_after.state is InspectState.FOUND
+    assert b_after.image_id == id_b
+    assert b_after.labels.get(RUN_LABEL) == run_b
+    assert _inspect_image(id_a).state is InspectState.NOT_FOUND
+    _assert_cleanup_ok([_cleanup_owned_image(id_b, run_b)])
 
 
 def test_sequential_matcher_invocations_use_distinct_tags(tmp_path):
@@ -541,4 +630,9 @@ def test_stack_loopback_binding_flow_and_negative_probe(tmp_path):
                       if port == backend_port else f"http://{lan_ip}:{port}/",
                       timeout=3)
     finally:
-        _run([*base, "down", "-v"], timeout=300)
+        down = _run([*base, "down", "-v"], timeout=300)
+        if down.returncode != 0:  # cleanup failure stays visible (P3-C)
+            warnings.warn(
+                f"P2-05: compose teardown of project {project} failed "
+                f"rc={down.returncode}: {(down.stderr or '')[-300:]}",
+                stacklevel=2)

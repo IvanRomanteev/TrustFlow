@@ -322,6 +322,117 @@ def test_cleanup_removes_by_immutable_id_only(monkeypatch):
     assert removals == [["docker", "rmi", _IMG]]  # ID target, no -f, no tag
 
 
+def test_inspect_absence_requires_exact_full_message(monkeypatch):
+    module = _docker_e2e_module()
+    ref = "trustflow-m5-matcher-test:abc123"
+    exact = f"Error response from daemon: No such image: {ref}"
+    variants = {
+        "quoted": f'Error response from daemon: upstream failed '
+                  f'while processing "No such image: {ref}"',
+        "mixed": exact + "\npermission denied while trying to connect",
+        "wrong-suffix": f"Error response from daemon: "
+                        f"No such image: {ref}-other",
+        "prefix": "Error response from daemon: No such image: "
+                  "trustflow-m5-matcher-test:abc",
+        "extra-line": exact + "\nError: additional failure",
+        "http500-embedded": f"Error response from daemon: 500 Internal "
+                            f'Server Error for "No such image: {ref}"',
+    }
+    for name, err in variants.items():
+        _scripted(module, monkeypatch,
+                  lambda args, e=err: _cp(1, "[]", e))
+        res = module._inspect_image(ref)
+        assert res.state is module.InspectState.ERROR, name
+    _scripted(module, monkeypatch, lambda args: _cp(1, "[]", exact))
+    assert module._inspect_image(ref).state is module.InspectState.NOT_FOUND
+
+
+def test_cleanup_false_absence_cannot_report_absent(monkeypatch):
+    module = _docker_e2e_module()
+    quoted = (f'Error response from daemon: backend failure while '
+              f'processing "No such image: {_IMG}"')
+    calls = _scripted(module, monkeypatch, lambda args: _cp(1, "[]", quoted))
+    with pytest.warns(UserWarning):
+        outcome = module._cleanup_owned_image(_IMG, "run-1")
+    assert outcome == "cleanup-failed"  # never a false "absent" success
+    assert not any("rmi" in c for c in calls)
+
+
+def test_inspect_invalid_metadata_shapes_fail_closed(monkeypatch):
+    module = _docker_e2e_module()
+    good_labels = {module.RUN_LABEL: "r"}
+    payloads = {
+        "config-string": [{"Id": _IMG, "Config": "nope"}],
+        "config-list": [{"Id": _IMG, "Config": []}],
+        "labels-list": [{"Id": _IMG, "Config": {"Labels": []}}],
+        "labels-int": [{"Id": _IMG, "Config": {"Labels": 0}}],
+        "labels-nonstring-value": [
+            {"Id": _IMG, "Config": {"Labels": {"k": 1}}}],
+        "truncated-id": [{"Id": "sha256:a", "Config": {"Labels": {}}}],
+        "nonhex-id": [
+            {"Id": "sha256:" + "g" * 64, "Config": {"Labels": {}}}],
+        "missing-id": [{"Config": {"Labels": good_labels}}],
+        "missing-config": [{"Id": _IMG}],
+    }
+    for name, payload in payloads.items():
+        _scripted(module, monkeypatch,
+                  lambda args, p=payload: _cp(0, _json.dumps(p)))
+        res = module._inspect_image(_IMG)
+        assert res.state is module.InspectState.ERROR, name
+
+
+def test_cleanup_removal_timeout_propagates_visibly(monkeypatch):
+    module = _docker_e2e_module()
+
+    def handler(args):
+        if args[:3] == ["docker", "image", "inspect"]:
+            return _found(labels={module.RUN_LABEL: "run-1"})
+        raise _sp.TimeoutExpired("docker", 120)
+
+    _scripted(module, monkeypatch, handler)
+    with pytest.raises(_sp.TimeoutExpired):
+        module._cleanup_owned_image(_IMG, "run-1")
+
+
+def test_post_build_inspection_failure_reports_tag_and_detail(
+        monkeypatch, tmp_path):
+    module = _docker_e2e_module()
+
+    def handler(args):
+        if args[:3] == ["docker", "image", "inspect"]:
+            ref = args[3]
+            if ref.startswith("sha256:"):
+                return _cp(1, "", "daemon unavailable")
+            return _cp(1, "[]", f"Error response from daemon: "
+                                f"No such image: {ref}")
+        return _cp(0)  # build/run succeed; inspection then fails
+
+    _scripted(module, monkeypatch, handler)
+    with pytest.raises(AssertionError) as excinfo:
+        module._run_matcher_build(tmp_path)
+    message = str(excinfo.value)
+    assert "trustflow-m5-matcher-test:" in message
+    assert "ownership unknown" in message
+
+
+def test_fixture_builder_reports_tag_on_inspection_failure(
+        monkeypatch, tmp_path):
+    module = _docker_e2e_module()
+
+    def handler(args):
+        if args[:3] == ["docker", "image", "inspect"]:
+            return _cp(1, "", "permission denied while trying to connect")
+        return _cp(0)
+
+    _scripted(module, monkeypatch, handler)
+    with pytest.raises(AssertionError) as excinfo:
+        module._build_labeled_image(
+            tmp_path, "sentinel", {module.RUN_LABEL: "run-x"})
+    message = str(excinfo.value)
+    assert "trustflow-m5-sentinel:run-x" in message
+    assert "ownership unknown" in message
+
+
 def test_cleanup_removal_refusal_is_visible(monkeypatch):
     module = _docker_e2e_module()
 
