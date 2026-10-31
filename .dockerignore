@@ -1,0 +1,15 @@
+# Backend build context: the Dockerfile needs only pyproject.toml,
+# README.md and src/. Keep local state, data and artifacts out.
+.git
+.venv
+.pytest_cache
+.mypy_cache
+.ruff_cache
+pytest-of-vanya
+data
+artifacts
+frontend
+docs
+tests
+*.txt
+.env

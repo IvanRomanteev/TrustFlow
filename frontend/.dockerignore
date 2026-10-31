@@ -1,0 +1,7 @@
+# Host build artifacts must never leak into the Linux image: the
+# Dockerfile runs `npm ci` + `npm run build` itself. Copying a host
+# (e.g. Windows) node_modules/.next over the fresh install can break
+# native binaries and makes the build context huge and non-reproducible.
+node_modules
+.next
+npm-debug.log*

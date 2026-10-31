@@ -1,6 +1,9 @@
 # TrustFlow demo (M3): one command — docker compose up --build
 # Then open http://127.0.0.1:3000 in a browser (SANDBOX, synthetic only).
 # Approval token for the demo UI: demo-approval-token (panel 3).
+# WARNING: this token is a public demo value for local use only.
+# Never reuse it (or this Compose file unchanged) in a public deployment;
+# set TRUSTFLOW_APPROVAL_TOKEN from a secret source instead.
 services:
   backend:
     build: .
