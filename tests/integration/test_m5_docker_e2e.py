@@ -590,6 +590,25 @@ def _raise_stack_result(primary: BaseException | None,
         raise ExceptionGroup("stack cleanup failed", failures)
 
 
+class _FailureLog:
+    """One structured accumulator for a whole teardown lifecycle.
+
+    Every discovery, validation, classification, cleanup and
+    postcondition operation appends here; no later exception can
+    discard earlier failures (R7 F4).
+    """
+
+    def __init__(self, run_id: str) -> None:
+        self.run_id = run_id
+        self.items: list[BaseException] = []
+
+    def add(self, operation: str, image_id: str | None,
+            command: str, reason: str) -> None:
+        self.items.append(CleanupFailure(
+            operation, image_id, self.run_id, command, reason,
+            preserved=True))
+
+
 class _StackRun:
     """One UUID-owned Compose stack invocation (R5 F1/F2/F3).
 
@@ -606,6 +625,11 @@ class _StackRun:
         self.project = project or f"tf-m5-it-{self.run_id}"
         self.backend_port = _free_port()
         self.frontend_port = _free_port()
+        # R7: persistence is a unique per-run HOST bind directory
+        # created by this invocation, never a named Docker volume.
+        self.workspace = tmp_path / f"ws-{self.run_id}"
+        self.bind_dir = self.workspace / "data"
+        self.marker_file = self.bind_dir / f".trustflow-owned-{self.run_id}"
         label = f"{RUN_LABEL}={self.run_id}"
         override = tmp_path / f"override-{self.run_id}.yml"
         override.write_text(
@@ -620,6 +644,10 @@ class _StackRun:
             f"      TRUSTFLOW_CORS_ORIGINS: "
             f"'[\"http://127.0.0.1:{self.frontend_port}\","
             f"\"http://localhost:{self.frontend_port}\"]'\n"
+            "    volumes: !override\n"
+            "      - type: bind\n"
+            f"        source: {self.bind_dir.as_posix()}\n"
+            "        target: /data\n"
             "    ports: !override\n"
             f"      - \"127.0.0.1:{self.backend_port}:8000\"\n"
             "  frontend:\n"
@@ -636,10 +664,6 @@ class _StackRun:
             "networks:\n"
             "  default:\n"
             "    labels:\n"
-            f"      - \"{label}\"\n"
-            "volumes:\n"
-            "  tf-data:\n"
-            "    labels:\n"
             f"      - \"{label}\"\n",
             encoding="utf-8")
         self.base = ["docker", "compose", "-p", self.project,
@@ -653,19 +677,51 @@ class _StackRun:
     def preflight(self) -> None:
         _compose_preflight(self.project)  # before ANY mutation
 
+    def _prepare_workspace(self) -> None:
+        """Create the private bind workspace; refuse reused paths."""
+        if self.workspace.exists() or self.workspace.is_symlink():
+            raise AssertionError(
+                f"workspace already exists or is a link: {self.workspace}")
+        self.bind_dir.mkdir(parents=True)
+        self.marker_file.write_text(self.run_id, encoding="utf-8")
+
+    @staticmethod
+    def _norm_path(path: str) -> str:
+        return path.replace("\\", "/").rstrip("/").casefold()
+
     def start(self) -> None:
+        """Build, create, verify ownership/mounts, THEN start.
+
+        No application process runs before the ownership gate: the
+        backend could otherwise initialize (and mutate) whatever
+        storage Compose happened to mount (R7 F1).
+        """
         self.preflight_inventory = _image_inventory()
-        up = _run([*self.base, "up", "-d", "--build"])
-        assert up.returncode == 0, up.stderr[-2000:]
+        self._prepare_workspace()
+        build = _run([*self.base, "build"])
+        assert build.returncode == 0, build.stderr[-2000:]
+        config = _run([*self.base, "config", "--format", "json"],
+                      timeout=120)
+        assert config.returncode == 0, config.stderr[-1000:]
+        rendered = json.loads(config.stdout)
+        mounts = (rendered["services"]["backend"].get("volumes") or [])
+        assert len(mounts) == 1 and mounts[0].get("type") == "bind" \
+            and self._norm_path(str(mounts[0].get("source", ""))) == \
+            self._norm_path(self.bind_dir.as_posix()), mounts
+        created = _run([*self.base, "create"])
+        assert created.returncode == 0, created.stderr[-2000:]
         # Record exact service container identities immediately:
         # labels alone cannot prove container ownership, because a
         # container created from our image inherits its labels.
         for service in ("backend", "frontend"):
-            cid = _run([*self.base, "ps", "-q", service]).stdout.strip()
-            if cid:
-                self.container_ids[service] = cid
+            cid = _run([*self.base, "ps", "-a", "-q", service],
+                       timeout=120).stdout.strip()
+            assert cid, f"container for {service} was not created"
+            self.container_ids[service] = cid
+        self._verify_ownership()  # gate: nothing has started yet
+        started = _run([*self.base, "start"])
+        assert started.returncode == 0, started.stderr[-2000:]
         self._wait_health()
-        self._verify_ownership()
 
     def up(self) -> None:
         self.preflight()
@@ -687,7 +743,7 @@ class _StackRun:
         assert body.get("persistence") == "sqlite"
 
     def _container_id(self, service: str) -> str:
-        cid = _run([*self.base, "ps", "-q", service]).stdout.strip()
+        cid = _run([*self.base, "ps", "-a", "-q", service]).stdout.strip()
         assert cid, service
         return cid
 
@@ -696,28 +752,27 @@ class _StackRun:
     # container/network/volume/image in the namespace is inspected
     # individually and must carry this invocation's run identity.
 
-    def _discover(self) -> tuple[dict[str, list[dict]],
-                                 list[dict], list[BaseException]]:
-        """Classify namespace resources as owned / foreign / unknown.
+    def _discover(self, log: "_FailureLog") -> tuple[dict[str, list[dict]],
+                                                     list[dict]]:
+        """Classify resources as OWNED / FOREIGN; else log UNKNOWN.
 
-        Returns (owned_by_kind, foreign_records, failures). Any
-        failed or timed-out inventory query becomes a structured
-        CleanupFailure; unknown is never read as empty (R6 N2).
+        Every listed resource is strictly validated (shape, types,
+        exact identity, string labels). Malformed or inconclusive
+        records append a structured failure to the shared `log`
+        accumulator and are preserved — never silently discarded
+        (R7 F3/F4). This method never raises for resource problems.
         """
         owned: dict[str, list[dict]] = {
             "containers": [], "networks": [], "volumes": [], "images": []}
         foreign: list[dict] = []
-        failures: list[BaseException] = []
 
         def fail(kind: str, cmd: str, reason: str) -> None:
-            failures.append(CleanupFailure(
-                f"inventory:{kind}", None, self.run_id, cmd, reason,
-                preserved=True))
+            log.add(f"inventory:{kind}", None, cmd, reason)
 
         def query(kind: str, argv: list[str]) -> list[str] | None:
             try:
                 proc = _run(argv, timeout=120)
-            except BaseException as exc:
+            except Exception as exc:
                 fail(kind, " ".join(argv), f"{type(exc).__name__}: {exc}")
                 return None
             if proc.returncode != 0:
@@ -727,13 +782,46 @@ class _StackRun:
                 return None
             return [x for x in proc.stdout.split() if x.strip()]
 
-        def classify(kind: str, record: dict) -> None:
-            labels = record.get("labels") or {}
+        def valid_labels(value: object, kind: str, ref: str) -> dict | None:
+            if value is None:
+                return {}
+            if not isinstance(value, dict) or not all(
+                    isinstance(k, str) and isinstance(v, str)
+                    for k, v in value.items()):
+                fail(kind, f"docker inspect {ref}",
+                     f"malformed metadata: labels must be a "
+                     f"string->string object, got {type(value).__name__}")
+                return None
+            return dict(value)
+
+        def classify(kind: str, record: dict, ref: str) -> None:
+            labels = record["labels"]
             if labels.get(PROJECT_LABEL) == self.project \
                     and labels.get(RUN_LABEL) == self.run_id:
                 owned[kind].append(record)
             elif labels.get(PROJECT_LABEL) == self.project:
                 foreign.append({"kind": kind, **record})
+            else:
+                fail(kind, f"docker inspect {ref}",
+                     "unclassifiable resource: labels do not confirm "
+                     f"project {self.project}: {labels}")
+
+        def identity(raw: object, kind: str, ref: str,
+                     field: str = "Id") -> str | None:
+            if not isinstance(raw, dict):
+                fail(kind, f"docker inspect {ref}",
+                     f"malformed metadata: expected object, "
+                     f"got {type(raw).__name__}")
+                return None
+            value = raw.get(field)
+            if not isinstance(value, str) or not value \
+                    or (value != ref and not value.startswith(ref)
+                        and not ref.startswith(value)):
+                fail(kind, f"docker inspect {ref}",
+                     f"malformed metadata: {field}={value!r} does "
+                     f"not match requested identity {ref!r}")
+                return None
+            return value
 
         pf = f"label={PROJECT_LABEL}={self.project}"
         ids = query("containers",
@@ -741,45 +829,71 @@ class _StackRun:
         for cid in ids or []:
             try:
                 raw = _raw_inspect(cid)
-            except BaseException as exc:
+                rid = identity(raw, "containers", cid)
+                if rid is None:
+                    continue
+                config = raw.get("Config") if isinstance(raw, dict) \
+                    else None
+                if not isinstance(config, dict):
+                    fail("containers", f"docker inspect {cid}",
+                         "malformed metadata: Config must be an object")
+                    continue
+                labels = valid_labels(config.get("Labels"),
+                                      "containers", cid)
+                if labels is None:
+                    continue
+                classify("containers", {
+                    "id": rid, "name": raw.get("Name"),
+                    "labels": labels,
+                    "running": bool(
+                        (raw.get("State") or {}).get("Running"))}, cid)
+            except Exception as exc:
                 fail("containers", f"docker inspect {cid}",
                      f"{type(exc).__name__}: {exc}")
-                continue
-            classify("containers", {
-                "id": raw.get("Id") or cid, "name": raw.get("Name"),
-                "labels": (raw.get("Config") or {}).get("Labels") or {},
-                "running": bool((raw.get("State") or {}).get("Running"))})
         ids = query("networks",
                     ["docker", "network", "ls", "-q", "--filter", pf])
         for nid in ids or []:
             try:
                 raw = _raw_inspect(nid)
-            except BaseException as exc:
+                rid = identity(raw, "networks", nid)
+                if rid is None:
+                    continue
+                labels = valid_labels(
+                    raw.get("Labels") if isinstance(raw, dict) else None,
+                    "networks", nid)
+                if labels is None:
+                    continue
+                classify("networks", {
+                    "id": rid, "name": raw.get("Name"),
+                    "labels": labels}, nid)
+            except Exception as exc:
                 fail("networks", f"docker network inspect {nid}",
                      f"{type(exc).__name__}: {exc}")
-                continue
-            classify("networks", {
-                "id": raw.get("Id") or nid, "name": raw.get("Name"),
-                "labels": raw.get("Labels") or {}})
         names = query("volumes",
                       ["docker", "volume", "ls", "-q", "--filter", pf])
         for name in names or []:
             try:
                 raw = _raw_inspect(name)
-            except BaseException as exc:
+                rid = identity(raw, "volumes", name, field="Name")
+                if rid is None:
+                    continue
+                labels = valid_labels(
+                    raw.get("Labels") if isinstance(raw, dict) else None,
+                    "volumes", name)
+                if labels is None:
+                    continue
+                classify("volumes", {
+                    "id": rid, "name": name, "labels": labels}, name)
+            except Exception as exc:
                 fail("volumes", f"docker volume inspect {name}",
                      f"{type(exc).__name__}: {exc}")
-                continue
-            classify("volumes", {
-                "id": raw.get("Name") or name, "name": name,
-                "labels": raw.get("Labels") or {}})
         ids = query("images",
                     ["docker", "image", "ls", "-q", "--no-trunc",
                      "--filter", pf])
         for ref in ids or []:
             try:
                 res = _inspect_image(ref)
-            except BaseException as exc:
+            except Exception as exc:
                 fail("images", f"docker image inspect {ref}",
                      f"{type(exc).__name__}: {exc}")
                 continue
@@ -788,8 +902,8 @@ class _StackRun:
                      f"state={res.state.value}: {res.detail}")
                 continue
             classify("images", {"id": res.image_id, "name": ref,
-                                "labels": res.labels})
-        return owned, foreign, failures
+                                "labels": res.labels}, ref)
+        return owned, foreign
 
     def _verify_ownership(self) -> None:
         for service in ("backend", "frontend"):
@@ -807,9 +921,30 @@ class _StackRun:
             assert res.state is InspectState.FOUND, res.detail
             assert res.labels.get(RUN_LABEL) == self.run_id, res.labels
             assert res.labels.get(PROJECT_LABEL) == self.project
+        # Pre-start gate (R7 F1): containers must not be running,
+        # and actual mounts must be exactly the invocation-owned
+        # bind directory — verified from real container metadata.
+        for service, cid in self.container_ids.items():
+            raw = _raw_inspect(cid)
+            assert not (raw.get("State") or {}).get("Running"), \
+                f"{service} started before the ownership gate"
+            mounts = raw.get("Mounts") or []
+            if service == "backend":
+                data = [m for m in mounts
+                        if m.get("Destination") == "/data"]
+                assert len(data) == 1 and data[0].get("Type") == "bind" \
+                    and self._norm_path(str(data[0].get("Source", ""))) \
+                    == self._norm_path(self.bind_dir.as_posix()), mounts
+            else:
+                assert not [m for m in mounts
+                            if m.get("Destination") == "/data"], mounts
+        assert self.marker_file.read_text(encoding="utf-8").strip() \
+            == self.run_id
         # Every namespace resource — networks and volumes included —
         # must belong to this invocation before any workflow runs.
-        _owned, foreign, failures = self._discover()
+        gate_log = _FailureLog(self.run_id)
+        _owned, foreign = self._discover(gate_log)
+        failures = gate_log.items
         if failures:
             raise AssertionError(
                 f"ownership inventory inconclusive for project "
@@ -888,6 +1023,46 @@ class _StackRun:
                       if port == backend_port else f"http://{lan_ip}:{port}/",
                       timeout=3)
 
+    def _cleanup_workspace(self, fail) -> None:
+        """Delete ONLY the positively identified private workspace.
+
+        Identity proof: path is the exact per-run directory created
+        by this invocation, it is not a symlink/reparse point, the
+        ownership marker names this run, and no recorded container
+        still exists to hold the mount. Anything else is preserved.
+        """
+        import shutil as _shutil
+
+        target = self.workspace
+        try:
+            if target.is_symlink() or self.bind_dir.is_symlink():
+                fail("workspace-cleanup", None, str(target),
+                     "workspace path is a symlink/reparse point; "
+                     "preserved")
+                return
+            if not self.marker_file.is_file() or \
+                    self.marker_file.read_text(
+                        encoding="utf-8").strip() != self.run_id:
+                fail("workspace-cleanup", None, str(target),
+                     "ownership marker missing or mismatched; "
+                     "preserved")
+                return
+            for cid in self.container_ids.values():
+                proc = _run(["docker", "inspect", "-f", "{{.Id}}", cid],
+                            timeout=120)
+                if proc.returncode == 0:
+                    fail("workspace-cleanup", None, str(target),
+                         f"container {cid} still exists; workspace "
+                         f"preserved")
+                    return
+            _shutil.rmtree(target)
+            if target.exists():
+                fail("workspace-cleanup", None, str(target),
+                     "workspace still present after cleanup")
+        except BaseException as exc:
+            fail("workspace-cleanup", None, str(target),
+                 f"{type(exc).__name__}: {exc}")
+
     def teardown(self) -> list[BaseException]:
         """Resource-scoped verified teardown; returns failures.
 
@@ -900,14 +1075,14 @@ class _StackRun:
         residual check-then-delete window on a shared daemon is
         documented in docs/m5.md; it is not claimed race-free.
         """
-        failures: list[BaseException] = []
+        log = _FailureLog(self.run_id)
+        failures = log.items
 
         def fail(op: str, image_id: str | None, cmd: str, reason: str):
-            failures.append(CleanupFailure(
-                op, image_id, self.run_id, cmd, reason, preserved=True))
+            log.add(op, image_id, cmd, reason)
 
         try:
-            owned, foreign, failures = self._discover()
+            owned, foreign = self._discover(log)
         except BaseException as exc:  # discovery itself exploded
             fail("inventory", None, "resource discovery",
                  f"{type(exc).__name__}: {exc}")
@@ -955,10 +1130,15 @@ class _StackRun:
             run_op("network-rm", rec["id"],
                    ["docker", "network", "rm", rec["id"]])
         for rec in owned["volumes"]:
-            # Volume identity is its exact verified name + labels;
-            # both were checked during discovery classification.
-            run_op("volume-rm", None,
-                   ["docker", "volume", "rm", rec["name"]])
+            # R7: named Docker volumes are NEVER deleted by this
+            # lifecycle (mutable-name teardown is eliminated). An
+            # owned-classified named volume is unexpected under the
+            # bind-mount design: preserve it and fail visibly.
+            fail("ownership:volume", None,
+                 "resource discovery",
+                 f"unexpected owned named volume preserved (named "
+                 f"volumes are never deleted): name={rec['name']} "
+                 f"id={rec['id']}")
         targets: dict[str, str] = dict(self.image_ids)
         for rec in owned["images"]:
             targets.setdefault(rec["id"], rec["id"])
@@ -973,12 +1153,14 @@ class _StackRun:
             if outcome not in ("removed", "absent"):
                 fail("image-cleanup", image_id,
                      f"docker rmi {image_id}", f"outcome={outcome}")
+        # Workspace cleanup: only after containers are gone, and
+        # only if the private directory identity is provable.
+        self._cleanup_workspace(fail)
         # Postconditions: only a successful authoritative inventory
         # with zero owned leftovers satisfies mandatory cleanup.
         try:
-            left, _foreign_left, post_failures = self._discover()
-            failures.extend(post_failures)
-            for kind in ("containers", "networks", "volumes", "images"):
+            left, _foreign_left = self._discover(log)
+            for kind in ("containers", "networks", "images"):
                 if left[kind]:
                     fail(f"postcondition:{kind}", None,
                          "resource discovery",
@@ -1076,7 +1258,7 @@ def test_stack_rejects_preexisting_namespace(tmp_path):
                  f"label={PROJECT_LABEL}={victim}"])
         finally:
             _run(["docker", "network", "rm", net_name], timeout=120)
-            _run(["docker", "volume", "rm", vol_name], timeout=120)
+            _remove_own_volume(vol_name, {PROJECT_LABEL: victim})
     assert _inspect_image(image_id).state is not InspectState.FOUND
 
 
@@ -1126,6 +1308,20 @@ def _exception_graph_text(exc: BaseException) -> str:
     return "\n".join(parts)
 
 
+def _remove_own_volume(name: str, expected_labels: dict) -> None:
+    """Remove a test-fixture volume ONLY after label re-verification.
+
+    This is the single volume-removal helper for fixtures this test
+    itself created; the candidate lifecycle never calls it.
+    """
+    raw = _raw_inspect(name)
+    labels = raw.get("Labels") or {}
+    for key, value in expected_labels.items():
+        assert labels.get(key) == value, labels
+    proc = _run(["docker", "volume", "rm", name], timeout=120)
+    assert proc.returncode == 0, proc.stderr
+
+
 def _create_foreign_resources(project: str) -> tuple[str, str, str]:
     """Foreign network+volume in `project` under another run ID.
 
@@ -1171,9 +1367,10 @@ def test_stack_foreign_resources_race_full(tmp_path):
         _assert_foreign_intact(net_name, vol_name, foreign_run)
     finally:
         if "foreign" in holder:
-            _f, net_name, vol_name = holder["foreign"]
+            foreign_run, net_name, vol_name = holder["foreign"]
             _run(["docker", "network", "rm", net_name], timeout=120)
-            _run(["docker", "volume", "rm", vol_name], timeout=120)
+            _remove_own_volume(vol_name, {
+                PROJECT_LABEL: project, RUN_LABEL: foreign_run})
 
 
 def test_stack_foreign_resources_race_partial(tmp_path):
@@ -1189,7 +1386,7 @@ def test_stack_foreign_resources_race_partial(tmp_path):
         failures = run.teardown()
         _assert_foreign_intact(net_name, vol_name, foreign_run)
         # Only the owned backend image may be gone; nothing foreign.
-        owned_left = [r for r in run._discover()[0]["images"]]
+        owned_left = run._discover(_FailureLog(run.run_id))[0]["images"]
         assert owned_left == []
         with pytest.raises(BaseException) as excinfo:
             _raise_stack_result(primary, failures)
@@ -1197,7 +1394,95 @@ def test_stack_foreign_resources_race_partial(tmp_path):
             excinfo.value.__cause__ or excinfo.value)
     finally:
         _run(["docker", "network", "rm", net_name], timeout=120)
-        _run(["docker", "volume", "rm", vol_name], timeout=120)
+        _remove_own_volume(vol_name, {
+            PROJECT_LABEL: project, RUN_LABEL: foreign_run})
+
+
+def _foreign_sqlite_volume(project: str) -> tuple[str, str, str]:
+    """Plant a foreign volume with sentinel file + sentinel SQLite.
+
+    Returns (foreign_run, volume_name, db_sha256). All resources are
+    created by the calling test and removed by it afterwards.
+    """
+    foreign_run = f"other-{uuid.uuid4().hex}"
+    vol_name = f"{project}_tf-data"
+    proc = _run(["docker", "volume", "create",
+                 "--label", f"{PROJECT_LABEL}={project}",
+                 "--label", f"{RUN_LABEL}={foreign_run}", vol_name])
+    assert proc.returncode == 0, proc.stderr
+    script = (
+        "import sqlite3, pathlib; "
+        "pathlib.Path('/data/sentinel.txt').write_text('foreign-sentinel'); "
+        "db = sqlite3.connect('/data/trustflow.db'); "
+        "db.execute('CREATE TABLE reviewer_sentinel (v TEXT)'); "
+        "db.execute(\"INSERT INTO reviewer_sentinel VALUES ('keep-me')\"); "
+        "db.commit(); db.close()")
+    made = _run(["docker", "run", "--rm", "--mount",
+                 f"source={vol_name},target=/data",
+                 "trustflow-backend:latest", "python", "-c", script],
+                timeout=300)
+    assert made.returncode == 0, made.stderr[-1000:]
+    digest = _run(["docker", "run", "--rm", "--mount",
+                   f"source={vol_name},target=/data",
+                   "trustflow-backend:latest", "python", "-c",
+                   "import hashlib; print(hashlib.sha256("
+                   "open('/data/trustflow.db','rb').read()).hexdigest())"],
+                  timeout=300)
+    assert digest.returncode == 0, digest.stderr[-500:]
+    return foreign_run, vol_name, digest.stdout.strip()
+
+
+def test_stack_foreign_sqlite_never_started_against(tmp_path):
+    """F1: the backend must never start against foreign storage.
+
+    A foreign named volume holds a sentinel SQLite DB. The bind
+    candidate's pre-start gate must conflict before any start, so
+    the foreign bytes are byte-identical afterwards and the
+    candidate's own bind directory was never initialized.
+    """
+    project = f"tf-m5-it-{uuid.uuid4().hex}"
+    foreign_run, vol_name, sha_before = _foreign_sqlite_volume(project)
+    proc = _run(["docker", "network", "create",
+                 "--label", f"{PROJECT_LABEL}={project}",
+                 "--label", f"{RUN_LABEL}={foreign_run}",
+                 f"{project}_default"])
+    assert proc.returncode == 0, proc.stderr
+    run = _StackRun(tmp_path, project=project)
+    primary: BaseException | None = None
+    try:
+        run.preflight()
+        run.start()
+    except BaseException as exc:
+        primary = exc
+    failures = run.teardown()
+    try:
+        assert primary is not None
+        graph = _exception_graph_text(primary)
+        for failure in failures:
+            graph += "\n" + str(failure)
+        assert "foreign" in graph
+        digest = _run(["docker", "run", "--rm", "--mount",
+                       f"source={vol_name},target=/data",
+                       "trustflow-backend:latest", "python", "-c",
+                       "import hashlib; print(hashlib.sha256("
+                       "open('/data/trustflow.db','rb')"
+                       ".read()).hexdigest())"], timeout=300)
+        assert digest.stdout.strip() == sha_before
+        sentinel = _run(["docker", "run", "--rm", "--mount",
+                         f"source={vol_name},target=/data",
+                         "trustflow-backend:latest", "python", "-c",
+                         "print(open('/data/sentinel.txt').read())"],
+                        timeout=300)
+        assert sentinel.stdout.strip() == "foreign-sentinel"
+        # The candidate backend never initialized any database.
+        assert not (run.bind_dir / "trustflow.db").exists()
+        _assert_foreign_intact(f"{project}_default", vol_name,
+                               foreign_run)
+    finally:
+        _run(["docker", "network", "rm", f"{project}_default"],
+             timeout=120)
+        _remove_own_volume(vol_name, {
+            PROJECT_LABEL: project, RUN_LABEL: foreign_run})
 
 
 def test_stack_inventory_failure_fails_closed(tmp_path, monkeypatch):
@@ -1278,7 +1563,93 @@ def test_stack_inventory_failure_fails_closed(tmp_path, monkeypatch):
             for name in (f"{project}_default",):
                 real_run(["docker", "network", "rm", name],
                          timeout=120)
-            real_run(["docker", "volume", "rm", f"{project}_tf-data"],
+            # No named volume is created by the bind-mount candidate;
+            # nothing volume-shaped is removed here.
+            for image_id in real_run(
+                    ["docker", "image", "ls", "-q", "--no-trunc",
+                     "--filter", f"label={PROJECT_LABEL}={project}"],
+                    timeout=120).stdout.split():
+                real_run(["docker", "rmi", image_id], timeout=120)
+
+
+def test_stack_malformed_network_metadata_fails(tmp_path, monkeypatch):
+    """F3: inspect `[{}]` for a real held network must FAIL.
+
+    During teardown, inspect of the candidate's owned network is
+    replaced with a successful but malformed `[{}]` response while
+    a review-owned holder keeps the network alive. The network must
+    be preserved and the test must FAIL with a malformed-metadata
+    failure; no false empty inventory may result.
+    """
+    import subprocess as _subprocess
+    import sys as _sys
+
+    real_run = _run
+    state: dict = {"project": None, "holder": None, "net_name": None,
+                   "teardown_phase": False, "malformed_done": False}
+
+    def wrapper(args, timeout=600, cwd=None):
+        argv = list(args)
+        if argv[:2] == ["docker", "compose"] and "-p" in argv:
+            state["project"] = argv[argv.index("-p") + 1]
+        if "restart" in argv:
+            state["teardown_phase"] = True
+        if state["teardown_phase"] and argv[:2] == ["docker", "inspect"]:
+            target = argv[2] if len(argv) > 2 else ""
+            nets = real_run(
+                ["docker", "network", "ls", "--filter",
+                 f"label={PROJECT_LABEL}={state['project']}",
+                 "--format", "{{.ID}}"], timeout=120).stdout.split()
+            if nets and target in nets \
+                    and not state["malformed_done"]:
+                state["malformed_done"] = True
+                state["net_name"] = real_run(
+                    ["docker", "network", "ls", "--filter",
+                     f"label={PROJECT_LABEL}={state['project']}",
+                     "--format", "{{.Name}}"],
+                    timeout=120).stdout.split()[0]
+                image = real_run(
+                    ["docker", "image", "ls", "-q", "--no-trunc",
+                     "--filter",
+                     f"label={PROJECT_LABEL}={state['project']}"],
+                    timeout=120).stdout.split()[0]
+                made = real_run(
+                    ["docker", "create", "--network", state["net_name"],
+                     image], timeout=120)
+                state["holder"] = made.stdout.strip()
+                return _subprocess.CompletedProcess(argv, 0, "[{}]", "")
+        return real_run(argv, timeout=timeout, cwd=cwd)
+
+    monkeypatch.setattr(_sys.modules[__name__], "_run", wrapper)
+    try:
+        with pytest.raises(BaseException) as excinfo:
+            _run_stack_test(tmp_path)
+        graph = _exception_graph_text(excinfo.value)
+        assert "malformed" in graph
+        assert state["malformed_done"] is True
+        assert state["holder"] and state["net_name"]
+        alive = real_run(["docker", "inspect", "-f", "{{.Id}}",
+                          state["holder"]], timeout=120)
+        assert alive.returncode == 0
+        nets = real_run(["docker", "network", "ls", "--filter",
+                         f"label={PROJECT_LABEL}={state['project']}",
+                         "--format", "{{.Name}}"],
+                        timeout=120).stdout
+        assert state["net_name"] in nets
+    finally:
+        monkeypatch.undo()
+        if state.get("holder"):
+            real_run(["docker", "rm", "-f", state["holder"]],
+                     timeout=120)
+        if state.get("project"):
+            project = state["project"]
+            for cid in real_run(
+                    ["docker", "ps", "-a", "-q", "--filter",
+                     f"label={PROJECT_LABEL}={project}"],
+                    timeout=120).stdout.split():
+                real_run(["docker", "stop", cid], timeout=120)
+                real_run(["docker", "rm", cid], timeout=120)
+            real_run(["docker", "network", "rm", f"{project}_default"],
                      timeout=120)
             for image_id in real_run(
                     ["docker", "image", "ls", "-q", "--no-trunc",

@@ -652,17 +652,69 @@ def test_compose_discovery_classifies_foreign_resources(
         return _cp(0, "")
 
     monkeypatch.setattr(module, "_run", handler)
-    owned, foreign, failures = run._discover()
-    assert not failures
+    log = module._FailureLog(run.run_id)
+    owned, foreign = run._discover(log)
+    assert not log.items
     assert [r["id"] for r in owned["containers"]] == ["cid-own"]
     assert {r["id"] for r in foreign} == {"cid-foreign", "net-foreign"}
 
 
+def test_compose_discovery_malformed_metadata_fails_closed(
+        monkeypatch, tmp_path):
+    """F3/F4 unit: malformed volume labels become a structured
+    failure in the accumulator, never a silently discarded record."""
+    module = _docker_e2e_module()
+    run = module._StackRun(tmp_path)
+
+    def handler(args, **_kwargs):
+        if args[:3] == ["docker", "volume", "ls"]:
+            return _cp(0, "volbad\n")
+        if args[:2] == ["docker", "inspect"]:
+            return _cp(0, _json.dumps([{
+                "Name": "volbad", "Labels": ["bad"]}]))
+        return _cp(0, "")
+
+    monkeypatch.setattr(module, "_run", handler)
+    log = module._FailureLog(run.run_id)
+    owned, foreign = run._discover(log)
+    assert owned["volumes"] == [] and foreign == []
+    assert log.items and "malformed" in str(log.items[0])
+
+
+def test_teardown_never_removes_volumes_by_name(monkeypatch, tmp_path):
+    """F2 unit: even a verified-owned named volume is preserved and
+    reported; teardown never issues `docker volume rm`."""
+    module = _docker_e2e_module()
+    run = module._StackRun(tmp_path)
+    run.ownership_verified = True
+    calls: list = []
+
+    def handler(args, **_kwargs):
+        argv = list(args)
+        calls.append(argv)
+        if argv[:3] == ["docker", "volume", "ls"]:
+            return _cp(0, "vol-own\n")
+        if argv[:2] == ["docker", "inspect"]:
+            return _cp(0, _json.dumps([{
+                "Name": "vol-own",
+                "Labels": {module.PROJECT_LABEL: run.project,
+                           module.RUN_LABEL: run.run_id}}]))
+        return _cp(0, "")
+
+    monkeypatch.setattr(module, "_run", handler)
+    failures = run.teardown()
+    assert failures and any(
+        "volumes are never deleted" in str(f) for f in failures)
+    assert not any(a[:3] == ["docker", "volume", "rm"] for a in calls)
+
+
 def test_stack_full_function_preserves_all_failures(
         monkeypatch, tmp_path):
-    """N3 graph: primary + cleanup-op + discovery failures coexist."""
+    """N3/F4 graph: primary + inventory + malformed + discovery
+    failures all coexist in one accumulated failure graph."""
     module = _docker_e2e_module()
-    state: dict = {"run_id": None, "project": None, "up_seen": False}
+    state: dict = {"run_id": None, "project": None,
+                   "build_seen": False, "bind_source": None}
 
     def handler(args, **_kwargs):
         import re as _re
@@ -674,39 +726,39 @@ def test_stack_full_function_preserves_all_failures(
                 state["project"] = argv[argv.index("-p") + 1]
             for token in argv:
                 if "override-" in token and token.endswith(".yml"):
+                    text = _p(token).read_text()
                     match = _re.search(r"trustflow\.test-run=([0-9a-f]+)",
-                                       _p(token).read_text())
+                                       text)
                     if match:
                         state["run_id"] = match.group(1)
-            if "up" in argv:
-                state["up_seen"] = True
+                    source = _re.search(r"source:\s*(\S+)", text)
+                    if source:
+                        state["bind_source"] = source.group(1)
+            if "build" in argv:
+                state["build_seen"] = True
                 return _cp(1, "", "PRIMARY_SETUP_MARKER")
+            if "config" in argv:
+                return _cp(0, _json.dumps({"services": {"backend": {
+                    "volumes": [{"type": "bind",
+                                 "source": state["bind_source"],
+                                 "target": "/app"}]}}}))
             return _cp(0, "")
         if argv[:2] == ["docker", "ps"]:
-            return _cp(0, "cid0001\n") if state["up_seen"] else _cp(0, "")
+            return _cp(0, "")
         if argv[:3] == ["docker", "image", "ls"]:
-            if state["up_seen"] and "--filter" in argv:
+            if state["build_seen"] and "--filter" in argv:
                 return _cp(0, _IMG + "\n")
             return _cp(0, "")
-        if argv[:2] == ["docker", "inspect"]:
-            if argv[2] == "net0001":
-                return _cp(0, _json.dumps([{
-                    "Id": "net0001", "Name": "n",
-                    "Labels": {
-                        module.PROJECT_LABEL: state["project"],
-                        module.RUN_LABEL: state["run_id"] or "?"}}]))
-            return _cp(0, _json.dumps([{
-                "Id": "cid0001", "Name": "/c",
-                "Config": {"Labels": {
-                    module.PROJECT_LABEL: state["project"],
-                    module.RUN_LABEL: state["run_id"] or "?"}},
-                "State": {"Running": True}}]))
         if argv[:3] == ["docker", "network", "ls"]:
-            return _cp(0, "net0001\n") if state["up_seen"] else _cp(0, "")
-        if argv[:3] == ["docker", "network", "rm"]:
-            return _cp(1, "", "DOWN_NONZERO_MARKER")
-        if argv[:2] == ["docker", "stop"]:
-            return _cp(1, "", "DOWN_NONZERO_MARKER")
+            if state["build_seen"]:
+                return _cp(1, "", "NETWORK_INVENTORY_DENIED_MARKER")
+            return _cp(0, "")
+        if argv[:3] == ["docker", "volume", "ls"]:
+            return _cp(0, "volbad\n") if state["build_seen"] \
+                else _cp(0, "")
+        if argv[:2] == ["docker", "inspect"]:
+            return _cp(0, _json.dumps([{
+                "Name": "volbad", "Labels": ["bad"]}]))
         if argv[:3] == ["docker", "image", "inspect"]:
             raise PermissionError("INSPECT_PERMISSION_MARKER")
         return _cp(0, "")
@@ -716,7 +768,8 @@ def test_stack_full_function_preserves_all_failures(
         module._run_stack_test(tmp_path)
     full = module._exception_graph_text(excinfo.value)
     assert "PRIMARY_SETUP_MARKER" in full
-    assert "DOWN_NONZERO_MARKER" in full
+    assert "NETWORK_INVENTORY_DENIED_MARKER" in full
+    assert "malformed" in full
     assert "INSPECT_PERMISSION_MARKER" in full
 
 
