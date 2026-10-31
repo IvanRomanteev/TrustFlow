@@ -1,25 +1,29 @@
 """One-command offline evaluation: python -m trustflow.evaluation
 
-Lifecycle (F5): validate inputs -> execute all repeats -> execute
-ablations -> write every artifact into a staging directory ->
-validate the staged JSON -> publish by rename -> write the completion
-marker as part of the staged set. A failed stage removes the staging
-directory and never touches a previously published successful report;
-no PASS artifact is published for an incomplete run.
+Lifecycle: validate inputs -> execute all repeats, accumulating
+safety findings as each repeat completes -> execute ablations ->
+compute the gate outcome -> sanitize and write every artifact into a
+private staging directory -> validate staged JSON -> publish by
+rename -> COMPLETE.json (part of the staged set) marks a fully
+published attempt; it is not by itself an evaluation PASS.
 
-Exit-code precedence (highest first), with all findings preserved in
-the published repeats.json / COMPLETE.json and in stdout:
-  2  critical safety violation in any repeat
-  3  harness/infrastructure failure (including write failures and
-     per-case harness errors)
+Exit-code precedence (highest first), applied identically on the
+success path and in the exception handler, so an infrastructure
+failure can never erase an already observed safety violation:
+  2  critical safety violation in any completed repeat
+  3  harness/infrastructure failure
   4  reproducibility mismatch across repeats
   1  evaluated case assertion failure
   0  valid, completed, successful gate
- 64  command-line input error (invalid arguments); this is a usage
-     error, distinct from every evaluation outcome above.
+ 64  command-line input error (invalid arguments).
 
-Fake provider only: no network or paid API calls. Errors are printed
-sanitized and bounded; tracebacks are never published (F4).
+Preservation: when the new attempt's gate is not a clean pass and the
+output directory already holds a completed publication, the failed
+attempt is published to a separate ``<name>.failed-<id>`` directory
+and the previous successful publication is left untouched. Staging
+directories are unique to each attempt and only ever removed by their
+owner. Errors are printed sanitized and bounded; tracebacks are never
+published (F4). Fake provider only: no network or paid API calls.
 """
 
 import argparse
@@ -27,13 +31,16 @@ import json
 import os
 import shutil
 import sys
+import uuid
 from pathlib import Path
 
 EXIT_USAGE = 64
 
 
-def _fail(message: str, code: int) -> int:
-    print(json.dumps({"error": message}), file=sys.stderr)
+def _fail(message: str, code: int, extra: dict | None = None) -> int:
+    payload = {"error": message, **(extra or {})}
+    print(json.dumps(payload), file=sys.stderr)
+    print(json.dumps(payload))
     return code
 
 
@@ -56,19 +63,37 @@ def main(argv: list[str] | None = None) -> int:
     from trustflow.evaluation import ablation as ablation_module
     from trustflow.evaluation import report as report_module
     from trustflow.evaluation import runner as runner_module
-    from trustflow.evaluation.errors import safe_error_detail
+    from trustflow.evaluation.errors import safe_error_detail, sanitize_payload
 
     out = Path(args.out)
-    staging = out.with_name(f"{out.name}.staging-{os.getpid()}")
-    backup = out.with_name(f"{out.name}.previous-{os.getpid()}")
-    shutil.rmtree(staging, ignore_errors=True)
+    attempt = uuid.uuid4().hex[:12]
+    staging = out.with_name(f"{out.name}.staging-{os.getpid()}-{attempt}")
+    reports: list = []
+    safety_total = 0
     try:
-        reports = []
         traces: dict = {}
         for _ in range(repeat):
             report, traces = runner_module.run_evaluation_sync()
             reports.append(report)
-        digests = [r.verdict_digest() for r in reports]
+            safety_total += report.summary.safety_violation_count
+        safe_reports = [report_module.sanitized_report(r) for r in reports]
+        digests = [r.verdict_digest() for r in safe_reports]
+        reproducible = len(set(digests)) == 1
+        if safety_total:
+            code = 2
+        elif any(r.summary.errors for r in reports):
+            code = 3
+        elif not reproducible:
+            code = 4
+        elif any(r.summary.failed for r in reports):
+            code = 1
+        else:
+            code = 0
+        # A non-pass attempt never replaces a completed prior
+        # publication; it is published separately and identified.
+        target = out
+        if code != 0 and (out / "COMPLETE.json").exists():
+            target = out.with_name(f"{out.name}.failed-{attempt}")
         paths = report_module.write_reports(reports[-1], traces, staging)
         repeats_payload = {
             "repeats": [
@@ -78,47 +103,55 @@ def main(argv: list[str] | None = None) -> int:
                  "safety_violations": r.summary.safety_violation_count,
                  "verdict_digest": d}
                 for i, (r, d) in enumerate(zip(reports, digests, strict=True))],
-            "reproducible": len(set(digests)) == 1,
+            "reproducible": reproducible,
         }
         repeats_path = staging / "repeats.json"
         report_module._atomic_write(
-            repeats_path, json.dumps(repeats_payload, indent=2))
+            repeats_path, json.dumps(sanitize_payload(repeats_payload), indent=2))
         paths["repeats"] = str(repeats_path)
         if args.ablations:
             ablation = ablation_module.run_ablations_sync()
             ablation_path = staging / "ablations.json"
             report_module._atomic_write(
-                ablation_path, json.dumps(ablation, indent=2, default=str))
+                ablation_path,
+                json.dumps(sanitize_payload(ablation), indent=2, default=str))
             paths["ablations"] = str(ablation_path)
         for staged in staging.glob("*.json"):
             json.loads(staged.read_text(encoding="utf-8"))
-        safety_total = sum(r.summary.safety_violation_count for r in reports)
-        marker = {
+        marker = sanitize_payload({
             "complete": True,
+            "gate_exit_code": code,
+            "attempt": attempt,
+            "git_sha": reports[-1].run_metadata.git_sha,
             "verdict_digests": digests,
-            "reproducible": len(set(digests)) == 1,
+            "reproducible": reproducible,
             "safety_violations_total": safety_total,
             "config_digest": reports[-1].run_metadata.config_digest,
             "dataset_digest": reports[-1].run_metadata.dataset_digest,
-        }
+        })
         report_module._atomic_write(
             staging / "COMPLETE.json", json.dumps(marker, indent=2))
         # Publish only now that every required artifact succeeded.
-        if out.exists():
-            os.rename(out, backup)
+        if target.exists():
+            backup = out.with_name(f"{out.name}.previous-{attempt}")
+            os.rename(target, backup)
             try:
-                os.rename(staging, out)
+                os.rename(staging, target)
             except Exception:
-                os.rename(backup, out)
+                os.rename(backup, target)
                 raise
             shutil.rmtree(backup, ignore_errors=True)
         else:
-            os.rename(staging, out)
+            os.rename(staging, target)
     except Exception as exc:
         shutil.rmtree(staging, ignore_errors=True)
-        return _fail(safe_error_detail(exc), 3)
+        code = 2 if safety_total else 3
+        return _fail(safe_error_detail(exc), code, {
+            "safety_violations": safety_total,
+            "repeats_completed": len(reports),
+            "published": False})
 
-    published = {name: str(out / Path(str(path)).name)
+    published = {name: str(target / Path(str(path)).name)
                  for name, path in paths.items()}
     print(json.dumps({
         "total": reports[-1].summary.total,
@@ -128,18 +161,11 @@ def main(argv: list[str] | None = None) -> int:
         "safety_violations": safety_total,
         "repeats": repeats_payload["repeats"],
         "verdict_digest": digests[-1],
-        "reproducible": len(set(digests)) == 1,
+        "reproducible": reproducible,
         "config_digest": reports[-1].run_metadata.config_digest,
+        "published_to": str(target),
         "artifacts": published}, indent=2))
-    if safety_total:
-        return 2
-    if any(r.summary.errors for r in reports):
-        return 3
-    if len(set(digests)) != 1:
-        return 4
-    if any(r.summary.failed for r in reports):
-        return 1
-    return 0
+    return code
 
 
 if __name__ == "__main__":
