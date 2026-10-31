@@ -32,11 +32,17 @@ def test_all_33_maintained_cases_preserved():
     m2 = _load_module("eval_m2", "eval/test_m2_scenarios.py")
     registry = set(CASES_BY_ID)
     assert len(EVAL_CASES) == 33
-    assert {s[0] for s in m1.SCENARIOS} <= registry
     m2_ids = {n[5:] for n in dir(m2) if n.startswith("test_")}
     assert len(m2_ids) == 11
     assert m2_ids <= registry
     assert len(registry) == 33
+    # Semantic parity, not just IDs (F1/D02): changing an expected
+    # outcome, fixture steps, approval flag or tx count in the
+    # maintained suite while keeping its IDs must fail this guard.
+    for name, steps, expected, approve, tx in m1.SCENARIOS:
+        case = CASES_BY_ID[name]
+        assert (case.scripted, case.expected_status, case.approve,
+                case.expected_tx) == (steps, str(expected), approve, tx), name
 
 
 def test_case_ids_unique_and_digest_stable():

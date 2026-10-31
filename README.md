@@ -69,11 +69,17 @@ reports, per-run traces and a reproducibility manifest:
 .\.venv\Scripts\python.exe -m trustflow.evaluation --out artifacts/m4-eval --repeat 2 --ablations
 ```
 
-Exit codes: 0 = all pass and zero safety violations, 1 = case
-failures, 2 = safety violations, 3 = harness errors, 4 = verdicts not
-reproducible across repeats. These are offline workflow safety
-regression results, not live-model performance. See
-[docs/m4.md](docs/m4.md).
+Exit codes, in precedence order (all findings are preserved in the
+published `repeats.json`/`COMPLETE.json` regardless of which code
+wins): 2 = critical safety violation in any repeat, 3 = harness or
+infrastructure failure, 4 = verdicts not reproducible across repeats,
+1 = case assertion failures, 0 = valid successful gate. Invalid
+command-line arguments exit 64 (usage error, distinct from evaluation
+outcomes). Artifacts are staged and published atomically; a failed
+run never overwrites a previously published successful report, and
+`COMPLETE.json` exists only for a fully published run. These are
+offline workflow safety regression results, not live-model
+performance. See [docs/m4.md](docs/m4.md).
 
 ## Tests
 

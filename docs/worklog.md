@@ -620,3 +620,29 @@ changed. Candidate validation: pytest 299 passed, evaluation 33/33
 PASS with 0 critical safety violations and identical verdict digests
 across repeats, ruff/mypy PASS, frontend build PASS. See docs/m4.md.
 Status: M4 IMPLEMENTATION COMPLETE - INDEPENDENT ACCEPTANCE PENDING.
+
+## M4 remediation round 1 (branch m4/acceptance-remediation-r1)
+
+Parent candidate 3ea23cde75200733b436eeb86898c13cdb2b8b2d (published,
+BLOCKED by independent review F1-F6 P1 + F7-F8 P2). Remediation in
+the M4 evaluation layer only; no accepted M1-M3 code changed and the
+published candidate history is untouched. F1: runner executes the
+maintained assertions (score>0, pre/post-approval lifecycle,
+mandatory citations, exact span text); drift guard compares fixtures
+field-by-field; assertion_contract_digest published. F2: new
+evaluation/safety.py detector over authoritative run/ledger data
+with the independent Verifier as oracle; unmeasured properties
+listed, never zero. F3: per-record priced cost, total null when any
+record unknown/unpriced, partial subtotal separate. F4: sanitized
+bounded errors only, defensive report redaction, no tracebacks.
+F5: staged atomic publication with COMPLETE.json, all repeat
+verdicts retained, precedence 2>3>4>1>0 and 64 for usage errors.
+F6: pinned effective settings; config_digest + effective_config in
+every manifest (X01 ambient threshold no longer changes the path).
+F7: controlled validation of suites/kinds/repeat. F8: measured zero
+stays zero. Validation: pytest 321 passed, ruff/mypy PASS, frontend
+build PASS, eval 33/33 with 0 violations, two runs share verdict
+digest 90043870... and config digest 1785b51a...; reviewer probes
+rerun from a separate copy now fail their buggy-behavior asserts and
+CLI fixtures return corrected codes. Status: M4 REMEDIATION
+COMPLETE - INDEPENDENT RE-REVIEW PENDING. Not pushed.
