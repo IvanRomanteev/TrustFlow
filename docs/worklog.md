@@ -646,3 +646,35 @@ digest 90043870... and config digest 1785b51a...; reviewer probes
 rerun from a separate copy now fail their buggy-behavior asserts and
 CLI fixtures return corrected codes. Status: M4 REMEDIATION
 COMPLETE - INDEPENDENT RE-REVIEW PENDING. Not pushed.
+
+## M4 remediation round 2 (branch m4/acceptance-remediation-r2)
+
+Parent R1 candidate e15b095d2f06afc6a0d6fdb188998fbc4b05d0ef. The R1
+independent review verified F1/F3/F6/F7/F8 FIXED and kept three P1
+blockers: R1-F2 (detector accepted S11 semantic FAIL hidden by
+passed summary, S12 REJECTED approval record, S13 foreign approval
+hash, S14 foreign mandatory citation source, S15 balance mutation on
+FAILED workflow without transactions), R1-F4 (structured payloads
+crossed the publication boundary unsanitized: boundary_payload and
+ablation_payload leaked the synthetic marker into seven artifacts),
+R1-F5 (infrastructure failure after a safety verdict returned 3
+instead of 2 and lost the finding; a later failed run replaced a
+previous successful publication). Round 2 fixes all three in the
+evaluation layer only: safety.py validates ledger conservation for
+every terminal state, semantic constituent consistency, approval via
+the accepted is_approved oracle, and canonical citation validation
+against corpus/snapshot; errors.sanitize_payload is the single
+defensive publication boundary for results/CSV/Markdown/traces/
+manifest/ablations/completion metadata with digests derived from
+the same sanitized copy; the CLI accumulates safety per repeat and
+applies precedence 2>3>4>1>0 in the exception handler, publishes
+transactionally from attempt-unique staging, records gate_exit_code
+in COMPLETE.json (fully published, not PASS), and publishes non-pass
+attempts to <name>.failed-<attempt> without touching a previous
+completed publication. Differential validation from a separate copy
+of the R1 reviewer probes: minimal_blockers F2/F4/F5 all pass their
+corrected-contract assertions. Full gates: pytest 331 passed, ruff
+and mypy PASS, frontend build PASS, eval 33/33 with 0 violations,
+verdict digest 90043870... stable across two runs, ablations
+A 18/18 B 23/24. Status: M4 R2 IMPLEMENTATION COMPLETE -
+INDEPENDENT ACCEPTANCE PENDING. Not pushed.
