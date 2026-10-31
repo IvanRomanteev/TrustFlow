@@ -1,11 +1,12 @@
 """One-command offline evaluation: python -m trustflow.evaluation
 
-Lifecycle: validate inputs -> execute all repeats, accumulating
-safety findings as each repeat completes -> execute ablations ->
-compute the gate outcome -> sanitize and write every artifact into a
-private staging directory -> validate staged JSON -> publish by
-rename -> COMPLETE.json (part of the staged set) marks a fully
-published attempt; it is not by itself an evaluation PASS.
+Lifecycle: validate inputs -> execute all repeats, preserving a
+sanitized per-repeat evidence record as each repeat completes ->
+execute ablations -> compute the gate outcome -> sanitize and write
+every artifact into a private staging directory -> validate staged
+JSON -> publish by rename -> COMPLETE.json (part of the staged set)
+marks a fully published attempt; it is not by itself an evaluation
+PASS.
 
 Exit-code precedence (highest first), applied identically on the
 success path and in the exception handler, so an infrastructure
@@ -22,13 +23,20 @@ output directory already holds a completed publication, the failed
 attempt is published to a separate ``<name>.failed-<id>`` directory
 and the previous successful publication is left untouched. Staging
 directories are unique to each attempt and only ever removed by their
-owner. Errors are printed sanitized and bounded; tracebacks are never
-published (F4). Fake provider only: no network or paid API calls.
+owner. If a later stage fails after one or more repeats completed,
+the completed-repeat evidence is retained in a separately identified
+``<name>.failed-<id>/FAILED_ATTEMPT.json`` artifact when writing is
+still possible, and always in the bounded sanitized stdout fallback;
+no COMPLETE marker is created for an incomplete attempt. Errors are
+printed sanitized and bounded; tracebacks are never published (F4).
+Fake provider only: no network or paid API calls.
 """
 
 import argparse
+import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import uuid
@@ -36,12 +44,69 @@ from pathlib import Path
 
 EXIT_USAGE = 64
 
+_HEX64 = re.compile(r"[0-9a-f]{64}\Z")
+_GIT_SHA = re.compile(r"[0-9a-f]{7,64}\Z")
+_MAX_EVIDENCE_REPEATS = 50
+_MAX_EVIDENCE_CASES = 100
+_MAX_EVIDENCE_TRACES = 100
+_MAX_TRACE_BYTES = 200_000
+
 
 def _fail(message: str, code: int, extra: dict | None = None) -> int:
-    payload = {"error": message, **(extra or {})}
+    from trustflow.evaluation.errors import sanitize_payload
+
+    payload = sanitize_payload({"error": message, **(extra or {})})
     print(json.dumps(payload), file=sys.stderr)
     print(json.dumps(payload))
     return code
+
+
+def _validate_provenance(report) -> None:
+    """Reject malformed critical provenance instead of publishing it
+    as a genuine reproducibility claim. Values are never echoed."""
+    meta = report.run_metadata
+    for name in ("config_digest", "dataset_digest",
+                 "assertion_contract_digest"):
+        value = getattr(meta, name)
+        if value and not _HEX64.fullmatch(value):
+            raise ValueError(f"invalid {name} in run provenance")
+    if meta.git_sha and not _GIT_SHA.fullmatch(meta.git_sha):
+        raise ValueError("invalid git_sha in run provenance")
+
+
+def _repeat_record(index, report, verdict_digest, traces, attempt):
+    """Bounded sanitized evidence for one completed repeat."""
+    from trustflow.evaluation.errors import sanitize_payload
+
+    findings = [
+        {"case_id": c.case_id, "status": c.status,
+         "safety_violations": list(c.safety_violations),
+         "failure_category": c.failure_category,
+         "workflow_run_id": c.workflow_run_id,
+         "trace_ref": c.trace_ref}
+        for c in report.cases[:_MAX_EVIDENCE_CASES]
+        if c.safety_violations or c.status != "PASS"
+    ]
+    trace_ids = sorted(str(k) for k in list(traces)[:_MAX_EVIDENCE_TRACES])
+    trace_digest = hashlib.sha256(
+        json.dumps(traces, sort_keys=True, default=str).encode()
+    ).hexdigest() if traces else ""
+    return sanitize_payload({
+        "index": index,
+        "attempt": attempt,
+        "git_sha": report.run_metadata.git_sha,
+        "config_digest": report.run_metadata.config_digest,
+        "dataset_digest": report.run_metadata.dataset_digest,
+        "verdict_digest": verdict_digest,
+        "total": report.summary.total,
+        "passed": report.summary.passed,
+        "failed": report.summary.failed,
+        "errors": report.summary.errors,
+        "safety_violations": report.summary.safety_violation_count,
+        "findings": findings,
+        "trace_ids": trace_ids,
+        "trace_digest": trace_digest,
+    })
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -69,15 +134,35 @@ def main(argv: list[str] | None = None) -> int:
     attempt = uuid.uuid4().hex[:12]
     staging = out.with_name(f"{out.name}.staging-{os.getpid()}-{attempt}")
     reports: list = []
+    safe_reports: list = []
+    digests: list[str] = []
+    completed_records: list[dict] = []
+    evidence_traces: dict = {}
+    evidence_overflow = 0
     safety_total = 0
+    traces: dict = {}
     try:
-        traces: dict = {}
-        for _ in range(repeat):
+        for index in range(repeat):
             report, traces = runner_module.run_evaluation_sync()
             reports.append(report)
             safety_total += report.summary.safety_violation_count
-        safe_reports = [report_module.sanitized_report(r) for r in reports]
-        digests = [r.verdict_digest() for r in safe_reports]
+            safe = report_module.sanitized_report(report)
+            safe_reports.append(safe)
+            digests.append(safe.verdict_digest())
+            safe_traces = sanitize_payload(traces)
+            if not isinstance(safe_traces, dict):
+                safe_traces = {}
+            record = _repeat_record(index, safe, digests[-1],
+                                    safe_traces, attempt)
+            if len(completed_records) < _MAX_EVIDENCE_REPEATS:
+                completed_records.append(record)
+            else:
+                evidence_overflow += 1
+            for trace_id, trace in list(safe_traces.items())[
+                    :_MAX_EVIDENCE_TRACES]:
+                if len(evidence_traces) < _MAX_EVIDENCE_TRACES:
+                    evidence_traces[str(trace_id)] = trace
+            _validate_provenance(safe)
         reproducible = len(set(digests)) == 1
         if safety_total:
             code = 2
@@ -94,20 +179,21 @@ def main(argv: list[str] | None = None) -> int:
         target = out
         if code != 0 and (out / "COMPLETE.json").exists():
             target = out.with_name(f"{out.name}.failed-{attempt}")
-        paths = report_module.write_reports(reports[-1], traces, staging)
-        repeats_payload = {
+        paths = report_module.write_reports(safe_reports[-1], traces, staging)
+        repeats_payload = sanitize_payload({
             "repeats": [
                 {"index": i, "total": r.summary.total,
                  "passed": r.summary.passed, "failed": r.summary.failed,
                  "errors": r.summary.errors,
                  "safety_violations": r.summary.safety_violation_count,
                  "verdict_digest": d}
-                for i, (r, d) in enumerate(zip(reports, digests, strict=True))],
+                for i, (r, d) in enumerate(
+                    zip(safe_reports, digests, strict=True))],
             "reproducible": reproducible,
-        }
+        })
         repeats_path = staging / "repeats.json"
         report_module._atomic_write(
-            repeats_path, json.dumps(sanitize_payload(repeats_payload), indent=2))
+            repeats_path, json.dumps(repeats_payload, indent=2))
         paths["repeats"] = str(repeats_path)
         if args.ablations:
             ablation = ablation_module.run_ablations_sync()
@@ -122,12 +208,12 @@ def main(argv: list[str] | None = None) -> int:
             "complete": True,
             "gate_exit_code": code,
             "attempt": attempt,
-            "git_sha": reports[-1].run_metadata.git_sha,
+            "git_sha": safe_reports[-1].run_metadata.git_sha,
             "verdict_digests": digests,
             "reproducible": reproducible,
             "safety_violations_total": safety_total,
-            "config_digest": reports[-1].run_metadata.config_digest,
-            "dataset_digest": reports[-1].run_metadata.dataset_digest,
+            "config_digest": safe_reports[-1].run_metadata.config_digest,
+            "dataset_digest": safe_reports[-1].run_metadata.dataset_digest,
         })
         report_module._atomic_write(
             staging / "COMPLETE.json", json.dumps(marker, indent=2))
@@ -146,25 +232,69 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:
         shutil.rmtree(staging, ignore_errors=True)
         code = 2 if safety_total else 3
-        return _fail(safe_error_detail(exc), code, {
+        git_sha = (completed_records[-1].get("git_sha", "")
+                   if completed_records else "")
+        failure = sanitize_payload({
+            "error": safe_error_detail(exc),
+            "harness_error_category": type(exc).__name__,
+            "error_category": type(exc).__name__,
+            "attempt": attempt,
+            "candidate_sha": git_sha,
+            "git_sha": git_sha,
             "safety_violations": safety_total,
             "repeats_completed": len(reports),
-            "published": False})
+            "completed_repeats": completed_records,
+            "evidence_overflow_repeats": evidence_overflow,
+            "published": False,
+            "complete": False,
+            "publication_complete": False,
+            "publication_status": "incomplete",
+        })
+        try:
+            failed_target = out.with_name(f"{out.name}.failed-{attempt}")
+            report_module._atomic_write(
+                failed_target / "FAILED_ATTEMPT.json",
+                json.dumps(failure, indent=2))
+            if evidence_traces:
+                traces_text = json.dumps(
+                    sanitize_payload(evidence_traces), indent=2, default=str)
+                if len(traces_text.encode()) > _MAX_TRACE_BYTES:
+                    traces_text = json.dumps(sanitize_payload({
+                        "truncated": True,
+                        "reason": "trace evidence size bound",
+                        "trace_ids": sorted(evidence_traces),
+                        "completed_repeats": completed_records,
+                    }), indent=2)
+                report_module._atomic_write(
+                    failed_target / "failed-traces.json", traces_text)
+            failure = {**failure,
+                       "failure_artifact": str(
+                           failed_target / "FAILED_ATTEMPT.json")}
+        except Exception:
+            failure = {**failure, "failure_artifact": None}
+        return _fail(str(failure.get("error", "harness error")), code,
+                     {k: v for k, v in failure.items() if k != "error"})
 
     published = {name: str(target / Path(str(path)).name)
                  for name, path in paths.items()}
-    print(json.dumps({
-        "total": reports[-1].summary.total,
-        "passed": reports[-1].summary.passed,
-        "failed": reports[-1].summary.failed,
-        "errors": reports[-1].summary.errors,
+    # The finalized sanitized report is the only publication source,
+    # including for stdout: no raw metadata is read after finalization.
+    final = sanitize_payload({
+        "total": safe_reports[-1].summary.total,
+        "passed": safe_reports[-1].summary.passed,
+        "failed": safe_reports[-1].summary.failed,
+        "errors": safe_reports[-1].summary.errors,
         "safety_violations": safety_total,
         "repeats": repeats_payload["repeats"],
         "verdict_digest": digests[-1],
         "reproducible": reproducible,
-        "config_digest": reports[-1].run_metadata.config_digest,
+        "config_digest": safe_reports[-1].run_metadata.config_digest,
+        "dataset_digest": safe_reports[-1].run_metadata.dataset_digest,
+        "git_sha": safe_reports[-1].run_metadata.git_sha,
+        "attempt": attempt,
         "published_to": str(target),
-        "artifacts": published}, indent=2))
+        "artifacts": published})
+    print(json.dumps(final, indent=2))
     return code
 
 
