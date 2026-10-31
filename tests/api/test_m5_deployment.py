@@ -150,14 +150,85 @@ def _docker_e2e_module():
     return module
 
 
-def test_matcher_image_tags_are_unique_and_never_the_fixed_tag():
+def _lifecycle_handler(module, *, inspect_mode="found", rmi_rc=0,
+                       write_iid=True, iid_map=None):
+    """Fake Docker boundary emulating untagged builds via iidfile."""
+    from pathlib import Path as _Path
+
+    labels_by_id: dict = {}
+
+    def handler(args):
+        if args[:2] == ["docker", "build"]:
+            iid_path = args[args.index("--iidfile") + 1]
+            labels = {}
+            for i, token in enumerate(args):
+                if token == "--label":
+                    key, value = args[i + 1].split("=", 1)
+                    labels[key] = value
+            image_id = (iid_map or {}).get(
+                _Path(iid_path).name, _IMG)
+            labels_by_id[image_id] = labels
+            if write_iid:
+                _Path(iid_path).write_text(image_id, encoding="utf-8")
+            return _cp(0)
+        if args[:3] == ["docker", "image", "inspect"]:
+            if inspect_mode == "error":
+                return _cp(1, "", "daemon unavailable")
+            labels = dict(labels_by_id.get(args[3], {}))
+            if inspect_mode == "wrong-label":
+                labels[module.RUN_LABEL] = "someone-else"
+            return _found(out_id=args[3], labels=labels)
+        if args[:2] == ["docker", "rmi"]:
+            return _cp(rmi_rc, "", "conflict" if rmi_rc else "")
+        if args[:2] == ["docker", "run"]:
+            return _cp(0, "/ctx/package.json /ctx/package-lock.json "
+                          "/ctx/app/page.tsx /ctx/lib/api.ts")
+        return _cp(0)
+
+    return handler
+
+
+def test_untagged_build_uses_iidfile_and_never_tags(
+        monkeypatch, tmp_path):
     module = _docker_e2e_module()
-    tags = {module._unique_image_tag() for _ in range(8)}
-    assert len(tags) == 8  # (tag, run_id) pairs all distinct
-    for tag, run_id in tags:
-        assert tag == f"trustflow-m5-matcher-test:{run_id}"
-        assert tag != module.LEGACY_FIXED_TAG
-        assert len(run_id) == 32  # uuid4 hex: collision-resistant
+    calls = _scripted(module, monkeypatch, _lifecycle_handler(module))
+    with module.ImageLifecycle() as lifecycle:
+        image_id = lifecycle.build_image(
+            module._tiny_context(tmp_path, "tiny"), "tiny")
+    assert image_id == _IMG
+    builds = [c for c in calls if c[:2] == ["docker", "build"]]
+    assert builds and "--iidfile" in builds[0]
+    assert calls[0][:2] == ["docker", "build"]  # no precheck inspect
+    flat = [token for call in calls for token in call]
+    assert "-t" not in flat
+    assert not any(c[:2] == ["docker", "tag"] for c in calls)
+    removals = [c for c in calls if c[:2] == ["docker", "rmi"]]
+    assert removals == [["docker", "rmi", _IMG]]
+
+
+def test_lifecycle_invalid_or_missing_iidfile_fails_closed(
+        monkeypatch, tmp_path):
+    module = _docker_e2e_module()
+    for kwargs in ({"write_iid": False},):
+        calls = _scripted(module, monkeypatch,
+                          _lifecycle_handler(module, **kwargs))
+        with pytest.raises(AssertionError):
+            with module.ImageLifecycle() as lifecycle:
+                lifecycle.build_image(
+                    module._tiny_context(tmp_path, "a"), "a")
+        assert not any(c[:2] == ["docker", "rmi"] for c in calls)
+    bad = _lifecycle_handler(module)
+    def garbage(args):
+        if args[:2] == ["docker", "build"]:
+            from pathlib import Path as _p
+            _p(args[args.index("--iidfile") + 1]).write_text("junk")
+            return _cp(0)
+        return bad(args)
+    _scripted(module, monkeypatch, garbage)
+    with pytest.raises(AssertionError):
+        with module.ImageLifecycle() as lifecycle:
+            lifecycle.build_image(
+                module._tiny_context(tmp_path, "b"), "b")
 
 
 def test_owned_image_cleanup_requires_label_and_identity():
@@ -207,7 +278,9 @@ def _inspect_only(calls):
     return all(c[:3] == ["docker", "image", "inspect"] for c in calls)
 
 
-def test_inspect_confirmed_missing_is_not_found(monkeypatch):
+def test_inspect_absence_shaped_output_is_error(monkeypatch):
+    # Even a byte-exact absence diagnostic cannot prove absence:
+    # Engine HTTP 404 and HTTP 500 produce identical CLI output.
     module = _docker_e2e_module()
 
     def handler(args):
@@ -216,7 +289,7 @@ def test_inspect_confirmed_missing_is_not_found(monkeypatch):
 
     _scripted(module, monkeypatch, handler)
     res = module._inspect_image("repo:missing")
-    assert res.state is module.InspectState.NOT_FOUND
+    assert res.state is module.InspectState.ERROR
 
 
 def test_inspect_found_validates_metadata(monkeypatch):
@@ -248,7 +321,7 @@ def test_inspect_malformed_and_empty_output_fail_closed(monkeypatch):
             module.InspectState.ERROR, out
 
 
-def test_inspect_timeout_is_error_and_blocks_allocation(monkeypatch):
+def test_inspect_timeout_is_conservative_error(monkeypatch):
     module = _docker_e2e_module()
 
     def handler(args):
@@ -256,18 +329,7 @@ def test_inspect_timeout_is_error_and_blocks_allocation(monkeypatch):
 
     calls = _scripted(module, monkeypatch, handler)
     assert module._inspect_image("repo:x").state is module.InspectState.ERROR
-    with pytest.raises(AssertionError):
-        module._allocate_matcher_tag()
-    assert _inspect_only(calls)  # no build/mutation was attempted
-
-
-def test_allocation_aborts_on_inspection_error(monkeypatch):
-    module = _docker_e2e_module()
-    calls = _scripted(module, monkeypatch,
-                       lambda args: _cp(1, "", "daemon unavailable"))
-    with pytest.raises(AssertionError):
-        module._allocate_matcher_tag()
-    assert _inspect_only(calls)
+    assert _inspect_only(calls)  # nothing was authorized or mutated
 
 
 def test_sentinel_guard_fails_closed_on_error():
@@ -343,8 +405,10 @@ def test_inspect_absence_requires_exact_full_message(monkeypatch):
                   lambda args, e=err: _cp(1, "[]", e))
         res = module._inspect_image(ref)
         assert res.state is module.InspectState.ERROR, name
+    # Even the byte-exact genuine-absence text is only ERROR: the CLI
+    # cannot distinguish Engine 404 from 500 (R4 invariant).
     _scripted(module, monkeypatch, lambda args: _cp(1, "[]", exact))
-    assert module._inspect_image(ref).state is module.InspectState.NOT_FOUND
+    assert module._inspect_image(ref).state is module.InspectState.ERROR
 
 
 def test_cleanup_false_absence_cannot_report_absent(monkeypatch):
@@ -394,43 +458,131 @@ def test_cleanup_removal_timeout_propagates_visibly(monkeypatch):
         module._cleanup_owned_image(_IMG, "run-1")
 
 
-def test_post_build_inspection_failure_reports_tag_and_detail(
+def test_post_build_inspection_failure_reports_id_and_detail(
         monkeypatch, tmp_path):
     module = _docker_e2e_module()
-
-    def handler(args):
-        if args[:3] == ["docker", "image", "inspect"]:
-            ref = args[3]
-            if ref.startswith("sha256:"):
-                return _cp(1, "", "daemon unavailable")
-            return _cp(1, "[]", f"Error response from daemon: "
-                                f"No such image: {ref}")
-        return _cp(0)  # build/run succeed; inspection then fails
-
-    _scripted(module, monkeypatch, handler)
-    with pytest.raises(AssertionError) as excinfo:
+    _scripted(module, monkeypatch,
+              _lifecycle_handler(module, inspect_mode="error"))
+    with pytest.raises(ExceptionGroup) as excinfo:
         module._run_matcher_build(tmp_path)
-    message = str(excinfo.value)
-    assert "trustflow-m5-matcher-test:" in message
-    assert "ownership unknown" in message
+    cause = str(excinfo.value.__cause__ or "")
+    assert _IMG in cause and "ownership unknown" in cause
 
 
-def test_fixture_builder_reports_tag_on_inspection_failure(
+def test_lifecycle_primary_and_cleanup_failures_both_survive(
         monkeypatch, tmp_path):
     module = _docker_e2e_module()
+    _scripted(module, monkeypatch,
+              _lifecycle_handler(module, rmi_rc=1))
+    with pytest.raises(ExceptionGroup) as excinfo:
+        with module.ImageLifecycle() as lifecycle:
+            lifecycle.build_image(
+                module._tiny_context(tmp_path, "x"), "x")
+            raise ValueError("primary-marker")
+    assert isinstance(excinfo.value.__cause__, ValueError)
+    assert "primary-marker" in str(excinfo.value.__cause__)
+    failures = excinfo.value.exceptions
+    assert failures and failures[0].image_id == _IMG
+
+
+def test_lifecycle_cleanup_failure_without_primary_fails(
+        monkeypatch, tmp_path):
+    module = _docker_e2e_module()
+    _scripted(module, monkeypatch,
+              _lifecycle_handler(module, rmi_rc=1))
+    with pytest.raises(ExceptionGroup) as excinfo:
+        with module.ImageLifecycle() as lifecycle:
+            lifecycle.build_image(
+                module._tiny_context(tmp_path, "y"), "y")
+    assert excinfo.value.exceptions[0].image_id == _IMG
+
+
+def test_lifecycle_partial_creation_cleans_known_owned_only(
+        monkeypatch, tmp_path):
+    module = _docker_e2e_module()
+    calls = []
+    iid_map: dict = {}
+    real = _lifecycle_handler(module, iid_map=iid_map)
+
+    def handler(args, **_kwargs):
+        calls.append(list(args))
+        if args[:2] == ["docker", "build"]:
+            from pathlib import Path as _p
+            name = _p(args[args.index("--iidfile") + 1]).name
+            iid_map[name] = _OTHER if name.endswith("-b") else _IMG
+        if args[:3] == ["docker", "image", "inspect"] \
+                and args[3] == _OTHER:
+            return _cp(1, "", "daemon unavailable")
+        return real(args)
+
+    monkeypatch.setattr(module, "_run", handler)
+    with pytest.raises(ExceptionGroup):
+        with module.ImageLifecycle() as lifecycle:
+            lifecycle.build_image(
+                module._tiny_context(tmp_path, "a"), "a")
+            lifecycle.build_image(
+                module._tiny_context(tmp_path, "b"), "b")
+    removals = [c for c in calls if c[:2] == ["docker", "rmi"]]
+    assert removals == [["docker", "rmi", _IMG]]  # B never targeted
+
+
+def test_retag_attack_mocked_preserves_full_mapping(monkeypatch):
+    module = _docker_e2e_module()
+    import copy as _copy
+
+    state = {
+        _IMG: {"labels": {module.RUN_LABEL: "run-a"},
+               "tags": {"repo:run-a", "repo:extra"}},
+        _OTHER: {"labels": {module.RUN_LABEL: "run-b"},
+                 "tags": {"repo:b-original"}},
+    }
+    before_b = _copy.deepcopy(state[_OTHER])
 
     def handler(args):
         if args[:3] == ["docker", "image", "inspect"]:
-            return _cp(1, "", "permission denied while trying to connect")
+            entry = state[args[3]]
+            return _cp(0, _json.dumps([{
+                "Id": args[3],
+                "Config": {"Labels": entry["labels"]},
+                "RepoTags": sorted(entry["tags"])}]))
+        if args[:2] == ["docker", "rmi"]:
+            assert args[2] in state  # only recorded IDs may be removed
+            del state[args[2]]
+            return _cp(0)
         return _cp(0)
 
-    _scripted(module, monkeypatch, handler)
-    with pytest.raises(AssertionError) as excinfo:
-        module._build_labeled_image(
-            tmp_path, "sentinel", {module.RUN_LABEL: "run-x"})
-    message = str(excinfo.value)
-    assert "trustflow-m5-sentinel:run-x" in message
-    assert "ownership unknown" in message
+    calls = _scripted(module, monkeypatch, handler)
+    # Simulated retag attack: mappings move, IDs/labels do not.
+    state[_OTHER]["tags"].add("repo:extra")
+    state[_IMG]["tags"].discard("repo:extra")
+    expected_b = {"labels": before_b["labels"],
+                  "tags": {"repo:b-original", "repo:extra"}}
+    outcome = module._cleanup_owned_image(_IMG, "run-a")
+    assert outcome == "removed"  # A addressed only by its recorded ID
+    assert state[_OTHER] == expected_b  # B ID/labels/tags fully intact
+    assert not any(c[:2] == ["docker", "tag"] for c in calls)
+    assert [c for c in calls if c[:2] == ["docker", "rmi"]] == [
+        ["docker", "rmi", _IMG]]
+
+
+def test_compose_teardown_failure_is_enforceable():
+    module = _docker_e2e_module()
+    with pytest.raises(AssertionError):
+        module._finish_stack(None, 1, "boom", "proj-x")
+    with pytest.raises(ExceptionGroup) as excinfo:
+        module._finish_stack(ValueError("primary"), 1, "boom", "proj-x")
+    assert isinstance(excinfo.value.__cause__, ValueError)
+    with pytest.raises(ValueError):
+        module._finish_stack(ValueError("primary"), 0, "", "proj-x")
+    module._finish_stack(None, 0, "", "proj-x")  # must not raise
+
+
+def test_no_mutable_tag_operations_in_integration_source():
+    source = (ROOT / "tests" / "integration"
+              / "test_m5_docker_e2e.py").read_text(encoding="utf-8")
+    assert '"docker", "tag"' not in source
+    assert '", "-t"' not in source and '"-t"]' not in source
+    assert "--iidfile" in source
 
 
 def test_cleanup_removal_refusal_is_visible(monkeypatch):
