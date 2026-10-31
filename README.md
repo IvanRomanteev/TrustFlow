@@ -77,7 +77,10 @@ infrastructure failure, 4 = verdicts not reproducible across repeats,
 command-line arguments exit 64 (usage error, distinct from evaluation
 outcomes). Artifacts are staged and published atomically; a failed
 run never overwrites a previously published successful report, and
-`COMPLETE.json` exists only for a fully published run. These are
+`COMPLETE.json` exists only for a fully published run. If a later
+repeat or stage fails, completed-repeat findings are retained in a
+separate `<name>.failed-<attempt>/FAILED_ATTEMPT.json` and in the
+sanitized stdout summary; no completion marker is created. These are
 offline workflow safety regression results, not live-model
 performance. See [docs/m4.md](docs/m4.md).
 

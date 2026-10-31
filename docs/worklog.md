@@ -678,3 +678,23 @@ and mypy PASS, frontend build PASS, eval 33/33 with 0 violations,
 verdict digest 90043870... stable across two runs, ablations
 A 18/18 B 23/24. Status: M4 R2 IMPLEMENTATION COMPLETE -
 INDEPENDENT ACCEPTANCE PENDING. Not pushed.
+
+## M4 remediation round 3 (branch m4/acceptance-remediation-r3)
+
+Parent R2 candidate ba4d1997409461cba597d9028200634189a0d740,
+independently BLOCKED on R2-F4a (secret in metadata mapping keys,
+errors.py published str(k) unsanitized), R2-F4b (CLI stdout read raw
+config_digest from the unsanitized report), R2-F5 (exception in a
+later repeat discarded completed-repeat case/label/digest/trace
+evidence). Fixes in the evaluation layer only: recursive key
+sanitization with label preservation, unsupported-key placeholder and
+explicit collision suffixes; finalized sanitized CLI output with
+provenance digest validation; bounded per-repeat evidence accumulator
+with FAILED_ATTEMPT.json artifact and sanitized stdout fallback, exit
+precedence and previous-publication preservation unchanged. Reviewer
+probes copied to a separate temporary workspace: F4-keys, F4-stdout,
+F5-evidence FAIL (exit 1) on R2, PASS (exit 0) on R3. Full gates:
+pytest 340 passed, ruff/mypy PASS, frontend build PASS, eval 33/33
+critical 20/20 0 violations, verdict digest 90043870... stable,
+ablations A 18/18 B 23/24. Status: M4 R3 IMPLEMENTATION COMPLETE -
+INDEPENDENT ACCEPTANCE PENDING. Not pushed, no acceptance tag.
