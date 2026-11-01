@@ -361,11 +361,11 @@ def main(argv: list[str] | None = None) -> int:
     invocation = uuid.uuid4().hex
     out = new_attempt(args.out.resolve(), invocation)
     print(f"M5.2 invocation {invocation}; evidence: {out}", flush=True)
-    # Production Dockerfile stays unchanged. Extra code exists only in the
-    # explicitly labelled demo image with the same single owned /data mount.
-    dockerfile = out / "Dockerfile.m52"
-    dockerfile.write_text((root / "Dockerfile").read_text(encoding="utf-8")
-                          + "\nCOPY scripts/m52 /app/demo\n", encoding="utf-8")
+    # Buildx must not need an fs.read entitlement for an external Dockerfile.
+    # Production Dockerfile stays unchanged; this maintained demo file is inside
+    # its build context. Preserve a copy in the evidence for exact provenance.
+    dockerfile = root / "scripts/m52/Dockerfile"
+    (out / "Dockerfile.m52").write_bytes(dockerfile.read_bytes())
     stack = DemoStack(root, out, invocation, prepare=seed_owned, backend_dockerfile=dockerfile,
                       backend_command=["uvicorn", "demo.fault_backend:create_app", "--factory",
                                        "--host", "0.0.0.0", "--port", "8000"],
