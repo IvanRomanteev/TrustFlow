@@ -1,0 +1,37 @@
+# Standalone opt-in local configuration: never combine with docker-compose.yml.
+# Starting services makes no inference request; submitting goals incurs usage.
+# Use only after separate authorization. Key comes only from the process env.
+name: trustflow-m53-live
+services:
+  backend:
+    build: .
+    environment:
+      MODEL_API_KEY: ${MODEL_API_KEY:?Provide MODEL_API_KEY in the process environment}
+      TRUSTFLOW_LLM_MODE: live
+      TRUSTFLOW_PLANNING_MODEL: muse-spark-1.3
+      TRUSTFLOW_REVIEW_MODEL: muse-wonder-1.0
+      TRUSTFLOW_LLM_MAX_REQUESTS: "12"
+      TRUSTFLOW_LLM_MAX_COST_USD: "0.25"
+      TRUSTFLOW_LLM_MAX_RETRIES: "0"
+      TRUSTFLOW_LLM_TIMEOUT_SECONDS: "30"
+      TRUSTFLOW_MAX_OUTPUT_TOKENS: "1200"
+      TRUSTFLOW_TOKEN_BUDGET_PER_WORKFLOW: "20000"
+      TRUSTFLOW_SEMANTIC_MAX_ATTEMPTS: "2"
+      TRUSTFLOW_DB_PATH: /synthetic/trustflow.db
+      TRUSTFLOW_APPROVAL_TOKEN: m53-synthetic-local-approval
+      TRUSTFLOW_CORS_ORIGINS: '["http://127.0.0.1:13000"]'
+    volumes:
+      - m53-synthetic:/synthetic
+    ports:
+      - "127.0.0.1:18000:8000"
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://127.0.0.1:18000
+    ports:
+      - "127.0.0.1:13000:3000"
+    depends_on:
+      - backend
+volumes:
+  m53-synthetic:

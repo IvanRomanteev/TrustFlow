@@ -17,7 +17,7 @@ from trustflow.audit.logger import AuditLogger
 from trustflow.core.errors import ApprovalError, TrustFlowError
 from trustflow.core.settings import Settings, get_settings
 from trustflow.domain.models import WorkflowGoal, WorkflowRun
-from trustflow.llm.provider import build_provider
+from trustflow.llm.provider import LLMProvider, build_provider
 from trustflow.orchestration.engine import RunRepository, WorkflowEngine
 from trustflow.policies.policy_engine import PolicyEngine
 from trustflow.retrieval.corpus import PolicyRetriever
@@ -41,7 +41,7 @@ class ApprovalRequest(BaseModel):
 class Container:
     """Wires the M0 object graph. One ledger => conservation checks hold."""
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, provider: LLMProvider | None = None) -> None:
         self.settings = settings
         self.persistence = "memory"
         self.recovered_runs: list[str] = []
@@ -70,7 +70,7 @@ class Container:
         self.policy = PolicyEngine(settings)
         self.approvals = HumanApprovalService()
         # Explicit fake/live switch; live without MODEL_API_KEY raises here.
-        provider = build_provider(settings)
+        provider = provider if provider is not None else build_provider(settings)
         self.llm_mode = settings.llm_mode
         planner = Planner(provider, self.policy,
                           max_output_tokens=settings.max_output_tokens)
