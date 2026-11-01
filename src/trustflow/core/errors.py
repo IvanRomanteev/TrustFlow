@@ -62,6 +62,10 @@ class TokenBudgetExceededError(TrustFlowError):
     """Raised when a workflow exceeds its application-inference token budget."""
 
 
+class LiveBudgetExceededError(LLMResponseError):
+    """A process/session HTTP or estimated-cost limit blocked a request."""
+
+
 class ConflictingOperationError(TrustFlowError):
     """Raised when an operation identity is reused with different arguments."""
 

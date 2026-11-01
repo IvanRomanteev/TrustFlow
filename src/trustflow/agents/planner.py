@@ -9,6 +9,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from trustflow.core.errors import LLMResponseError, PlanValidationError
+from trustflow.core.logging import redact
 from trustflow.domain.models import Plan, PlanStep, WorkflowGoal
 from trustflow.llm.provider import LLMProvider
 from trustflow.llm.usage import UsageTracker
@@ -39,15 +40,15 @@ def validate_steps(raw_steps: Any) -> list[PlanStep]:
             raise PlanValidationError(f"Step {idx + 1} is not an object")
         tool = str(raw.get("tool_name", ""))
         if tool not in ARG_MODELS:
-            raise PlanValidationError(f"Unknown tool in plan: {tool or '<empty>'}")
+            raise PlanValidationError("Unknown tool in plan")
         # operation_id is backend-owned; any model-supplied value is discarded.
         raw_args = {k: v for k, v in raw.items()
                     if k not in ("tool_name", "rationale", "operation_id")
                     and v is not None and v != ""}
         try:
             parsed = ARG_MODELS[tool].model_validate(raw_args)
-        except Exception as exc:
-            raise PlanValidationError(f"Invalid args for {tool}: {exc}") from exc
+        except Exception:
+            raise PlanValidationError(f"Invalid args for {tool}") from None
         args = parsed.model_dump(exclude_none=True)
         args.pop("idempotency_key", None)  # engine-owned, never model-supplied
         if tool == "simulate_transfer":
@@ -60,7 +61,7 @@ def validate_steps(raw_steps: Any) -> list[PlanStep]:
             if args.get("account_id") not in KNOWN_ACCOUNTS:
                 raise PlanValidationError(f"Unknown synthetic account: {args.get('account_id')}")
         steps.append(PlanStep(step_id=f"step-{idx + 1}", tool_name=tool, args=args,
-                              rationale=str(raw.get("rationale", ""))))
+                              rationale=redact(str(raw.get("rationale", "")))))
     return steps
 
 
@@ -172,14 +173,26 @@ class Planner:
         raw = self._propose(goal, tracker, retrieval_context=retrieval_context,
                             retrieval_mandatory=retrieval_mandatory,
                             retrieval_shrinkable=retrieval_shrinkable)
+        def validated(candidate):
+            try:
+                result = validate_steps(candidate)
+            except PlanValidationError:
+                if tracker is not None and tracker.records:
+                    tracker.records[-1].validation_outcome = "typed_plan_invalid"
+                    tracker.records[-1].failure_reason = "plan_validation_failed"
+                raise
+            if tracker is not None and tracker.records:
+                tracker.records[-1].validation_outcome = "typed_plan_valid"
+            return result
+
         try:
-            steps = validate_steps(raw)
+            steps = validated(raw)
         except PlanValidationError as first_error:
             raw = self._propose(goal, tracker, feedback=str(first_error),
                                 retrieval_context=retrieval_context,
                                 retrieval_mandatory=retrieval_mandatory,
                                 retrieval_shrinkable=retrieval_shrinkable)
-            steps = validate_steps(raw)  # second failure propagates: fail closed
+            steps = validated(raw)  # second failure propagates: fail closed
         for idx, step in enumerate(steps):
             step.step_id = f"v{version}-step-{idx + 1}"
         plan = Plan(goal_title=goal.title, version=version, steps=steps)

@@ -9,11 +9,12 @@ billing cap, since the provider may report different final usage.
 """
 
 import math
+import threading
 from decimal import Decimal, InvalidOperation
 
 from pydantic import BaseModel
 
-from trustflow.core.errors import TokenBudgetExceededError
+from trustflow.core.errors import LiveBudgetExceededError, TokenBudgetExceededError
 
 PRICING_PER_MILLION: dict[str, tuple[float, float]] = {
     "muse-wonder-1.0": (4.0, 20.0),
@@ -56,6 +57,12 @@ class LLMCallRecord(BaseModel):
     model: str
     workflow_id: str | None = None
     request_id: str | None = None
+    response_id: str | None = None
+    http_status: int | None = None
+    validation_outcome: str = "not_validated"
+    failure_reason: str | None = None
+    # Unknown usage retains the pre-call estimate in the session limiter.
+    budget_charge_usd: float = 0.0
     latency_ms: float = 0.0
     input_tokens: int | None = None  # None = unknown, not zero
     output_tokens: int | None = None
@@ -67,6 +74,45 @@ class LLMCallRecord(BaseModel):
     # final record only so callers record exactly one object; the tracker
     # expands them into flat records and clears this field.
     prior_attempts: list["LLMCallRecord"] = []
+
+
+class LiveCallBudget:
+    """Atomic, shared planning/review limits for one application process/session.
+
+    Reservations count in-flight requests and remain charged after unknown
+    outcomes. Known usage replaces the reservation, including overshoots.
+    Restarts start a new session; this is not an account billing ceiling.
+    """
+
+    def __init__(self, max_requests: int, max_cost_usd: float) -> None:
+        if not 1 <= max_requests <= 1000 or not 0 < max_cost_usd <= 100:
+            raise ValueError("Invalid live session limits")
+        self.max_requests = max_requests
+        self.max_cost_usd = max_cost_usd
+        self.requests = 0
+        self.charged_usd = 0.0
+        self._lock = threading.Lock()
+
+    def acquire(self, model: str, input_estimate: int, output_cap: int) -> float:
+        reservation = estimate_cost(model, input_estimate, output_cap)
+        with self._lock:
+            if self.requests >= self.max_requests:
+                raise LiveBudgetExceededError("Live HTTP request limit exhausted")
+            if self.charged_usd + reservation > self.max_cost_usd:
+                raise LiveBudgetExceededError("Live estimated spending limit exhausted")
+            self.requests += 1
+            self.charged_usd += reservation
+        return reservation
+
+    def settle(self, reserved: float, record: LLMCallRecord) -> None:
+        record.usage_unknown = record.input_tokens is None or record.output_tokens is None
+        record.estimated_cost_usd = estimate_cost(
+            record.model, record.input_tokens or 0, record.output_tokens or 0)
+        charge = max(reserved, record.estimated_cost_usd) if record.usage_unknown \
+            else record.estimated_cost_usd
+        record.budget_charge_usd = charge
+        with self._lock:
+            self.charged_usd += charge - reserved
 
 
 class UsageTracker:

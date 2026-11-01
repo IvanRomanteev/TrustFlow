@@ -8,6 +8,8 @@ the caller never substitutes Fake output for a failed live call.
 """
 
 import json
+import math
+import random
 import re
 import time
 from typing import Any, Protocol
@@ -19,8 +21,9 @@ from trustflow.core.errors import (
     LLMResponseError,
     TokenBudgetExceededError,
 )
+from trustflow.core.logging import redact
 from trustflow.core.settings import Settings
-from trustflow.llm.usage import MAX_TOKEN_COUNT, LLMCallRecord, UsageTracker
+from trustflow.llm.usage import MAX_TOKEN_COUNT, LiveCallBudget, LLMCallRecord, UsageTracker
 
 PLAN_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -161,21 +164,96 @@ def _extract_text(data: dict[str, Any]) -> str:
     """
     if not isinstance(data, dict):
         raise LLMResponseError("Live response envelope was not an object")
-    if isinstance(data.get("output_text"), str) and data["output_text"]:
+    if data.get("status", "completed") != "completed" or data.get("error"):
+        raise LLMResponseError("Live response did not complete successfully")
+    if "output" not in data and isinstance(data.get("output_text"), str) and data["output_text"]:
         return str(data["output_text"])
     output = data.get("output")
     if output is not None and not isinstance(output, list):
         raise LLMResponseError("Live response output was not a list")
+    texts = []
     for item in output or []:
         if not isinstance(item, dict):
             continue
+        # Reasoning and function-call payloads cannot masquerade as final JSON.
+        if item.get("type") != "message" or item.get("role") != "assistant":
+            continue
+        if item.get("status", "completed") != "completed":
+            raise LLMResponseError("Live output message was incomplete")
         content = item.get("content")
         if not isinstance(content, list):
             continue
         for part in content:
-            if isinstance(part, dict) and isinstance(part.get("text"), str) and part["text"]:
-                return str(part["text"])
+            if isinstance(part, dict) and part.get("type") == "refusal":
+                raise LLMResponseError("Live model refused the request")
+            if isinstance(part, dict) and part.get("type") == "output_text" \
+                    and isinstance(part.get("text"), str) and part["text"]:
+                texts.append(part["text"])
+    if len(texts) == 1:
+        return str(texts[0])
+    if texts:
+        raise LLMResponseError("Live response contained ambiguous output text")
     raise LLMResponseError("Live response contained no output text")
+
+
+def _decode_object(data: dict, model: str) -> dict:
+    if data.get("model", model) != model:
+        raise LLMResponseError("Live response model did not match the requested model")
+
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise ValueError("Duplicate JSON key")
+            result[key] = value
+        return result
+
+    def constant(value):
+        raise ValueError("Non-finite JSON number")
+
+    parsed = json.loads(_extract_text(data), object_pairs_hook=pairs, parse_constant=constant)
+    if not isinstance(parsed, dict):
+        raise LLMResponseError("Live response JSON was not an object")
+    return parsed
+
+
+def _validate_schema(schema: dict) -> None:
+    """Validate our deliberately small strict JSON Schema surface before HTTP.
+
+    This is not a general JSON Schema implementation. TrustFlow sends only
+    flat, non-recursive schemas; an invalid internal schema fails locally.
+    """
+    def visit(node: Any, depth: int = 0) -> None:
+        if not isinstance(node, dict) or depth > 10:
+            raise LLMResponseError("Invalid live structured-output schema")
+        if any(k in node for k in ("$ref", "oneOf", "allOf")):
+            raise LLMResponseError("Unsupported live structured-output schema")
+        if node.get("type") == "object":
+            props = node.get("properties", {})
+            required = node.get("required", [])
+            if not isinstance(props, dict) or node.get("additionalProperties") is not False \
+                    or not isinstance(required, list) \
+                    or not all(isinstance(k, str) for k in required) \
+                    or set(required) != set(props) or len(required) != len(props):
+                raise LLMResponseError("Invalid strict object schema")
+            for value in props.values():
+                visit(value, depth + 1)
+        elif node.get("type") == "array":
+            visit(node.get("items"), depth + 1)
+        elif node.get("type") not in {"string", "number", "integer", "boolean", "null"}:
+            raise LLMResponseError("Unsupported live structured-output type")
+    if not isinstance(schema, dict) or schema.get("type") != "object":
+        raise LLMResponseError("Live schema root must be an object")
+    visit(schema)
+
+
+def _metadata_id(value: Any, key: str) -> str | None:
+    # Never preserve arbitrary headers/body strings or a reflected credential.
+    if not isinstance(value, str) or key in value or redact(value) != value:
+        return None
+    if re.fullmatch(r"[A-Za-z0-9_:.-]{1,128}", value):
+        return value
+    return None
 
 
 def _token_count(value: object) -> int | None:
@@ -214,25 +292,36 @@ class MetaResponsesProvider:
     supports_retrieval_context = True
 
     def __init__(self, settings: Settings | None = None, model: str | None = None,
-                 transport: httpx.BaseTransport | None = None) -> None:
+                 transport: httpx.BaseTransport | None = None,
+                 budget: LiveCallBudget | None = None) -> None:
         self._settings = settings or Settings()
         self.model = model or self._settings.planning_model
         self._transport = transport  # test seam only; production uses network
+        if transport is None and self._settings.llm_base_url.rstrip('/') \
+                != "https://api.meta.ai/v1":
+            raise LLMNotConfiguredError("Live API origin must be https://api.meta.ai/v1")
+        self.budget = budget or LiveCallBudget(
+            self._settings.llm_max_requests, self._settings.llm_max_cost_usd)
 
     def _call(self, name: str, schema: dict, prompt: str, purpose: str,
               model: str | None = None,
               tracker: UsageTracker | None = None,
               retry_reserve_tokens: int = 0,
               shrink_optional_context: bool = False) -> tuple[dict[str, Any], LLMCallRecord]:
-        key = self._settings.model_api_key
+        # MockTransport is an offline-only seam. It must never receive a
+        # developer's real credential, even when present in the environment.
+        key = "offline-transport-placeholder" if isinstance(self._transport, httpx.MockTransport) \
+            else self._settings.model_api_key
         if not key:
             raise LLMNotConfiguredError("MODEL_API_KEY is not set (live mode)")
+        _validate_schema(schema)
         payload = {
             "model": model or self.model,
             "input": prompt,
             "max_output_tokens": self._settings.max_output_tokens,
             "text": {"format": {"type": "json_schema", "name": name,
-                                "schema": schema, "strict": False}},
+                                "schema": schema, "strict": True}},
+            "store": False,
         }
         url = f"{self._settings.llm_base_url.rstrip('/')}/responses"
         attempts = 1 + self._settings.llm_max_retries
@@ -251,6 +340,21 @@ class MetaResponsesProvider:
         # by this application-side check.
         attempt_records: list[LLMCallRecord] = []
         logical_attempt = 0
+
+        def delay(attempt: int, response: httpx.Response | None = None) -> float | None:
+            seconds = self._settings.llm_backoff_seconds * (2 ** attempt)
+            if response is not None:
+                try:
+                    requested = float(response.headers.get("retry-after", "0"))
+                    if math.isfinite(requested):
+                        seconds = max(seconds, requested)
+                except ValueError:
+                    pass
+            # Do not retry earlier than a long server cooldown. End this
+            # bounded call and let the operator schedule a later session.
+            if seconds > 10:
+                return None
+            return min(10, seconds + random.uniform(0, 0.05)) if seconds else 0
 
         def account_before_retry(record: LLMCallRecord) -> None:
             """Record an interim attempt in the originating workflow and
@@ -296,51 +400,63 @@ class MetaResponsesProvider:
 
         for attempt in range(attempts):
             transport_attempt = attempt + 1
+            try:
+                reserved = self.budget.acquire(
+                    str(payload["model"]), len(json.dumps(payload).encode()) // 4 + 256,
+                    self._settings.max_output_tokens)
+            except LLMResponseError as exc:
+                if attempt_records:
+                    raise _attempt_error(str(exc), attempt_records) from None
+                raise
             started = time.perf_counter()
             try:
                 with httpx.Client(timeout=self._settings.llm_timeout_seconds,
-                                  transport=self._transport) as client:
+                                  transport=self._transport, trust_env=False) as client:
                     resp = client.post(url, headers={"Authorization": f"Bearer {key}"},
                                        json=payload)
-            except httpx.TransportError as exc:
+            except httpx.TransportError:
                 unknown = LLMCallRecord(
                     purpose=purpose, model=str(payload["model"]),
                     transport_attempt=transport_attempt,
                     latency_ms=round((time.perf_counter() - started) * 1000, 2),
+                    failure_reason="transport_error", validation_outcome="failed",
                 )
+                self.budget.settle(reserved, unknown)
                 if tracker is not None:
                     if attempt < attempts - 1:
                         account_before_retry(unknown)
-                        time.sleep(self._settings.llm_backoff_seconds * (2 ** attempt))
+                        time.sleep(delay(attempt) or 0)
                         continue
                     if logical_attempt:
                         unknown.attempt = logical_attempt
                     tracker.record(unknown)
                     raise LLMResponseError(
-                        f"Live model call failed: {exc}") from exc
+                        "Live model call failed: transport error") from None
                 attempt_records.append(unknown)
                 if attempt < attempts - 1:
-                    time.sleep(self._settings.llm_backoff_seconds * (2 ** attempt))
+                    time.sleep(delay(attempt) or 0)
                     continue
                 raise _attempt_error(
-                    f"Live model call failed: {exc}", attempt_records
-                ) from exc
-            except httpx.HTTPError as exc:
+                    "Live model call failed: transport error", attempt_records
+                ) from None
+            except httpx.HTTPError:
                 unknown = LLMCallRecord(
                     purpose=purpose, model=str(payload["model"]),
                     transport_attempt=transport_attempt,
                     latency_ms=round((time.perf_counter() - started) * 1000, 2),
+                    failure_reason="http_client_error", validation_outcome="failed",
                 )
+                self.budget.settle(reserved, unknown)
                 if tracker is not None:
                     if logical_attempt:
                         unknown.attempt = logical_attempt
                     tracker.record(unknown)
                     raise LLMResponseError(
-                        f"Live model call failed: {exc}") from exc
+                        "Live model call failed: HTTP client error") from None
                 attempt_records.append(unknown)
                 raise _attempt_error(
-                    f"Live model call failed: {exc}", attempt_records
-                ) from exc
+                    "Live model call failed: HTTP client error", attempt_records
+                ) from None
             # Usage is extracted BEFORE status/domain validation so an
             # incurred attempt is accounted even when it failed or the
             # payload is malformed. Unparseable bodies keep usage unknown.
@@ -353,23 +469,29 @@ class MetaResponsesProvider:
             usage = data.get("usage") if isinstance(data, dict) else None
             if not isinstance(usage, dict):
                 usage = {}
-            request_id = data.get("id") if isinstance(data, dict) else None
-            if not isinstance(request_id, str) or not request_id:
-                request_id = resp.headers.get("x-request-id")
+            response_id = _metadata_id(data.get("id"), key) if isinstance(data, dict) else None
+            request_id = _metadata_id(resp.headers.get("x-request-id"), key) or response_id
             record = LLMCallRecord(
                 purpose=purpose, model=str(payload["model"]),
                 transport_attempt=transport_attempt,
                 request_id=request_id,
+                response_id=response_id, http_status=resp.status_code,
                 latency_ms=round((time.perf_counter() - started) * 1000, 2),
                 input_tokens=_token_count(usage.get("input_tokens")),
                 output_tokens=_token_count(usage.get("output_tokens")),
             )
-            if resp.status_code in (429, 500, 502, 503, 504) and attempt < attempts - 1:
+            self.budget.settle(reserved, record)
+            if resp.is_error:
+                record.failure_reason = f"http_{resp.status_code}"
+                record.validation_outcome = "failed"
+            retry_delay = delay(attempt, resp)
+            if resp.status_code in (429, 500, 502, 503, 504) and attempt < attempts - 1 \
+                    and retry_delay is not None:
                 if tracker is not None:
                     account_before_retry(record)
                 else:
                     attempt_records.append(record)
-                time.sleep(self._settings.llm_backoff_seconds * (2 ** attempt))
+                time.sleep(retry_delay)
                 continue
             if tracker is not None:
                 # Terminal path: failed attempts are recorded here (the
@@ -377,13 +499,14 @@ class MetaResponsesProvider:
                 # is returned for the caller to record exactly once.
                 def fail(failed_record: LLMCallRecord, message: str,
                          cause: Exception | None = None) -> Any:
+                    failed_record.failure_reason = (
+                        failed_record.failure_reason or "invalid_response")
+                    failed_record.validation_outcome = "failed"
                     if logical_attempt:
                         failed_record.attempt = logical_attempt
                     tracker.record(failed_record)
                     error = LLMResponseError(message)
-                    if cause is not None:
-                        raise error from cause
-                    raise error
+                    raise error from None
 
                 try:
                     resp.raise_for_status()
@@ -392,13 +515,14 @@ class MetaResponsesProvider:
                 if not body_is_json or not isinstance(data, dict):
                     fail(record, "Malformed live response: envelope was not a JSON object")
                 try:
-                    parsed = json.loads(_extract_text(data))
-                except (json.JSONDecodeError, LLMResponseError) as exc:
-                    fail(record, f"Malformed live response: {exc}", exc)
+                    parsed = _decode_object(data, str(payload["model"]))
+                except (ValueError, LLMResponseError) as exc:
+                    fail(record, "Malformed live response: invalid or incomplete JSON", exc)
                 if not isinstance(parsed, dict):
                     fail(record, "Live response JSON was not an object")
                 if logical_attempt:
                     record.attempt = logical_attempt
+                record.validation_outcome = "json_object_valid"
                 return parsed, record
             attempt_records.append(record)
             try:
@@ -409,21 +533,28 @@ class MetaResponsesProvider:
                     attempt_records,
                 ) from exc
             if not body_is_json or not isinstance(data, dict):
+                record.failure_reason = "invalid_envelope"
+                record.validation_outcome = "failed"
                 raise _attempt_error(
                     "Malformed live response: envelope was not a JSON object",
                     attempt_records,
                 )
             try:
-                parsed = json.loads(_extract_text(data))
-            except (json.JSONDecodeError, LLMResponseError) as exc:
+                parsed = _decode_object(data, str(payload["model"]))
+            except (ValueError, LLMResponseError):
+                record.failure_reason = "invalid_response"
+                record.validation_outcome = "failed"
                 raise _attempt_error(
-                    f"Malformed live response: {exc}", attempt_records
-                ) from exc
+                    "Malformed live response: invalid or incomplete JSON", attempt_records
+                ) from None
             if not isinstance(parsed, dict):
+                record.failure_reason = "invalid_json_object"
+                record.validation_outcome = "failed"
                 raise _attempt_error(
                     "Live response JSON was not an object", attempt_records
                 )
             record.prior_attempts = list(attempt_records[:-1])
+            record.validation_outcome = "json_object_valid"
             return parsed, record
         raise _attempt_error("Live model call failed", attempt_records)
 
@@ -441,7 +572,8 @@ class MetaResponsesProvider:
             "string or 0 elsewhere. "
             'Example: {"tool_name": "simulate_transfer", "account_id": "", '
             '"from_account": "acc_alice", "to_account": "acc_bob", '
-            '"amount": 100, "currency": "USD", "rationale": "pay"}'
+            '"amount": 100, "currency": "USD", "from_currency": "", '
+            '"to_currency": "", "limit": 1, "rationale": "pay"}'
         )
         if retrieval_context:
             # Untrusted advisory data only, delimited as data. It is
@@ -462,6 +594,8 @@ class MetaResponsesProvider:
                                         context_shrinkable and retrieval_context))
         steps = parsed.get("steps")
         if not isinstance(steps, list):
+            record.validation_outcome = "typed_plan_invalid"
+            record.failure_reason = "missing_steps_list"
             # Incurred usage travels with the error so it is never lost.
             raise LLMResponseError(
                 "Live plan response missing steps list", record=record

@@ -3,7 +3,7 @@
 import json
 from typing import Annotated, Any
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from trustflow.core.errors import LLMResponseError
 from trustflow.domain.models import Plan, SemanticReview, WorkflowGoal
@@ -32,6 +32,7 @@ class SemanticReviewInput(BaseModel):
     so an incomplete provider response is malformed, never a valid PASS.
     """
 
+    model_config = ConfigDict(extra="forbid")
     verdict: str = Field(pattern="^(PASS|FAIL)$")
     # Strict JSON number: bool/string coercion would accept output the
     # published REVIEW_SCHEMA (type: number) forbids.
@@ -408,10 +409,13 @@ class SemanticReviewer:
             tracker.record(record)
         try:
             parsed = SemanticReviewInput.model_validate(raw)
-        except ValidationError as exc:
+        except ValidationError:
+            record.validation_outcome = "typed_review_invalid"
+            record.failure_reason = record.failure_reason or "review_validation_failed"
             raise LLMResponseError(
-                f"Malformed semantic review output: {exc}", record=record
-            ) from exc
+                "Malformed semantic review output", record=record
+            ) from None
+        record.validation_outcome = "typed_review_valid"
         from trustflow.core.logging import redact
 
         return SemanticReview(
