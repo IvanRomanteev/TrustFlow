@@ -20,7 +20,7 @@ from typing import Any
 import httpx
 
 from trustflow.agents.semantic import SemanticReviewer
-from trustflow.api.app import Container, create_app
+from trustflow.api.factory import Container, create_app
 from trustflow.core.errors import TrustFlowError
 from trustflow.core.logging import redact
 from trustflow.core.settings import Settings
@@ -65,6 +65,19 @@ def source_identity() -> dict:
     return {"candidate_sha": git("rev-parse", "HEAD"),
             "candidate_tree": git("rev-parse", "HEAD^{tree}"),
             "working_tree_clean": not bool(git("status", "--porcelain=v1"))}
+
+
+class EvaluationSettings(Settings):
+    """Only explicit fixture configuration; MODEL_API_KEY remains environment-only.
+
+    Neither .env nor application settings can redirect evaluation persistence,
+    change its policy threshold or initialize a user's ordinary demo storage.
+    """
+
+    @classmethod
+    def settings_customise_sources(cls, settings_cls, init_settings, env_settings,
+                                  dotenv_settings, file_secret_settings):
+        return (init_settings,)
 
 
 class InvalidFirstReview:
@@ -167,8 +180,7 @@ async def evaluate_profile(directory: Path, profile: str, provider, mode: str) -
     planning, review = PROFILES.get(profile, ("muse-spark-1.3", "muse-spark-1.3"))
     cap = (provider._settings.max_output_tokens
            if isinstance(provider, MetaResponsesProvider) else 1200)
-    isolated: dict[str, Any] = {"_env_file": None}
-    settings = Settings(**isolated, llm_mode="fake" if mode == "fake" else "live",
+    settings = EvaluationSettings(llm_mode="fake" if mode == "fake" else "live",
                         db_path=str(db), approval_token=TOKEN, planning_model=planning,
                         review_model=review, llm_max_retries=0, max_retries=0,
                         semantic_max_attempts=2, token_budget_per_workflow=30000,
@@ -310,9 +322,8 @@ async def execute_profiles(args, directory: Path, profiles: list[str],
                            budget: LiveCallBudget, report: dict) -> dict:
     for profile in profiles:
         planning, review = PROFILES[profile]
-        isolated: dict[str, Any] = {"_env_file": None}
         provider = MetaResponsesProvider(
-            Settings(**isolated, llm_mode="live",
+            EvaluationSettings(llm_mode="live",
                      planning_model=planning, review_model=review,
                      max_output_tokens=args.max_output_tokens, llm_max_retries=args.retries,
                      llm_timeout_seconds=30),

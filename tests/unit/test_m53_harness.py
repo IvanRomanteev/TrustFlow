@@ -1,7 +1,10 @@
 """Bounded evaluation, authorization flags, SQLite observations and comparisons."""
 
 import json
+import os
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import httpx
@@ -9,6 +12,7 @@ import pytest
 
 from trustflow.core.settings import Settings
 from trustflow.evaluation.live import (
+    EvaluationSettings,
     evaluate_profile,
     main,
     model_metrics,
@@ -24,6 +28,29 @@ def test_dry_plan_needs_no_key_or_http(monkeypatch, capsys):
     report = json.loads(capsys.readouterr().out)
     assert report["mode"] == "plan_only" and report["paid_requests_executed"] == 0
     assert report["expected_requests_per_profile"] == 9
+
+
+@pytest.mark.parametrize("mode", ["fake", "live"])
+def test_plan_only_does_not_initialize_standard_app_or_demo_storage(tmp_path, mode):
+    trap = tmp_path / "ordinary-demo.db"
+    (tmp_path / ".env").write_text(f"TRUSTFLOW_LLM_MODE={mode}\nTRUSTFLOW_DB_PATH={trap}\n")
+    env = {name: os.environ[name] for name in os.environ
+           if name not in {"MODEL_API_KEY", "TRUSTFLOW_LLM_MODE", "TRUSTFLOW_DB_PATH"}}
+    env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2] / "src")
+    result = subprocess.run([sys.executable, "-m", "trustflow.evaluation.live"],
+                            cwd=tmp_path, env=env, capture_output=True, text=True)
+    assert result.returncode == 0
+    assert json.loads(result.stdout)["paid_requests_executed"] == 0
+    assert not trap.exists()
+
+
+def test_fixture_settings_ignore_ambient_demo_configuration(monkeypatch):
+    monkeypatch.setenv("TRUSTFLOW_DB_PATH", "ordinary-demo.db")
+    monkeypatch.setenv("TRUSTFLOW_HIGH_RISK_THRESHOLD", "999999")
+    monkeypatch.setenv("TRUSTFLOW_LLM_MODE", "live")
+    settings = EvaluationSettings()
+    assert settings.db_path is None and settings.llm_mode == "fake"
+    assert settings.high_risk_threshold == 1000
 
 
 @pytest.mark.parametrize("args", [["--live"], ["--authorize-paid"],
@@ -64,7 +91,6 @@ def test_full_offline_matrix_and_fake_comparison(tmp_path, capsys, monkeypatch):
     assert report["model_metrics"]["muse-spark-1.3"]["http_attempts"] == 13
     for artifact in path.parent.rglob("*.json"):
         assert "opaque-offline-sentinel-credential" not in artifact.read_text()
-    import os
     assert os.environ["MODEL_API_KEY"] == "opaque-offline-sentinel-credential"
 
 
@@ -113,9 +139,6 @@ def test_unknown_usage_never_reported_as_known_zero_cost():
 def test_compose_live_is_separate_loopback_and_isolated():
     # docker compose interpolation sees a dummy key only. Capture and inspect
     # the rendered config in memory; never print or save environment values.
-    import os
-    import subprocess
-
     root = Path(__file__).resolve().parents[2]
     env = os.environ.copy()
     env["MODEL_API_KEY"] = "offline-compose-placeholder"
