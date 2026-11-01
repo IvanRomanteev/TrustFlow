@@ -158,6 +158,20 @@ def test_retry_after_and_timeout_redaction(monkeypatch):
     assert error.value.record.prior_attempts[0].http_status == 429
 
 
+def test_transport_backoff_remains_bounded_at_maximum_retry_setting(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr("trustflow.llm.provider.time.sleep", sleeps.append)
+
+    def timeout(request):
+        raise httpx.ReadTimeout("offline timeout", request=request)
+
+    p = meta(timeout, llm_max_retries=3, llm_backoff_seconds=5)
+    with pytest.raises(LLMResponseError):
+        p.propose_plan("Read", "")
+    assert p.budget.requests == 4
+    assert 5 <= sleeps[0] <= 5.05 and sleeps[1:] == [10, 10]
+
+
 @pytest.mark.parametrize("bad", [[{"tool_name": "shell", "command": "pay"}],
     [{"tool_name": "simulate_transfer", "from_account": "acc_alice",
       "to_account": "acc_bob", "amount": -1}],

@@ -353,7 +353,7 @@ class MetaResponsesProvider:
             # Do not retry earlier than a long server cooldown. End this
             # bounded call and let the operator schedule a later session.
             if seconds > 10:
-                return None
+                return None if response is not None else 10
             return min(10, seconds + random.uniform(0, 0.05)) if seconds else 0
 
         def account_before_retry(record: LLMCallRecord) -> None:
