@@ -219,6 +219,13 @@ $env:TRUSTFLOW_M52_DEMO_TESTS="1"
 python -m pytest tests/integration/test_m52_demo.py -v
 ```
 
+This test creates an exclusive, short `tfm52-*` directory under the host's
+temporary directory and retains both runs and all failed attempts there. It
+prints that evidence root and records it before starting the runner in
+`m52-evidence-location.json` under the pytest test directory. It does not use
+recursive temporary-directory cleanup. This avoids adding pytest's potentially
+long test-name and `--basetemp` paths to the Docker bind workspace.
+
 P2-05 keeps its original opt-in variable and skip semantics:
 
 ```powershell
@@ -246,6 +253,13 @@ not close these gates.
   another process. Start a new invocation so fresh loopback ports are selected.
   A port selected before build cannot be atomically reserved across Docker start;
   the runner verifies actual resulting bindings and fails on startup conflicts.
+- Windows path limits: the runner appends invocation UUID, workspace and marker
+  components below `--out`. A deeply nested output directory can exceed
+  `MAX_PATH` and fail with `FileNotFoundError` during owned-workspace setup. Use
+  a shorter output path, for example
+  `python scripts/run_m52_demo.py --out "$env:TEMP\tfm52-demo"` in PowerShell,
+  then use the printed invocation path for `--compare`. The failed attempt is
+  retained; it is not counted as a successful browser execution.
 - First build cannot fetch dependencies: check Docker registry/network access or
   pre-populate the package/base-image cache. Registry traffic during setup is
   distinct from prohibited live-model calls.

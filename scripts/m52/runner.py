@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.metadata
+import os
 import platform
 import shutil
 import sys
@@ -323,6 +324,11 @@ class Demo:
 
 def prerequisites(stack: DemoStack) -> dict:
     assert sys.version_info >= (3, 12), "Python 3.12+ required"
+    if os.name == "nt" and len(str(stack._stack.marker_file)) >= 260:
+        raise AssertionError(
+            "Windows MAX_PATH: output directory is too deep for the owned workspace; "
+            "rerun with a shorter --out path (for example C:/tf-demo). "
+            "No Docker resources or SQLite storage have been created.")
     for executable in ("git", "docker"):
         assert shutil.which(executable), f"missing prerequisite: {executable}"
     from playwright.sync_api import sync_playwright

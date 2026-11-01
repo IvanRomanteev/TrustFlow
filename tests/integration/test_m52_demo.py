@@ -13,6 +13,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -131,9 +132,19 @@ def _assert_evidence(directory: Path) -> dict:
 
 
 def test_m52_two_complete_real_browser_runs_are_reproducible(tmp_path):
-    first = _execute(tmp_path / "first")
+    # pytest basetemp/test-name paths can exceed Windows MAX_PATH once the
+    # runner appends UUID/workspace/marker components. mkdtemp exclusively owns
+    # a short root; deliberately retain it, including every failed attempt.
+    # TemporaryDirectory is unsuitable because its recursive cleanup bypasses
+    # the accepted resource/host-storage ownership lifecycle.
+    evidence_root = Path(tempfile.mkdtemp(prefix="tfm52-"))
+    (tmp_path / "m52-evidence-location.json").write_text(
+        json.dumps({"evidence_root": str(evidence_root), "retained": True}, indent=2) + "\n",
+        encoding="utf-8")
+    print(f"M5.2 retained external evidence root: {evidence_root}", flush=True)
+    first = _execute(evidence_root / "first")
     first_manifest = _assert_evidence(first)
-    second = _execute(tmp_path / "second", previous=first)
+    second = _execute(evidence_root / "second", previous=first)
     second_manifest = _assert_evidence(second)
     assert first_manifest["invocation_id"] != second_manifest["invocation_id"]
     assert first_manifest["project"] != second_manifest["project"]
