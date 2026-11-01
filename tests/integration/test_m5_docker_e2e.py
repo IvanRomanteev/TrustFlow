@@ -938,6 +938,13 @@ class _StackRun:
                 fail("images", f"docker image inspect {ref}",
                      f"state={res.state.value}: {res.detail}")
                 continue
+            requested_id = ref.removeprefix("sha256:")
+            if not re.fullmatch(r"[0-9a-f]{12,64}", requested_id) \
+                    or not res.image_id.removeprefix("sha256:").startswith(requested_id):
+                fail("images", f"docker image inspect {ref}",
+                     f"malformed metadata: Id={res.image_id!r} does "
+                     f"not match requested identity {ref!r}")
+                continue
             classify("images", {"id": res.image_id, "name": ref,
                                 "labels": res.labels}, ref)
         return owned, foreign

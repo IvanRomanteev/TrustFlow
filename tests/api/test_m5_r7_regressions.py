@@ -211,3 +211,83 @@ def test_incomplete_resource_metadata_is_unknown(module, tmp_path, monkeypatch, 
     owned, foreign = run._discover(log)
     assert not owned["containers"] and not foreign
     assert log.items and "malformed" in str(log.items)
+
+
+@pytest.mark.parametrize("query", [
+    "sha256:" + "a" * 64, "a" * 12, "sha256:" + "a" * 12,
+    "g" * 64, "a" * 11, "repo:latest", "sha256:" + "a" * 65,
+])
+def test_image_discovery_invalid_identity_preserves_both_images(
+        module, tmp_path, monkeypatch, query):
+    """An inspect(A)->B response must not redirect full teardown to B."""
+    run = module._StackRun(tmp_path)
+    run.ownership_verified = True
+    image_a = "sha256:" + "a" * 64
+    image_b = "sha256:" + "b" * 64
+    images = {image_a: tmp_path / "image-a", image_b: tmp_path / "image-b"}
+    for image_id, path in images.items():
+        path.write_bytes(image_id.encode())
+    before = {image_id: path.read_bytes() for image_id, path in images.items()}
+    labels = {module.PROJECT_LABEL: run.project, module.RUN_LABEL: run.run_id}
+    calls = []
+
+    def metadata(image_id):
+        return {"Id": image_id, "Config": {"Labels": labels},
+                "RepoTags": [], "RepoDigests": []}
+
+    def boundary(args, **kwargs):
+        calls.append(list(args))
+        if args[:3] == ["docker", "image", "ls"]:
+            if "--filter" in args:
+                return reply(args, query if images[image_a].exists() else "")
+            return reply(args, "\n".join(
+                image_id for image_id, path in images.items() if path.exists()))
+        if args[:3] == ["docker", "image", "inspect"]:
+            if args[-1] == query:
+                return reply(args, json.dumps([metadata(image_b)]))
+            if args[-1] in images and images[args[-1]].exists():
+                return reply(args, json.dumps([metadata(args[-1])]))
+            return reply(args, rc=1, error="No such image")
+        if args[:2] == ["docker", "inspect"]:
+            return reply(args, json.dumps([metadata(args[-1])]))
+        if args[:2] == ["docker", "rmi"]:
+            images[args[-1]].unlink()
+        return reply(args)
+
+    monkeypatch.setattr(module, "_run", boundary)
+    log = module._FailureLog(run.run_id)
+    owned, foreign = run._discover(log)
+    failures = run.teardown()  # Execute the whole cleanup before checking oracles.
+    assert not owned["images"] and not foreign
+    assert log.items and failures
+    assert any(isinstance(failure, module.CleanupFailure)
+               and failure.operation == "inventory:images"
+               and failure.run_id == run.run_id and failure.preserved
+               and query in failure.reason and image_b in failure.reason
+               and failure.command == f"docker image inspect {query}"
+               for failure in failures)
+    assert not any(args[:2] == ["docker", "rmi"] for args in calls)
+    assert {image_id: path.read_bytes() for image_id, path in images.items()} == before
+
+
+@pytest.mark.parametrize("query", [
+    "sha256:" + "a" * 64, "a" * 64, "a" * 12, "sha256:" + "a" * 12,
+])
+def test_image_discovery_matching_identity_is_owned(module, tmp_path, monkeypatch, query):
+    """Full IDs and matching query prefixes resolve to one canonical full ID."""
+    run = module._StackRun(tmp_path)
+    image_id = "sha256:" + "a" * 64
+    labels = {module.PROJECT_LABEL: run.project, module.RUN_LABEL: run.run_id}
+
+    def boundary(args, **kwargs):
+        if args[:3] == ["docker", "image", "ls"]:
+            return reply(args, query)
+        if args[:3] == ["docker", "image", "inspect"]:
+            return reply(args, json.dumps([{"Id": image_id, "Config": {"Labels": labels}}]))
+        return reply(args)
+
+    monkeypatch.setattr(module, "_run", boundary)
+    log = module._FailureLog(run.run_id)
+    owned, foreign = run._discover(log)
+    assert not log.items and not foreign
+    assert owned["images"] == [{"id": image_id, "name": query, "labels": labels}]
