@@ -1,0 +1,27 @@
+{
+  "api_url": "http://127.0.0.1:52547",
+  "cors_origins": [
+    "http://127.0.0.1:52548",
+    "http://localhost:52548"
+  ],
+  "services": {
+    "backend": {
+      "container_id": "8a6ccff7aa95c0580ade422a97f47715cdf9fe629c982fb04df3a1c56d996cf3",
+      "bindings": [
+        {
+          "HostIp": "127.0.0.1",
+          "HostPort": "52547"
+        }
+      ]
+    },
+    "frontend": {
+      "container_id": "97f8f4af14b4155fc32b3027bbdb4a42b7033aeb066c731028024cab8094b797",
+      "bindings": [
+        {
+          "HostIp": "127.0.0.1",
+          "HostPort": "52548"
+        }
+      ]
+    }
+  }
+}

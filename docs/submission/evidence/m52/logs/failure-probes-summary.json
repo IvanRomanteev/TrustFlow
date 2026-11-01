@@ -1,0 +1,39 @@
+[
+  {
+    "case": "invalid-publication",
+    "exit_code": 1,
+    "original_success_preserved": true
+  },
+  {
+    "case": "malformed-browser",
+    "exit_code": 1,
+    "original_success_preserved": true
+  },
+  {
+    "case": "interrupted-complete",
+    "exit_code": 1,
+    "original_success_preserved": true
+  },
+  {
+    "case": "failed-mandatory-scenario",
+    "exit_code": 1,
+    "original_success_preserved": true
+  },
+  {
+    "case": "unknown-docker-ownership",
+    "exit_code": 1,
+    "original_success_preserved": true
+  },
+  {
+    "case": "refuse-reuse-success",
+    "complete_preserved": true,
+    "all_bytes_preserved": true
+  },
+  {
+    "case": "missing-browser",
+    "exit_code": 1,
+    "failed_marker": true,
+    "false_complete": false,
+    "actual_canonical_cli": true
+  }
+]

@@ -1,0 +1,191 @@
+{
+  "checkpoints": {},
+  "events": [
+    {
+      "event": "process_started",
+      "run_id": "075897be048d47229697cab98e1d7de2",
+      "seq": 1
+    },
+    {
+      "event": "startup_recovery_complete",
+      "recovered_runs": [],
+      "seq": 2
+    },
+    {
+      "event": "tool_invoked",
+      "key": "3cbca09b-93d0-40e8-a6c9-d26d00f9e704:get_balance:e009e3d4f62cd525",
+      "seq": 3,
+      "tool": "get_balance"
+    },
+    {
+      "event": "semantic_review",
+      "fault_injected": false,
+      "seq": 4
+    },
+    {
+      "event": "tool_invoked",
+      "key": "ecc30da0-4fc8-4a1f-a930-3723f8221b25:get_balance:e009e3d4f62cd525",
+      "seq": 5,
+      "tool": "get_balance"
+    },
+    {
+      "event": "tool_invoked",
+      "key": "op_12aa75a934a343db",
+      "seq": 6,
+      "tool": "simulate_transfer"
+    },
+    {
+      "event": "semantic_review",
+      "fault_injected": false,
+      "seq": 7
+    },
+    {
+      "event": "tool_invoked",
+      "key": "803b156a-7af3-47e2-a277-0e15ebf41676:get_balance:e009e3d4f62cd525",
+      "seq": 8,
+      "tool": "get_balance"
+    },
+    {
+      "event": "tool_invoked",
+      "key": "op_88df88031ad54336",
+      "seq": 9,
+      "tool": "simulate_transfer"
+    },
+    {
+      "event": "semantic_review",
+      "fault_injected": false,
+      "seq": 10
+    },
+    {
+      "event": "checkpoint",
+      "mode": "late_commit",
+      "name": "armed",
+      "seq": 11
+    },
+    {
+      "event": "tool_invoked",
+      "key": "6059c53e-b74b-4b69-8685-e35be5306497:get_balance:e009e3d4f62cd525",
+      "seq": 12,
+      "tool": "get_balance"
+    },
+    {
+      "event": "tool_invoked",
+      "key": "op_57e500ef80374ef0",
+      "seq": 13,
+      "tool": "simulate_transfer"
+    },
+    {
+      "event": "checkpoint",
+      "key": "op_57e500ef80374ef0",
+      "mode": "late_commit",
+      "name": "worker_entered",
+      "seq": 14
+    },
+    {
+      "event": "checkpoint_released",
+      "seq": 15
+    },
+    {
+      "event": "checkpoint",
+      "key": "op_57e500ef80374ef0",
+      "mode": "late_commit",
+      "name": "ledger_committed",
+      "seq": 16,
+      "tx_id": "tx_0003"
+    },
+    {
+      "event": "checkpoint",
+      "key": "op_57e500ef80374ef0",
+      "mode": "late_commit",
+      "name": "worker_returned",
+      "seq": 17
+    },
+    {
+      "event": "semantic_review",
+      "fault_injected": true,
+      "seq": 18
+    },
+    {
+      "event": "semantic_review",
+      "fault_injected": false,
+      "seq": 19
+    },
+    {
+      "event": "checkpoint",
+      "mode": "after_commit",
+      "name": "armed",
+      "seq": 20
+    },
+    {
+      "event": "tool_invoked",
+      "key": "58e49d62-afd0-4775-8a4e-b84b95c53880:get_balance:e009e3d4f62cd525",
+      "seq": 21,
+      "tool": "get_balance"
+    },
+    {
+      "event": "tool_invoked",
+      "key": "op_65788472d91c46fc",
+      "seq": 22,
+      "tool": "simulate_transfer"
+    },
+    {
+      "event": "checkpoint",
+      "key": "op_65788472d91c46fc",
+      "mode": "after_commit",
+      "name": "worker_entered",
+      "seq": 23
+    },
+    {
+      "event": "checkpoint",
+      "key": "op_65788472d91c46fc",
+      "mode": "after_commit",
+      "name": "ledger_committed",
+      "seq": 24,
+      "tx_id": "tx_0004"
+    },
+    {
+      "event": "checkpoint",
+      "key": "op_65788472d91c46fc",
+      "name": "after_commit",
+      "seq": 25,
+      "tx_id": "tx_0004"
+    },
+    {
+      "event": "process_started",
+      "run_id": "075897be048d47229697cab98e1d7de2",
+      "seq": 26
+    },
+    {
+      "event": "tool_invoked",
+      "key": "",
+      "seq": 27,
+      "tool": "get_balance"
+    },
+    {
+      "event": "startup_recovery_complete",
+      "recovered_runs": [
+        "58e49d62-afd0-4775-8a4e-b84b95c53880"
+      ],
+      "seq": 28
+    },
+    {
+      "event": "semantic_review",
+      "fault_injected": false,
+      "seq": 29
+    },
+    {
+      "event": "process_started",
+      "run_id": "075897be048d47229697cab98e1d7de2",
+      "seq": 30
+    },
+    {
+      "event": "startup_recovery_complete",
+      "recovered_runs": [],
+      "seq": 31
+    }
+  ],
+  "fault_injected": true,
+  "mode": null,
+  "semantic_failures_remaining": 0,
+  "worker_active": false
+}

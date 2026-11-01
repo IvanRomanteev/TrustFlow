@@ -1,0 +1,866 @@
+{
+  "accounts": [
+    {
+      "account_id": "acc_alice",
+      "balance": 20000.0,
+      "currency": "USD",
+      "owner": "Alice (synthetic)"
+    },
+    {
+      "account_id": "acc_bob",
+      "balance": 6200.0,
+      "currency": "USD",
+      "owner": "Bob (synthetic)"
+    },
+    {
+      "account_id": "acc_ops",
+      "balance": 10000.0,
+      "currency": "USD",
+      "owner": "Ops (synthetic)"
+    }
+  ],
+  "audit": [
+    {
+      "action": "workflow_created",
+      "actor": "demo-user",
+      "detail": {
+        "title": "Check balance"
+      },
+      "detail_json": "{\"title\": \"Check balance\"}",
+      "id": 1,
+      "payload_hash": "31e41cbf93913f6a80622a521a06d6c4a550e5bd5cc0ba1d1355ab0e253ad07f",
+      "run_id": "4d0be702-c761-4ce1-8c5e-51e8bfbe2b32",
+      "ts": "2026-11-01T12:04:36.804960+00:00"
+    },
+    {
+      "action": "retrieval_attached",
+      "actor": "retrieval",
+      "detail": {
+        "chunks": [
+          "policy-verification#1",
+          "policy-accounts#1",
+          "policy-approval#2"
+        ],
+        "corpus_version": "synthetic-policies-v1"
+      },
+      "detail_json": "{\"chunks\": [\"policy-verification#1\", \"policy-accounts#1\", \"policy-approval#2\"], \"corpus_version\": \"synthetic-policies-v1\"}",
+      "id": 2,
+      "payload_hash": "295e2334d44659b4c178d4134b39862af28b245ea15634df68a3d1636cfdd3a3",
+      "run_id": "4d0be702-c761-4ce1-8c5e-51e8bfbe2b32",
+      "ts": "2026-11-01T12:04:36.810796+00:00"
+    },
+    {
+      "action": "plan_created",
+      "actor": "planner",
+      "detail": {
+        "plan_hash": "dad22c17378041348fffea7575c688372e1710c4961fe1dea2550946d1a3780f",
+        "steps": 1,
+        "version": 1
+      },
+      "detail_json": "{\"plan_hash\": \"dad22c17378041348fffea7575c688372e1710c4961fe1dea2550946d1a3780f\", \"steps\": 1, \"version\": 1}",
+      "id": 3,
+      "payload_hash": "b66e58fb636ffd10df5472291d9609d1e935010d9f52dbc540c8aac2af80ed15",
+      "run_id": "4d0be702-c761-4ce1-8c5e-51e8bfbe2b32",
+      "ts": "2026-11-01T12:04:36.814410+00:00"
+    },
+    {
+      "action": "execution_finished",
+      "actor": "executor",
+      "detail": {
+        "results": 1
+      },
+      "detail_json": "{\"results\": 1}",
+      "id": 4,
+      "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+      "run_id": "4d0be702-c761-4ce1-8c5e-51e8bfbe2b32",
+      "ts": "2026-11-01T12:04:36.827992+00:00"
+    },
+    {
+      "action": "verification_finished",
+      "actor": "verifier",
+      "detail": {
+        "issues": [],
+        "passed": true
+      },
+      "detail_json": "{\"issues\": [], \"passed\": true}",
+      "id": 5,
+      "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+      "run_id": "4d0be702-c761-4ce1-8c5e-51e8bfbe2b32",
+      "ts": "2026-11-01T12:04:36.847488+00:00"
+    },
+    {
+      "action": "workflow_created",
+      "actor": "demo-user",
+      "detail": {
+        "title": "Transfer 5000"
+      },
+      "detail_json": "{\"title\": \"Transfer 5000\"}",
+      "id": 6,
+      "payload_hash": "d60cb0d67e957bb601b0dff628276adb7071fe79a02c8ca5a8445ce927fb5fbe",
+      "run_id": "65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1",
+      "ts": "2026-11-01T12:04:37.715641+00:00"
+    },
+    {
+      "action": "retrieval_attached",
+      "actor": "retrieval",
+      "detail": {
+        "chunks": [
+          "policy-approval#2",
+          "policy-verification#2",
+          "policy-accounts#1"
+        ],
+        "corpus_version": "synthetic-policies-v1"
+      },
+      "detail_json": "{\"chunks\": [\"policy-approval#2\", \"policy-verification#2\", \"policy-accounts#1\"], \"corpus_version\": \"synthetic-policies-v1\"}",
+      "id": 7,
+      "payload_hash": "781d3317355012ceea653b80c375d012eafd1ff8014cda23f31d3dce7eda867f",
+      "run_id": "65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1",
+      "ts": "2026-11-01T12:04:37.719183+00:00"
+    },
+    {
+      "action": "plan_created",
+      "actor": "planner",
+      "detail": {
+        "plan_hash": "101227120e5d7c7591dcdca60d4ed7ed239a354e17ceaa76a188b754a2182a03",
+        "steps": 2,
+        "version": 1
+      },
+      "detail_json": "{\"plan_hash\": \"101227120e5d7c7591dcdca60d4ed7ed239a354e17ceaa76a188b754a2182a03\", \"steps\": 2, \"version\": 1}",
+      "id": 8,
+      "payload_hash": "3929c86ca0ad89ad38100b6c15d977dcee23845b06e44583eecfd08088de7d4b",
+      "run_id": "65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1",
+      "ts": "2026-11-01T12:04:37.722043+00:00"
+    },
+    {
+      "action": "approval_required",
+      "actor": "policy",
+      "detail": {
+        "plan_hash": "101227120e5d7c7591dcdca60d4ed7ed239a354e17ceaa76a188b754a2182a03"
+      },
+      "detail_json": "{\"plan_hash\": \"101227120e5d7c7591dcdca60d4ed7ed239a354e17ceaa76a188b754a2182a03\"}",
+      "id": 9,
+      "payload_hash": "c7a519173c84df00aac63c1e932e2bd8093c223ad1d17b49a957f2f2ebb3c5c8",
+      "run_id": "65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1",
+      "ts": "2026-11-01T12:04:37.728329+00:00"
+    },
+    {
+      "action": "approval_granted",
+      "actor": "demo-manager",
+      "detail": {
+        "plan_hash": "101227120e5d7c7591dcdca60d4ed7ed239a354e17ceaa76a188b754a2182a03"
+      },
+      "detail_json": "{\"plan_hash\": \"101227120e5d7c7591dcdca60d4ed7ed239a354e17ceaa76a188b754a2182a03\"}",
+      "id": 10,
+      "payload_hash": "c7a519173c84df00aac63c1e932e2bd8093c223ad1d17b49a957f2f2ebb3c5c8",
+      "run_id": "65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1",
+      "ts": "2026-11-01T12:04:38.935344+00:00"
+    },
+    {
+      "action": "execution_resumed",
+      "actor": "system",
+      "detail": {},
+      "detail_json": "{}",
+      "id": 11,
+      "payload_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "run_id": "65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1",
+      "ts": "2026-11-01T12:04:38.938781+00:00"
+    },
+    {
+      "action": "execution_finished",
+      "actor": "executor",
+      "detail": {
+        "results": 2
+      },
+      "detail_json": "{\"results\": 2}",
+      "id": 12,
+      "payload_hash": "814e1937b08b3497b31b80f6c6017734c11c72e8fea2498414799c5d9df47dae",
+      "run_id": "65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1",
+      "ts": "2026-11-01T12:04:38.957844+00:00"
+    },
+    {
+      "action": "verification_finished",
+      "actor": "verifier",
+      "detail": {
+        "issues": [],
+        "passed": true
+      },
+      "detail_json": "{\"issues\": [], \"passed\": true}",
+      "id": 13,
+      "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+      "run_id": "65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1",
+      "ts": "2026-11-01T12:04:38.979248+00:00"
+    }
+  ],
+  "balances": {
+    "acc_alice": 20000.0,
+    "acc_bob": 6200.0,
+    "acc_ops": 10000.0
+  },
+  "runs": {
+    "4d0be702-c761-4ce1-8c5e-51e8bfbe2b32": {
+      "run": {
+        "approvals": [],
+        "approved_hash": "",
+        "approved_plan_snapshot": null,
+        "attempt": 0,
+        "cancellations": [],
+        "created_at": "2026-11-01T12:04:36.799123Z",
+        "error": null,
+        "evidence_spans": [
+          {
+            "chunk_id": "policy-verification#1",
+            "corpus_version": "synthetic-policies-v1",
+            "end": 92,
+            "quoted_text": "Committed transfers are verified against ledger evidence read independently from the ledger.",
+            "snapshot_hash": "",
+            "snapshot_id": "",
+            "source_id": "policy-verification",
+            "source_type": "policy",
+            "start": 0,
+            "text_hash": "c350896ce9b65a4f0725045970a8353029d78572612f68ad05f67c4dbd3632de",
+            "version": "1"
+          },
+          {
+            "chunk_id": "policy-accounts#1",
+            "corpus_version": "synthetic-policies-v1",
+            "end": 60,
+            "quoted_text": "Known synthetic accounts are acc_alice, acc_bob and acc_ops.",
+            "snapshot_hash": "",
+            "snapshot_id": "",
+            "source_id": "policy-accounts",
+            "source_type": "policy",
+            "start": 0,
+            "text_hash": "16cafaa7e6d363b309e250a84eadd24dcdc2f7089b7ba732dca0740d9eb5cc8c",
+            "version": "1"
+          },
+          {
+            "chunk_id": "policy-approval#2",
+            "corpus_version": "synthetic-policies-v1",
+            "end": 192,
+            "quoted_text": "Approval is bound to the exact approved plan hash and plan version. A retrieved policy never authorizes a transfer by itself.",
+            "snapshot_hash": "",
+            "snapshot_id": "",
+            "source_id": "policy-approval",
+            "source_type": "policy",
+            "start": 67,
+            "text_hash": "7fd4c9e7bef227571bd76a959eefcb61916d19184be7ce7883d06b0c088083cc",
+            "version": "1"
+          }
+        ],
+        "goal": {
+          "description": "Read the synthetic account balance",
+          "requested_by": "demo-user",
+          "require_evidence": false,
+          "title": "Check balance"
+        },
+        "intents": [],
+        "ledger_snapshot": {
+          "balances": {
+            "acc_alice": {
+              "account_id": "acc_alice",
+              "balance": 25000.0,
+              "currency": "USD",
+              "owner": "Alice (synthetic)"
+            }
+          },
+          "canonical_text": "{\"balances\":{\"acc_alice\":{\"account_id\":\"acc_alice\",\"balance\":25000.0,\"currency\":\"USD\",\"owner\":\"Alice (synthetic)\"}},\"transactions\":[]}",
+          "snapshot_hash": "ff2b5b3c5e4d3f6ead90ff5e28dbe97cd07df8f70b77117ec654f786e3b90020",
+          "snapshot_id": "ledger-ff2b5b3c5e4d3f6e",
+          "transactions": []
+        },
+        "llm_calls": [
+          {
+            "attempt": 1,
+            "estimated_cost_usd": 0.0,
+            "expense_category": "application_inference",
+            "input_tokens": null,
+            "latency_ms": 0.0,
+            "model": "fake",
+            "output_tokens": null,
+            "over_budget": false,
+            "prior_attempts": [],
+            "purpose": "plan",
+            "request_id": null,
+            "transport_attempt": 1,
+            "usage_unknown": true,
+            "workflow_id": "4d0be702-c761-4ce1-8c5e-51e8bfbe2b32"
+          },
+          {
+            "attempt": 1,
+            "estimated_cost_usd": 0.0,
+            "expense_category": "application_inference",
+            "input_tokens": null,
+            "latency_ms": 0.0,
+            "model": "fake",
+            "output_tokens": null,
+            "over_budget": false,
+            "prior_attempts": [],
+            "purpose": "semantic_review",
+            "request_id": null,
+            "transport_attempt": 1,
+            "usage_unknown": true,
+            "workflow_id": "4d0be702-c761-4ce1-8c5e-51e8bfbe2b32"
+          }
+        ],
+        "operations": [],
+        "plan": {
+          "goal_title": "Check balance",
+          "plan_hash": "dad22c17378041348fffea7575c688372e1710c4961fe1dea2550946d1a3780f",
+          "plan_id": "582e6c2a-c593-45ce-876c-b93a7f8ac80b",
+          "steps": [
+            {
+              "args": {
+                "account_id": "acc_alice"
+              },
+              "intent_id": "",
+              "operation_id": "",
+              "rationale": "Inspect synthetic account",
+              "risk": "LOW",
+              "step_id": "v1-step-1",
+              "suggested_risk": "LOW",
+              "tool_name": "get_balance"
+            }
+          ],
+          "version": 1
+        },
+        "retrieval": [
+          {
+            "chunk": {
+              "chunk_id": "policy-verification#1",
+              "corpus_version": "synthetic-policies-v1",
+              "doc_id": "policy-verification",
+              "end": 92,
+              "start": 0,
+              "text": "Committed transfers are verified against ledger evidence read independently from the ledger.",
+              "version": "1"
+            },
+            "score": 0.333333,
+            "span": {
+              "chunk_id": "policy-verification#1",
+              "corpus_version": "synthetic-policies-v1",
+              "end": 92,
+              "quoted_text": "Committed transfers are verified against ledger evidence read independently from the ledger.",
+              "snapshot_hash": "",
+              "snapshot_id": "",
+              "source_id": "policy-verification",
+              "source_type": "policy",
+              "start": 0,
+              "text_hash": "c350896ce9b65a4f0725045970a8353029d78572612f68ad05f67c4dbd3632de",
+              "version": "1"
+            }
+          },
+          {
+            "chunk": {
+              "chunk_id": "policy-accounts#1",
+              "corpus_version": "synthetic-policies-v1",
+              "doc_id": "policy-accounts",
+              "end": 60,
+              "start": 0,
+              "text": "Known synthetic accounts are acc_alice, acc_bob and acc_ops.",
+              "version": "1"
+            },
+            "score": 0.166667,
+            "span": {
+              "chunk_id": "policy-accounts#1",
+              "corpus_version": "synthetic-policies-v1",
+              "end": 60,
+              "quoted_text": "Known synthetic accounts are acc_alice, acc_bob and acc_ops.",
+              "snapshot_hash": "",
+              "snapshot_id": "",
+              "source_id": "policy-accounts",
+              "source_type": "policy",
+              "start": 0,
+              "text_hash": "16cafaa7e6d363b309e250a84eadd24dcdc2f7089b7ba732dca0740d9eb5cc8c",
+              "version": "1"
+            }
+          },
+          {
+            "chunk": {
+              "chunk_id": "policy-approval#2",
+              "corpus_version": "synthetic-policies-v1",
+              "doc_id": "policy-approval",
+              "end": 192,
+              "start": 67,
+              "text": "Approval is bound to the exact approved plan hash and plan version. A retrieved policy never authorizes a transfer by itself.",
+              "version": "1"
+            },
+            "score": 0.166667,
+            "span": {
+              "chunk_id": "policy-approval#2",
+              "corpus_version": "synthetic-policies-v1",
+              "end": 192,
+              "quoted_text": "Approval is bound to the exact approved plan hash and plan version. A retrieved policy never authorizes a transfer by itself.",
+              "snapshot_hash": "",
+              "snapshot_id": "",
+              "source_id": "policy-approval",
+              "source_type": "policy",
+              "start": 67,
+              "text_hash": "7fd4c9e7bef227571bd76a959eefcb61916d19184be7ce7883d06b0c088083cc",
+              "version": "1"
+            }
+          }
+        ],
+        "run_id": "4d0be702-c761-4ce1-8c5e-51e8bfbe2b32",
+        "status": "COMPLETED",
+        "step_results": [
+          {
+            "data": {
+              "account_id": "acc_alice",
+              "balance": 25000.0,
+              "currency": "USD",
+              "owner": "Alice (synthetic)"
+            },
+            "error": null,
+            "idempotency_key": "4d0be702-c761-4ce1-8c5e-51e8bfbe2b32:get_balance:e009e3d4f62cd525",
+            "status": "SUCCEEDED",
+            "step_id": "v1-step-1",
+            "tool_name": "get_balance"
+          }
+        ],
+        "updated_at": "2026-11-01T12:04:36.850725Z",
+        "verification": {
+          "checks": [
+            {
+              "detail": "1/1 results",
+              "name": "all_steps_succeeded",
+              "passed": true
+            },
+            {
+              "detail": "[]",
+              "name": "no_failed_steps",
+              "passed": true
+            },
+            {
+              "detail": "total=36200.0",
+              "name": "ledger_conservation",
+              "passed": true
+            }
+          ],
+          "issues": [],
+          "passed": true,
+          "semantic": {
+            "confidence": 1.0,
+            "issues": [],
+            "model": "fake",
+            "summary": "fake deterministic review",
+            "verdict": "PASS"
+          }
+        },
+        "verification_attempts": 1
+      },
+      "status": "COMPLETED",
+      "version": 7
+    },
+    "65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1": {
+      "run": {
+        "approvals": [
+          {
+            "actor": "demo-manager",
+            "created_at": "2026-11-01T12:04:38.931914Z",
+            "decision": "APPROVED",
+            "plan_hash": "101227120e5d7c7591dcdca60d4ed7ed239a354e17ceaa76a188b754a2182a03",
+            "plan_version": 1,
+            "reason": ""
+          }
+        ],
+        "approved_hash": "101227120e5d7c7591dcdca60d4ed7ed239a354e17ceaa76a188b754a2182a03",
+        "approved_plan_snapshot": {
+          "goal_title": "Transfer 5000",
+          "plan_hash": "101227120e5d7c7591dcdca60d4ed7ed239a354e17ceaa76a188b754a2182a03",
+          "plan_id": "d07f7d8a-bc34-4cbb-9d71-c563c294d16c",
+          "steps": [
+            {
+              "args": {
+                "account_id": "acc_alice"
+              },
+              "intent_id": "",
+              "operation_id": "",
+              "rationale": "Check synthetic sender balance first",
+              "risk": "LOW",
+              "step_id": "v1-step-1",
+              "suggested_risk": "LOW",
+              "tool_name": "get_balance"
+            },
+            {
+              "args": {
+                "amount": 5000.0,
+                "currency": "USD",
+                "from_account": "acc_alice",
+                "to_account": "acc_bob"
+              },
+              "intent_id": "op_a5d69a836e3f4abd",
+              "operation_id": "op_a5d69a836e3f4abd",
+              "rationale": "Simulated transfer (synthetic funds only)",
+              "risk": "HIGH",
+              "step_id": "v1-step-2",
+              "suggested_risk": "LOW",
+              "tool_name": "simulate_transfer"
+            }
+          ],
+          "version": 1
+        },
+        "attempt": 0,
+        "cancellations": [],
+        "created_at": "2026-11-01T12:04:37.713725Z",
+        "error": null,
+        "evidence_spans": [
+          {
+            "chunk_id": "policy-approval#2",
+            "corpus_version": "synthetic-policies-v1",
+            "end": 192,
+            "quoted_text": "Approval is bound to the exact approved plan hash and plan version. A retrieved policy never authorizes a transfer by itself.",
+            "snapshot_hash": "",
+            "snapshot_id": "",
+            "source_id": "policy-approval",
+            "source_type": "policy",
+            "start": 67,
+            "text_hash": "7fd4c9e7bef227571bd76a959eefcb61916d19184be7ce7883d06b0c088083cc",
+            "version": "1"
+          },
+          {
+            "chunk_id": "policy-verification#2",
+            "corpus_version": "synthetic-policies-v1",
+            "end": 258,
+            "quoted_text": "If semantic review fails after a commit, recovery is verification-only. Tools are never re-executed and no second transfer is created to fix a review or a citation.",
+            "snapshot_hash": "",
+            "snapshot_id": "",
+            "source_id": "policy-verification",
+            "source_type": "policy",
+            "start": 94,
+            "text_hash": "7ed69e7e1227e13f084cf5648a575c24b418d89f6395bf6245b75b384f6c44ce",
+            "version": "1"
+          },
+          {
+            "chunk_id": "policy-accounts#1",
+            "corpus_version": "synthetic-policies-v1",
+            "end": 60,
+            "quoted_text": "Known synthetic accounts are acc_alice, acc_bob and acc_ops.",
+            "snapshot_hash": "",
+            "snapshot_id": "",
+            "source_id": "policy-accounts",
+            "source_type": "policy",
+            "start": 0,
+            "text_hash": "16cafaa7e6d363b309e250a84eadd24dcdc2f7089b7ba732dca0740d9eb5cc8c",
+            "version": "1"
+          },
+          {
+            "chunk_id": "",
+            "corpus_version": "",
+            "end": 368,
+            "quoted_text": "\"tx_id\":\"tx_0001\"",
+            "snapshot_hash": "16a28855a07e1cbab84e3f9d3906c943783d82bf2371f2ffc106d39878cca6a4",
+            "snapshot_id": "ledger-16a28855a07e1cba",
+            "source_id": "ledger-16a28855a07e1cba",
+            "source_type": "ledger",
+            "start": 351,
+            "text_hash": "f622c3b3e6f25d16f5988354c2026721c706e003e62bdba422fad9660117b28c",
+            "version": ""
+          }
+        ],
+        "goal": {
+          "description": "transfer 5000 to bob",
+          "requested_by": "demo-user",
+          "require_evidence": false,
+          "title": "Transfer 5000"
+        },
+        "intents": [
+          {
+            "authorized": true,
+            "authorized_payload": {
+              "amount": 5000.0,
+              "currency": "USD",
+              "from_account": "acc_alice",
+              "to_account": "acc_bob"
+            },
+            "ever_authorized": true,
+            "fingerprint": "cb04a1500724000c368ddebaf89c73be1a35b3971f0c0b28e3d60fb6283b035f",
+            "intent_id": "op_a5d69a836e3f4abd",
+            "proposed_payload": {
+              "amount": 5000.0,
+              "currency": "USD",
+              "from_account": "acc_alice",
+              "to_account": "acc_bob"
+            },
+            "status": "COMMITTED",
+            "tool_name": "simulate_transfer"
+          }
+        ],
+        "ledger_snapshot": {
+          "balances": {
+            "acc_alice": {
+              "account_id": "acc_alice",
+              "balance": 20000.0,
+              "currency": "USD",
+              "owner": "Alice (synthetic)"
+            },
+            "acc_bob": {
+              "account_id": "acc_bob",
+              "balance": 6200.0,
+              "currency": "USD",
+              "owner": "Bob (synthetic)"
+            }
+          },
+          "canonical_text": "{\"balances\":{\"acc_alice\":{\"account_id\":\"acc_alice\",\"balance\":20000.0,\"currency\":\"USD\",\"owner\":\"Alice (synthetic)\"},\"acc_bob\":{\"account_id\":\"acc_bob\",\"balance\":6200.0,\"currency\":\"USD\",\"owner\":\"Bob (synthetic)\"}},\"transactions\":[{\"amount\":5000.0,\"currency\":\"USD\",\"from_account\":\"acc_alice\",\"idempotency_key\":\"op_a5d69a836e3f4abd\",\"to_account\":\"acc_bob\",\"tx_id\":\"tx_0001\"}]}",
+          "snapshot_hash": "16a28855a07e1cbab84e3f9d3906c943783d82bf2371f2ffc106d39878cca6a4",
+          "snapshot_id": "ledger-16a28855a07e1cba",
+          "transactions": [
+            {
+              "amount": 5000.0,
+              "currency": "USD",
+              "from_account": "acc_alice",
+              "idempotency_key": "op_a5d69a836e3f4abd",
+              "to_account": "acc_bob",
+              "tx_id": "tx_0001"
+            }
+          ]
+        },
+        "llm_calls": [
+          {
+            "attempt": 1,
+            "estimated_cost_usd": 0.0,
+            "expense_category": "application_inference",
+            "input_tokens": null,
+            "latency_ms": 0.0,
+            "model": "fake",
+            "output_tokens": null,
+            "over_budget": false,
+            "prior_attempts": [],
+            "purpose": "plan",
+            "request_id": null,
+            "transport_attempt": 1,
+            "usage_unknown": true,
+            "workflow_id": "65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1"
+          },
+          {
+            "attempt": 1,
+            "estimated_cost_usd": 0.0,
+            "expense_category": "application_inference",
+            "input_tokens": null,
+            "latency_ms": 0.0,
+            "model": "fake",
+            "output_tokens": null,
+            "over_budget": false,
+            "prior_attempts": [],
+            "purpose": "semantic_review",
+            "request_id": null,
+            "transport_attempt": 1,
+            "usage_unknown": true,
+            "workflow_id": "65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1"
+          }
+        ],
+        "operations": [
+          {
+            "authorized": false,
+            "fingerprint": "",
+            "operation_id": "op_a5d69a836e3f4abd",
+            "payload": {
+              "amount": 5000.0,
+              "currency": "USD",
+              "from_account": "acc_alice",
+              "to_account": "acc_bob"
+            },
+            "tool_name": "simulate_transfer"
+          }
+        ],
+        "plan": {
+          "goal_title": "Transfer 5000",
+          "plan_hash": "101227120e5d7c7591dcdca60d4ed7ed239a354e17ceaa76a188b754a2182a03",
+          "plan_id": "d07f7d8a-bc34-4cbb-9d71-c563c294d16c",
+          "steps": [
+            {
+              "args": {
+                "account_id": "acc_alice"
+              },
+              "intent_id": "",
+              "operation_id": "",
+              "rationale": "Check synthetic sender balance first",
+              "risk": "LOW",
+              "step_id": "v1-step-1",
+              "suggested_risk": "LOW",
+              "tool_name": "get_balance"
+            },
+            {
+              "args": {
+                "amount": 5000.0,
+                "currency": "USD",
+                "from_account": "acc_alice",
+                "to_account": "acc_bob"
+              },
+              "intent_id": "op_a5d69a836e3f4abd",
+              "operation_id": "op_a5d69a836e3f4abd",
+              "rationale": "Simulated transfer (synthetic funds only)",
+              "risk": "HIGH",
+              "step_id": "v1-step-2",
+              "suggested_risk": "LOW",
+              "tool_name": "simulate_transfer"
+            }
+          ],
+          "version": 1
+        },
+        "retrieval": [
+          {
+            "chunk": {
+              "chunk_id": "policy-approval#2",
+              "corpus_version": "synthetic-policies-v1",
+              "doc_id": "policy-approval",
+              "end": 192,
+              "start": 67,
+              "text": "Approval is bound to the exact approved plan hash and plan version. A retrieved policy never authorizes a transfer by itself.",
+              "version": "1"
+            },
+            "score": 0.5,
+            "span": {
+              "chunk_id": "policy-approval#2",
+              "corpus_version": "synthetic-policies-v1",
+              "end": 192,
+              "quoted_text": "Approval is bound to the exact approved plan hash and plan version. A retrieved policy never authorizes a transfer by itself.",
+              "snapshot_hash": "",
+              "snapshot_id": "",
+              "source_id": "policy-approval",
+              "source_type": "policy",
+              "start": 67,
+              "text_hash": "7fd4c9e7bef227571bd76a959eefcb61916d19184be7ce7883d06b0c088083cc",
+              "version": "1"
+            }
+          },
+          {
+            "chunk": {
+              "chunk_id": "policy-verification#2",
+              "corpus_version": "synthetic-policies-v1",
+              "doc_id": "policy-verification",
+              "end": 258,
+              "start": 94,
+              "text": "If semantic review fails after a commit, recovery is verification-only. Tools are never re-executed and no second transfer is created to fix a review or a citation.",
+              "version": "1"
+            },
+            "score": 0.5,
+            "span": {
+              "chunk_id": "policy-verification#2",
+              "corpus_version": "synthetic-policies-v1",
+              "end": 258,
+              "quoted_text": "If semantic review fails after a commit, recovery is verification-only. Tools are never re-executed and no second transfer is created to fix a review or a citation.",
+              "snapshot_hash": "",
+              "snapshot_id": "",
+              "source_id": "policy-verification",
+              "source_type": "policy",
+              "start": 94,
+              "text_hash": "7ed69e7e1227e13f084cf5648a575c24b418d89f6395bf6245b75b384f6c44ce",
+              "version": "1"
+            }
+          },
+          {
+            "chunk": {
+              "chunk_id": "policy-accounts#1",
+              "corpus_version": "synthetic-policies-v1",
+              "doc_id": "policy-accounts",
+              "end": 60,
+              "start": 0,
+              "text": "Known synthetic accounts are acc_alice, acc_bob and acc_ops.",
+              "version": "1"
+            },
+            "score": 0.25,
+            "span": {
+              "chunk_id": "policy-accounts#1",
+              "corpus_version": "synthetic-policies-v1",
+              "end": 60,
+              "quoted_text": "Known synthetic accounts are acc_alice, acc_bob and acc_ops.",
+              "snapshot_hash": "",
+              "snapshot_id": "",
+              "source_id": "policy-accounts",
+              "source_type": "policy",
+              "start": 0,
+              "text_hash": "16cafaa7e6d363b309e250a84eadd24dcdc2f7089b7ba732dca0740d9eb5cc8c",
+              "version": "1"
+            }
+          }
+        ],
+        "run_id": "65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1",
+        "status": "COMPLETED",
+        "step_results": [
+          {
+            "data": {
+              "account_id": "acc_alice",
+              "balance": 25000.0,
+              "currency": "USD",
+              "owner": "Alice (synthetic)"
+            },
+            "error": null,
+            "idempotency_key": "65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1:get_balance:e009e3d4f62cd525",
+            "status": "SUCCEEDED",
+            "step_id": "v1-step-1",
+            "tool_name": "get_balance"
+          },
+          {
+            "data": {
+              "amount": 5000.0,
+              "currency": "USD",
+              "from_account": "acc_alice",
+              "idempotency_key": "op_a5d69a836e3f4abd",
+              "to_account": "acc_bob",
+              "tx_id": "tx_0001"
+            },
+            "error": null,
+            "idempotency_key": "op_a5d69a836e3f4abd",
+            "status": "SUCCEEDED",
+            "step_id": "v1-step-2",
+            "tool_name": "simulate_transfer"
+          }
+        ],
+        "updated_at": "2026-11-01T12:04:38.981738Z",
+        "verification": {
+          "checks": [
+            {
+              "detail": "2/2 results",
+              "name": "all_steps_succeeded",
+              "passed": true
+            },
+            {
+              "detail": "[]",
+              "name": "no_failed_steps",
+              "passed": true
+            },
+            {
+              "detail": "total=36200.0",
+              "name": "ledger_conservation",
+              "passed": true
+            },
+            {
+              "detail": "key=op_a5d69a836e3f4abd ledger_tx=tx_0001",
+              "name": "transfer_ledger_match:v1-step-2",
+              "passed": true
+            },
+            {
+              "detail": "committed=1",
+              "name": "intent_coverage:op_a5d69a836e3f4abd",
+              "passed": true
+            }
+          ],
+          "issues": [],
+          "passed": true,
+          "semantic": {
+            "confidence": 1.0,
+            "issues": [],
+            "model": "fake",
+            "summary": "fake deterministic review",
+            "verdict": "PASS"
+          }
+        },
+        "verification_attempts": 1
+      },
+      "status": "COMPLETED",
+      "version": 9
+    }
+  },
+  "total": 36200.0,
+  "transactions": [
+    {
+      "amount": 5000.0,
+      "currency": "USD",
+      "from_account": "acc_alice",
+      "idempotency_key": "op_a5d69a836e3f4abd",
+      "seq": 1,
+      "to_account": "acc_bob",
+      "tx_id": "tx_0001"
+    }
+  ]
+}

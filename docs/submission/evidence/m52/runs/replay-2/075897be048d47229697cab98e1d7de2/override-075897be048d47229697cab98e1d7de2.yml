@@ -1,0 +1,29 @@
+services:
+  backend:
+    build:
+      labels:
+        - "trustflow.test-run=075897be048d47229697cab98e1d7de2"
+    labels:
+      - "trustflow.test-run=075897be048d47229697cab98e1d7de2"
+    environment:
+      TRUSTFLOW_CORS_ORIGINS: '["http://127.0.0.1:65315","http://localhost:65315"]'
+    volumes: !override
+      - type: bind
+        source: C:/tf52r-d131ca8d/b/075897be048d47229697cab98e1d7de2/ws-075897be048d47229697cab98e1d7de2/data
+        target: /data
+    ports: !override
+      - "127.0.0.1:65314:8000"
+  frontend:
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: "http://127.0.0.1:65314"
+      labels:
+        - "trustflow.test-run=075897be048d47229697cab98e1d7de2"
+    labels:
+      - "trustflow.test-run=075897be048d47229697cab98e1d7de2"
+    ports: !override
+      - "127.0.0.1:65315:3000"
+networks:
+  default:
+    labels:
+      - "trustflow.test-run=075897be048d47229697cab98e1d7de2"

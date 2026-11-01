@@ -1,0 +1,3 @@
+# Preserve exact accepted bytes, including historical CRLF / CSV line endings.
+# Whitespace checks apply to authored docs; archival copies must not be rewritten.
+evidence/** -text -whitespace

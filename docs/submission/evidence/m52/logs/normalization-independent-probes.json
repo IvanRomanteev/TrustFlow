@@ -1,0 +1,96 @@
+{
+  "base_digest": "a17849b150ae8207b5efa629ef4384176ce334666590bfcd3165e59de8e3a370",
+  "tests": [
+    {
+      "name": "scenario verdict",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "scenario safety assertion",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "response multiset",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "transfer amount",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "tx identity",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "tx ordering",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "account balance",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "conservation",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "workflow state",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "verification check outcome",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "approval count",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "audit action count",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "semantic attempt count",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "browser assertion outcome",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "screenshot inventory",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "cleanup outcome",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "preservation outcome",
+      "passed": true,
+      "digest_changed": true
+    },
+    {
+      "name": "documented volatile identifiers excluded only from projection",
+      "passed": true,
+      "digest_changed": false
+    }
+  ],
+  "raw_plan_and_snapshot_integrity": "separately recomputed from independent SQLite backups; projection is not a standalone authorization proof"
+}

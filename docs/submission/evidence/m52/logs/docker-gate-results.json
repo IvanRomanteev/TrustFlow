@@ -1,0 +1,22 @@
+[
+  {
+    "argv": [
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\m52-reproducible-demo\\worktree\\.venv\\Scripts\\python.exe",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\probes\\docker_gates.py"
+    ],
+    "cwd": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate",
+    "start": 1793534813.3165746,
+    "end": 1793535155.1885026,
+    "returncode": 0
+  },
+  {
+    "argv": [
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\m52-reproducible-demo\\worktree\\.venv\\Scripts\\python.exe",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\probes\\integration_gate.py"
+    ],
+    "cwd": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate",
+    "start": 1793535155.1895046,
+    "end": 1793535324.1549826,
+    "returncode": 0
+  }
+]

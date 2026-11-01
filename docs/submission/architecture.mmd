@@ -1,0 +1,40 @@
+flowchart TB
+  UI[Next.js UI / FastAPI]
+  subgraph Engine[WorkflowEngine · trusted local single instance]
+    Planner[Planner]
+    Policy[PolicyEngine · deterministic risk]
+    Approval[Human Approval · version + SHA-256 snapshot]
+    Executor[Executor · authorized intents / stable keys]
+    Verifier[Verifier · deterministic ledger checks first]
+    Semantic[Semantic reviewer · cannot override deterministic FAIL]
+    Recovery[Recovery · reconcile / verification only]
+    Planner --> Policy
+    Policy -->|HIGH| Approval
+    Policy -->|LOW / backend authorized| Executor
+    Approval -->|approved exact snapshot| Executor
+    Approval -->|rejected| Rejected[REJECTED · no transfer]
+    Executor --> Verifier
+    Verifier --> Semantic
+    Semantic --> Result[COMPLETED / pending / bounded revision or failure]
+    Recovery --> Verifier
+  end
+  UI --> Planner
+  UI --> Approval
+  UI --> Recovery
+  Provider[Muse LLM Provider boundary]
+  Fake[FakeLLMProvider · independently accepted M5.2]
+  Live[MetaResponsesProvider · live evidence PENDING]
+  Planner <-->|typed plan| Provider
+  Semantic <-->|goal + plan + evidence| Provider
+  Provider --> Fake
+  Provider -.->|POST /responses · no invocation in M5.4| Live
+  Corpus[Local policy corpus / evidence spans] --> Planner
+  Executor -->|atomic synthetic transfer| Ledger[(SQLite Ledger)]
+  Ledger -->|independent read| Verifier
+  Ledger -->|existing operation| Recovery
+  Store[(SQLite run / approval / audit tables)] <--> Engine
+  Obs[Observability · audit payload hashes / workflow usage / evidence manifests / browser logs]
+  Engine -.-> Obs
+  Ledger -.-> Obs
+  classDef pending fill:#fff4d6,stroke:#b57900,stroke-dasharray:5 5
+  class Live pending

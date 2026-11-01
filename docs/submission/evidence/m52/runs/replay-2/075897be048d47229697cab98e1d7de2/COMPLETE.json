@@ -1,0 +1,7 @@
+{
+  "failures": [],
+  "finished_at": "2026-11-01T12:06:47.481002+00:00",
+  "manifest_sha256": "b1c39e6167220fc7a91df2683c9e317215161851b1dc2bd31f0123b76b4ea021",
+  "normalized_digest": "a17849b150ae8207b5efa629ef4384176ce334666590bfcd3165e59de8e3a370",
+  "verdict": "PASS"
+}

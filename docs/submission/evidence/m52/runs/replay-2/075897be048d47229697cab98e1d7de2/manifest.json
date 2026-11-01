@@ -1,0 +1,300 @@
+{
+  "artifact_hashes": {
+    "Dockerfile.m52": "e5c440e07e17c8053d11f7f26f2d4cadae6b5b476520fc9c70df48fe6b6e0011",
+    "README.md": "bc981a31bffbb6254acfff09b6ddc396b36aa381dd0fa149869b5dc034e9051d",
+    "api-log.json": "89f0ec16e0aba13b6f120ab8c68153046082be05c797e07bc15fd07341001e46",
+    "audit-summary.json": "37f66f92275b695b76b04931c61dabb68b87989e05f0790acee0efed7f998a0a",
+    "browser-log.json": "89b4d0db49a7867626bbb698ee6a2a47f82db7f4edec3190a6db120e1d128e02",
+    "commands.jsonl": "344075f6bed53905b208ab121bc92a9a5bb16da397537f56e4583bff0a983d5a",
+    "comparison.json": "c160965115302a26da5e196ee842bccb67bce0048cbb21c0b6e99498bfbbe5ac",
+    "demo-backend-075897be048d47229697cab98e1d7de2.json": "45c47edbf6ba24e0f960e77668d8b64655d70f3b29a122cbbb21a69bf61ffc33",
+    "environment.json": "0cc1724d4ac819f4664de87c1bd7d102152132ea27f96a8b8e3b307da3b7c338",
+    "fault-journal.json": "2dd88d4962a511c2a3d6a404c0b4f8e8afb487d8c47ceda0cde411a8905c896f",
+    "ledger-after.json": "be7e3acf33706759a64879b6bee5572cb0f3ff86bddc7ac94c3f617888a6dff3",
+    "ledger-before.json": "cbd9f86957c1823e3463f4beb46f9c5dbe1b2e6b719cec39cb7144883d8c30e1",
+    "ledger-s1-after.json": "88598d182f0b7ea9c0915ac7e0459fdf6b9260d0a4d29a24237f66917ab1a88d",
+    "ledger-s1-before.json": "cbd9f86957c1823e3463f4beb46f9c5dbe1b2e6b719cec39cb7144883d8c30e1",
+    "ledger-s2-approved.json": "dda86f1d75a20bf35f13ad8ecb855872786eb415a7e0aa8c289d59d7575406fd",
+    "ledger-s2-before.json": "88598d182f0b7ea9c0915ac7e0459fdf6b9260d0a4d29a24237f66917ab1a88d",
+    "ledger-s2-concurrent.json": "14020582fc433fd84ba9aa3d3b15db49231eab34fe6cfc4a976aa3a06a4aefa1",
+    "ledger-s2-invalid.json": "022df50a972cf87e944ff6bcabf20c1a5f180eda1bdbd26fda96bf0016ce4326",
+    "ledger-s2-replay.json": "dda86f1d75a20bf35f13ad8ecb855872786eb415a7e0aa8c289d59d7575406fd",
+    "ledger-s3-before.json": "14020582fc433fd84ba9aa3d3b15db49231eab34fe6cfc4a976aa3a06a4aefa1",
+    "ledger-s3-late-approve.json": "1ce3e779f68d5db533511c6af8828c697e715e12a2125d2c1d9738c2a84682bb",
+    "ledger-s3-rejected.json": "1ce3e779f68d5db533511c6af8828c697e715e12a2125d2c1d9738c2a84682bb",
+    "ledger-s4-after.json": "19a75eea3e3f635bcb0d54273ea4388bcd8171288a87e439954085757e4fd81a",
+    "ledger-s4-before.json": "1ce3e779f68d5db533511c6af8828c697e715e12a2125d2c1d9738c2a84682bb",
+    "ledger-s4-held.json": "23a2f53ae2a1a8163f60894754d504bfb6b4912db343f1457cb7024fe9c829b8",
+    "ledger-s4-late-commit.json": "2c139d9bc84e536729319f4f34de6af020fd9c9ed3a9f287d45647add8d65329",
+    "ledger-s5-after.json": "829edc3d1c68400a71be0abaa050dc7e552ad8d631c2871f0041662f512f3e48",
+    "ledger-s5-before.json": "19a75eea3e3f635bcb0d54273ea4388bcd8171288a87e439954085757e4fd81a",
+    "ledger-s6-after.json": "be7e3acf33706759a64879b6bee5572cb0f3ff86bddc7ac94c3f617888a6dff3",
+    "ledger-s6-at-crash-checkpoint.json": "edb81600aa2f6d6f6ffc093a74e7bccb65f8065c190de6451c3c2953d5170d11",
+    "ledger-s6-before.json": "829edc3d1c68400a71be0abaa050dc7e552ad8d631c2871f0041662f512f3e48",
+    "ledger-s6-graceful-restart.json": "be7e3acf33706759a64879b6bee5572cb0f3ff86bddc7ac94c3f617888a6dff3",
+    "normalization-rules.json": "e7f363decafbb9c4ee8cdc0c13b52a3da21d30780e1c6a80775b08608e0288e8",
+    "normalized-results.json": "edd91e4409156ea98580f888e285eba6deb991962a849d0e95e32fe2476cee28",
+    "override-075897be048d47229697cab98e1d7de2.yml": "70efa93de4ce0f7bc35a22aa725f26621d1a4f7b7e84e445e2ce5c2deca5304c",
+    "preservation-after.json": "49f24f7dda3f0ab8590d75488cd1210a21b75e1c8eee6a9fa48b73aebf2f073a",
+    "preservation-before.json": "b6e3855aa7a1bc4582f5458382a206d6c4943133b243e097decd0176c9a83ae5",
+    "runtime-bindings.json": "8c337484224064864e869a08b19147e6c71f6a37caf8e81a2e5a595630830652",
+    "runtime-logs.json": "8761950b27b247c9d79875719f157c0307ad483afa75ced5216c16f28917556f",
+    "scenario-results.json": "517527d72fcf7a311184b5c9df01b516b4bf87ae52f5cbf3fa96e47c2fda32c1",
+    "screenshots/S1-low-risk-verified.png": "9ce3b085a414815f065b714ee96e37b9d0673fbe7fca51c8b6ccf412723da74c",
+    "screenshots/S2-approved-verified.png": "b110b243c857b8e002816605fa318b0af23f49afec77ce508832a7a7cae3ffdd",
+    "screenshots/S2-authoritative-refresh.png": "cf975c99a5cce01720e8f652f12bf850c1bb118217168d362133f627188425a5",
+    "screenshots/S2-awaiting-exact-hash.png": "db95456b4d040917c904356b575d54147f15eb18dd2931df37d98f2f7af879a0",
+    "screenshots/S2-concurrent-one-winner.png": "5db530324cd7e6b22af679b63fb4bd028a85e29c47b7beb93982e7db2f05456d",
+    "screenshots/S3-rejected-authoritative.png": "7130cc09f282de6bbb65c8c97cdb71b2f5b330693aa565224edce479e4966b2e",
+    "screenshots/S4-recovered-no-duplicate.png": "220a8ce6925f9d8e171920204f932034168822863ebfc453d108b2d94b1a20bc",
+    "screenshots/S4-uncertain-fault-injected.png": "f589e1158c312a8d43b2c1f1cd1d529149ff21dca14a0034381e1ff90007d5b5",
+    "screenshots/S4-verification-pending.png": "69403919e9358385364e2f2de67e6c4fe9442ec18226e04cb74a3ca4f0da50cb",
+    "screenshots/S5-missing-mandatory-evidence.png": "aef746cbc83cea62f1939591ef69d9cce602ce924b902dee539c4dc1d76fafc3",
+    "screenshots/S6-after-graceful-restart.png": "d1b3047e7ddaa19424e9c85f4dc7d08c06fdb719a3638546643384b4290aee58",
+    "screenshots/S6-after-sigkill-recovered-pending.png": "c4a4bc5cf605c5882299c18f448b8c0dc9e1fcbbaf0cbfc2ff74668a6a5f0cf8",
+    "screenshots/S6-before-crash-approval.png": "8c9c2dfc9737d1dace1ff6921b2d456d84f2dae0c624dd39952187269a117e8d",
+    "screenshots/S6-durable-ui-reload.png": "d1b3047e7ddaa19424e9c85f4dc7d08c06fdb719a3638546643384b4290aee58"
+  },
+  "base_sha": "d497043810073d53a6ebaa94ba550a4c2c6b9b08",
+  "cleanup": {
+    "failures": [],
+    "passed": true
+  },
+  "counts": {
+    "failed": 0,
+    "not_run": 0,
+    "passed": 6,
+    "skipped": 0
+  },
+  "failures": [],
+  "git_branch": "",
+  "git_dirty": false,
+  "git_sha": "38cc3942dbd715681d59bfd893e47643210294a9",
+  "git_status": [],
+  "invocation_id": "075897be048d47229697cab98e1d7de2",
+  "llm_mode": "fake",
+  "normalized_digest": "a17849b150ae8207b5efa629ef4384176ce334666590bfcd3165e59de8e3a370",
+  "preservation": {
+    "container_sqlite_count": 3,
+    "docker_counts": {
+      "containers": 2,
+      "images": 31,
+      "networks": 4,
+      "volumes": 1
+    },
+    "host_sqlite_count": 0,
+    "unchanged": true
+  },
+  "project": "tf-m52-075897be048d47229697cab98e1d7de2",
+  "provider": "FakeLLMProvider",
+  "scenario_ids": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "scenarios": [
+    {
+      "assertions": [
+        {
+          "name": "low_risk_no_approval_completed",
+          "passed": true
+        },
+        {
+          "name": "deterministic_and_semantic_verified",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "no_transfer_balances_unchanged",
+          "passed": true
+        }
+      ],
+      "id": "S1",
+      "verdict": "PASS"
+    },
+    {
+      "assertions": [
+        {
+          "name": "high_risk_awaits_exact_hash",
+          "passed": true
+        },
+        {
+          "name": "missing_token_401",
+          "passed": true
+        },
+        {
+          "name": "incorrect_token_403",
+          "passed": true
+        },
+        {
+          "name": "wrong_or_stale_hash_409",
+          "passed": true
+        },
+        {
+          "name": "invalid_decisions_never_mutate",
+          "passed": true
+        },
+        {
+          "name": "ui_correct_approval_verified",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "exactly_one_5000_transfer_approved_hash",
+          "passed": true
+        },
+        {
+          "name": "duplicate_approval_409_no_transfer",
+          "passed": true
+        },
+        {
+          "name": "concurrent_valid_decisions_one_winner",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "concurrent_one_decision_one_transfer",
+          "passed": true
+        }
+      ],
+      "concurrent_statuses": [
+        200,
+        409
+      ],
+      "id": "S2",
+      "verdict": "PASS"
+    },
+    {
+      "assertions": [
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "durable_rejected_no_successful_approval",
+          "passed": true
+        },
+        {
+          "name": "rejection_zero_transfer_unchanged_balances",
+          "passed": true
+        },
+        {
+          "name": "later_approval_409_no_transfer",
+          "passed": true
+        }
+      ],
+      "id": "S3",
+      "verdict": "PASS"
+    },
+    {
+      "assertions": [
+        {
+          "name": "real_timeout_execution_uncertain",
+          "passed": true
+        },
+        {
+          "name": "held_worker_no_commit_yet",
+          "passed": true
+        },
+        {
+          "name": "live_worker_reconcile_fails_closed",
+          "passed": true
+        },
+        {
+          "name": "ledger_reconcile_to_verification_pending",
+          "passed": true
+        },
+        {
+          "name": "verification_only_retry_completed",
+          "passed": true
+        },
+        {
+          "name": "concurrent_terminal_recovery_idempotent",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "recovery_no_mutating_invocation_or_duplicate",
+          "passed": true
+        }
+      ],
+      "fault_injected": true,
+      "id": "S4",
+      "verdict": "PASS"
+    },
+    {
+      "assertions": [
+        {
+          "name": "real_mandatory_retrieval_missing_failed",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "missing_evidence_reason_in_audit",
+          "passed": true
+        },
+        {
+          "name": "missing_evidence_blocks_all_tools_and_transfers",
+          "passed": true
+        }
+      ],
+      "id": "S5",
+      "verdict": "PASS"
+    },
+    {
+      "assertions": [
+        {
+          "name": "actual_commit_before_step_result_persisted",
+          "passed": true
+        },
+        {
+          "name": "restart_bound_hash_and_no_reexecution",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "crash_recovery_verified_same_transaction_ids",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "graceful_restart_preserves_all_tx_and_approvals",
+          "passed": true
+        }
+      ],
+      "fault_injected": true,
+      "id": "S6",
+      "interrupted_request": "RemoteProtocolError",
+      "interruption": "actual owned-container SIGKILL after SQLite COMMIT",
+      "verdict": "PASS"
+    }
+  ],
+  "schema_version": 1,
+  "seed_id": "m52-synthetic-v1",
+  "started_at": "2026-11-01T12:05:24.702615+00:00",
+  "verdict": "PASS"
+}
