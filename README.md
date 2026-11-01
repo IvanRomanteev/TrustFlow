@@ -2,6 +2,12 @@
 
 Self-verifying multi-agent workflows for the **Meta Global AI Developer Hackathon 2026**.
 
+The scripted real-browser replay is documented in [M5.2 demo quickstart](docs/m52-demo.md):
+after installing its prerequisites, run
+`python scripts/run_m52_demo.py --out artifacts/m5.2/latest`.
+It uses fresh synthetic SQLite storage, isolated loopback Docker services and
+headless Chromium, and reports an explicit PASS or FAIL with evidence artifacts.
+
 TrustFlow runs a `Planner -> Human Approval -> Executor -> Verifier` loop over
 **synthetic financial data only**. No real money, no real banking APIs, no secrets
 in code or logs ONLY FOR HACKATHON USING :D
