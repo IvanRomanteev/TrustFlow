@@ -8,7 +8,7 @@ gates need a running Docker daemon. Run explicitly:
 
 The stack test uses an isolated Compose project, free loopback ports
 (the corrected host_ip is preserved in the override) and a fresh
-named volume, and removes only its own project resources afterwards.
+private bind directory, and removes only its own recorded resources afterwards.
 """
 
 import json
@@ -16,6 +16,7 @@ import os
 import re
 import shutil
 import socket
+import stat
 import subprocess
 import time
 import urllib.error
@@ -627,7 +628,9 @@ class _StackRun:
         self.frontend_port = _free_port()
         # R7: persistence is a unique per-run HOST bind directory
         # created by this invocation, never a named Docker volume.
-        self.workspace = tmp_path / f"ws-{self.run_id}"
+        self.workspace = tmp_path.absolute() / f"ws-{self.run_id}"
+        self._workspace_identity: dict[Path, tuple[int, int, int]] = {}
+        self._workspace_cleaned = False
         self.bind_dir = self.workspace / "data"
         self.marker_file = self.bind_dir / f".trustflow-owned-{self.run_id}"
         label = f"{RUN_LABEL}={self.run_id}"
@@ -677,13 +680,37 @@ class _StackRun:
     def preflight(self) -> None:
         _compose_preflight(self.project)  # before ANY mutation
 
+    @staticmethod
+    def _path_identity(path: Path) -> tuple[int, int, int]:
+        info = path.lstat()
+        if stat.S_ISLNK(info.st_mode) or getattr(
+                info, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT:
+            raise AssertionError(f"workspace reparse/link path preserved: {path}")
+        if not info.st_ino:
+            raise AssertionError(f"workspace identity unavailable: {path}")
+        return info.st_dev, info.st_ino, stat.S_IFMT(info.st_mode)
+
     def _prepare_workspace(self) -> None:
-        """Create the private bind workspace; refuse reused paths."""
-        if self.workspace.exists() or self.workspace.is_symlink():
-            raise AssertionError(
-                f"workspace already exists or is a link: {self.workspace}")
-        self.bind_dir.mkdir(parents=True)
-        self.marker_file.write_text(self.run_id, encoding="utf-8")
+        """Record actual filesystem identities, including every ancestor."""
+        parents = {p: self._path_identity(p) for p in self.workspace.parents}
+        # Exclusive creation: neither a reused directory nor a junction is adopted.
+        self.workspace.mkdir()
+        self.bind_dir.mkdir()
+        with self.marker_file.open("x", encoding="utf-8") as marker:
+            marker.write(self.run_id)
+        self._workspace_identity = {
+            **parents, **{p: self._path_identity(p) for p in (
+                self.workspace, self.bind_dir, self.marker_file)}}
+        self._validate_workspace()
+
+    def _validate_workspace(self) -> None:
+        if not self._workspace_identity:
+            raise AssertionError("workspace identity was not recorded")
+        for path, expected in self._workspace_identity.items():
+            if self._path_identity(path) != expected:
+                raise AssertionError(f"workspace identity changed; preserved: {path}")
+        if self.marker_file.read_text(encoding="utf-8") != self.run_id:
+            raise AssertionError("workspace ownership marker changed; preserved")
 
     @staticmethod
     def _norm_path(path: str) -> str:
@@ -708,6 +735,7 @@ class _StackRun:
         assert len(mounts) == 1 and mounts[0].get("type") == "bind" \
             and self._norm_path(str(mounts[0].get("source", ""))) == \
             self._norm_path(self.bind_dir.as_posix()), mounts
+        self._validate_workspace()
         created = _run([*self.base, "create"])
         assert created.returncode == 0, created.stderr[-2000:]
         # Record exact service container identities immediately:
@@ -719,6 +747,7 @@ class _StackRun:
             assert cid, f"container for {service} was not created"
             self.container_ids[service] = cid
         self._verify_ownership()  # gate: nothing has started yet
+        self._validate_workspace()
         started = _run([*self.base, "start"])
         assert started.returncode == 0, started.stderr[-2000:]
         self._wait_health()
@@ -814,12 +843,17 @@ class _StackRun:
                      f"got {type(raw).__name__}")
                 return None
             value = raw.get(field)
-            if not isinstance(value, str) or not value \
-                    or (value != ref and not value.startswith(ref)
-                        and not ref.startswith(value)):
+            matches = (isinstance(value, str) and value == ref) if field == "Name" else (
+                isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value)
+                and re.fullmatch(r"[0-9a-f]{12,64}", ref) and value.startswith(ref))
+            if not matches:
                 fail(kind, f"docker inspect {ref}",
                      f"malformed metadata: {field}={value!r} does "
                      f"not match requested identity {ref!r}")
+                return None
+            if not isinstance(raw.get("Name"), str) or not raw["Name"]:
+                fail(kind, f"docker inspect {ref}",
+                     "malformed metadata: Name must be a nonempty string")
                 return None
             return value
 
@@ -842,11 +876,14 @@ class _StackRun:
                                       "containers", cid)
                 if labels is None:
                     continue
+                state = raw.get("State")
+                if not isinstance(state, dict) or type(state.get("Running")) is not bool:
+                    fail("containers", f"docker inspect {cid}",
+                         "malformed metadata: State.Running must be a boolean")
+                    continue
                 classify("containers", {
-                    "id": rid, "name": raw.get("Name"),
-                    "labels": labels,
-                    "running": bool(
-                        (raw.get("State") or {}).get("Running"))}, cid)
+                    "id": rid, "name": raw["Name"], "labels": labels,
+                    "running": state["Running"]}, cid)
             except Exception as exc:
                 fail("containers", f"docker inspect {cid}",
                      f"{type(exc).__name__}: {exc}")
@@ -906,6 +943,7 @@ class _StackRun:
         return owned, foreign
 
     def _verify_ownership(self) -> None:
+        self._validate_workspace()
         for service in ("backend", "frontend"):
             cid = self._container_id(service)
             raw = _raw_inspect(cid)
@@ -1024,41 +1062,44 @@ class _StackRun:
                       timeout=3)
 
     def _cleanup_workspace(self, fail) -> None:
-        """Delete ONLY the positively identified private workspace.
+        """Remove only the known SQLite files in the original directory objects.
 
-        Identity proof: path is the exact per-run directory created
-        by this invocation, it is not a symlink/reparse point, the
-        ownership marker names this run, and no recorded container
-        still exists to hold the mount. Anything else is preserved.
+        Never recursively traverse host storage. Unknown identity, directory
+        entries or container inventory preserve the workspace and fail cleanup.
+        A shared host/daemon still has a final check/use race (see docs/m5.md).
         """
-        import shutil as _shutil
-
         target = self.workspace
         try:
-            if target.is_symlink() or self.bind_dir.is_symlink():
-                fail("workspace-cleanup", None, str(target),
-                     "workspace path is a symlink/reparse point; "
-                     "preserved")
+            if self._workspace_cleaned:
                 return
-            if not self.marker_file.is_file() or \
-                    self.marker_file.read_text(
-                        encoding="utf-8").strip() != self.run_id:
-                fail("workspace-cleanup", None, str(target),
-                     "ownership marker missing or mismatched; "
-                     "preserved")
-                return
-            for cid in self.container_ids.values():
-                proc = _run(["docker", "inspect", "-f", "{{.Id}}", cid],
-                            timeout=120)
-                if proc.returncode == 0:
-                    fail("workspace-cleanup", None, str(target),
-                         f"container {cid} still exists; workspace "
-                         f"preserved")
-                    return
-            _shutil.rmtree(target)
-            if target.exists():
-                fail("workspace-cleanup", None, str(target),
-                     "workspace still present after cleanup")
+            if not self._workspace_identity and not target.exists():
+                return  # setup did not create storage
+            self._validate_workspace()
+            argv = ["docker", "container", "ls", "-a", "-q", "--no-trunc"]
+            proc = _run(argv, timeout=120)
+            if proc.returncode != 0:
+                raise AssertionError(
+                    f"{' '.join(argv)} rc={proc.returncode}: {proc.stderr[-300:]}")
+            present = proc.stdout.split()
+            if any(not re.fullmatch(r"[0-9a-f]{64}", cid) for cid in present):
+                raise AssertionError("malformed container inventory; workspace preserved")
+            if set(present).intersection(self.container_ids.values()):
+                raise AssertionError("recorded container still exists; workspace preserved")
+            allowed = {self.marker_file.name, "trustflow.db", "trustflow.db-wal",
+                       "trustflow.db-shm", "trustflow.db-journal"}
+            if set(target.iterdir()) != {self.bind_dir}:
+                raise AssertionError("unknown workspace contents; preserved")
+            files = list(self.bind_dir.iterdir())
+            for path in files:
+                if path.name not in allowed or self._path_identity(path)[2] != stat.S_IFREG:
+                    raise AssertionError(f"unknown workspace entry; preserved: {path}")
+            # Recheck after the potentially blocking Docker query and before deletion.
+            self._validate_workspace()
+            for path in files:
+                path.unlink()  # never follows links or traverses a directory
+            self.bind_dir.rmdir()
+            target.rmdir()
+            self._workspace_cleaned = True
         except BaseException as exc:
             fail("workspace-cleanup", None, str(target),
                  f"{type(exc).__name__}: {exc}")

@@ -627,26 +627,26 @@ def test_compose_discovery_classifies_foreign_resources(
 
     def handler(args, **_kwargs):
         if args[:2] == ["docker", "ps"]:
-            return _cp(0, "cid-own\ncid-foreign\n")
+            return _cp(0, "c" * 64 + "\n" + "d" * 64 + "\n")
         if args[:3] == ["docker", "network", "ls"]:
-            return _cp(0, "net-foreign\n")
+            return _cp(0, "e" * 64 + "\n")
         if args[:2] == ["docker", "inspect"]:
-            if "cid-own" in args:
+            if "c" * 64 in args:
                 return _cp(0, _json.dumps([{
-                    "Id": "cid-own", "Name": "/own",
+                    "Id": "c" * 64, "Name": "/own",
                     "Config": {"Labels": {
                         module.PROJECT_LABEL: project,
                         module.RUN_LABEL: run_id}},
                     "State": {"Running": False}}]))
-            if "cid-foreign" in args:
+            if "d" * 64 in args:
                 return _cp(0, _json.dumps([{
-                    "Id": "cid-foreign", "Name": "/foreign",
+                    "Id": "d" * 64, "Name": "/foreign",
                     "Config": {"Labels": {
                         module.PROJECT_LABEL: project,
                         module.RUN_LABEL: "other-run"}},
                     "State": {"Running": False}}]))
             return _cp(0, _json.dumps([{
-                "Id": "net-foreign", "Name": "n",
+                "Id": "e" * 64, "Name": "n",
                 "Labels": {module.PROJECT_LABEL: project,
                            module.RUN_LABEL: "other-run"}}]))
         return _cp(0, "")
@@ -655,8 +655,8 @@ def test_compose_discovery_classifies_foreign_resources(
     log = module._FailureLog(run.run_id)
     owned, foreign = run._discover(log)
     assert not log.items
-    assert [r["id"] for r in owned["containers"]] == ["cid-own"]
-    assert {r["id"] for r in foreign} == {"cid-foreign", "net-foreign"}
+    assert [r["id"] for r in owned["containers"]] == ["c" * 64]
+    assert {r["id"] for r in foreign} == {"d" * 64, "e" * 64}
 
 
 def test_compose_discovery_malformed_metadata_fails_closed(
