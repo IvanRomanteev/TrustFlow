@@ -65,13 +65,14 @@ def test_replaced_workspace_preserved_by_full_entrypoint(module, tmp_path, monke
                          if state["built"] and "--filter" in args else "")
         if args[:3] == ["docker", "image", "inspect"]:
             return reply(args, json.dumps([{"Id": args[-1], "Config": {"Labels": labels}}]))
-        if args[:2] == ["docker", "inspect"]:
+        if args[:2] == ["docker", "inspect"] or args[:3] == ["docker", "container", "inspect"]:
             service = next(k for k, v in cids.items() if v == args[-1])
             if "-f" in args:
                 return reply(args, rc=1, error="No such object")
             return reply(args, json.dumps([{
                 "Id": cids[service], "Name": "/" + service,
-                "Image": images[service], "Config": {"Labels": labels},
+                "Image": images[service], "Config": {"Labels": {
+                    **labels, "com.docker.compose.service": service}},
                 "State": {"Running": False}, "Mounts": [
                     {"Type": "bind", "Source": run.bind_dir.as_posix(), "Destination": "/data"}
                 ] if service == "backend" else []}]))

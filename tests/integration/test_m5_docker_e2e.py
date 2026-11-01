@@ -742,10 +742,7 @@ class _StackRun:
         # labels alone cannot prove container ownership, because a
         # container created from our image inherits its labels.
         for service in ("backend", "frontend"):
-            cid = _run([*self.base, "ps", "-a", "-q", service],
-                       timeout=120).stdout.strip()
-            assert cid, f"container for {service} was not created"
-            self.container_ids[service] = cid
+            self._container_id(service)
         self._verify_ownership()  # gate: nothing has started yet
         self._validate_workspace()
         started = _run([*self.base, "start"])
@@ -772,9 +769,36 @@ class _StackRun:
         assert body.get("persistence") == "sqlite"
 
     def _container_id(self, service: str) -> str:
-        cid = _run([*self.base, "ps", "-a", "-q", service]).stdout.strip()
-        assert cid, service
-        return cid
+        argv = [*self.base, "ps", "-a", "-q", service]
+        ref = None
+        try:
+            proc = _run(argv, timeout=120)
+            assert proc.returncode == 0, proc.stderr
+            ref = proc.stdout.strip()
+            assert re.fullmatch(r"[0-9a-f]{12,64}", ref), f"invalid container ID: {ref!r}"
+            argv = ["docker", "container", "inspect", ref]
+            proc = _run(argv, timeout=120)
+            assert proc.returncode == 0, proc.stderr
+            items = json.loads(proc.stdout)
+            assert isinstance(items, list) and len(items) == 1 and isinstance(items[0], dict)
+            raw = items[0]
+            cid = raw.get("Id")
+            assert isinstance(cid, str) and re.fullmatch(r"[0-9a-f]{64}", cid) \
+                and cid.startswith(ref), f"container Id={cid!r} does not match {ref!r}"
+            labels = raw["Config"]["Labels"]
+            assert isinstance(labels, dict) and all(
+                isinstance(k, str) and isinstance(v, str) for k, v in labels.items())
+            assert labels.get(PROJECT_LABEL) == self.project, "container project mismatch"
+            assert labels.get(RUN_LABEL) == self.run_id, "container run mismatch"
+            assert labels.get("com.docker.compose.service") == service, "container service mismatch"
+            assert self.container_ids.get(service, cid) == cid, \
+                "recorded container identity changed"
+            self.container_ids[service] = cid  # Only authoritative canonical full IDs.
+            return cid
+        except Exception as exc:
+            raise CleanupFailure("container-identity", ref, self.run_id, " ".join(argv),
+                                 f"service={service}: {type(exc).__name__}: {exc}",
+                                 preserved=True) from exc
 
     # -- resource-level ownership (R6 N1) --
     # Project membership alone never proves ownership: EVERY
@@ -1076,13 +1100,18 @@ class _StackRun:
         A shared host/daemon still has a final check/use race (see docs/m5.md).
         """
         target = self.workspace
+        cid, command = None, str(target)
         try:
             if self._workspace_cleaned:
                 return
             if not self._workspace_identity and not target.exists():
                 return  # setup did not create storage
             self._validate_workspace()
+            for cid in self.container_ids.values():
+                assert isinstance(cid, str) and re.fullmatch(r"[0-9a-f]{64}", cid), \
+                    f"unresolved recorded container identity {cid!r}; workspace preserved"
             argv = ["docker", "container", "ls", "-a", "-q", "--no-trunc"]
+            command = " ".join(argv)
             proc = _run(argv, timeout=120)
             if proc.returncode != 0:
                 raise AssertionError(
@@ -1090,8 +1119,28 @@ class _StackRun:
             present = proc.stdout.split()
             if any(not re.fullmatch(r"[0-9a-f]{64}", cid) for cid in present):
                 raise AssertionError("malformed container inventory; workspace preserved")
-            if set(present).intersection(self.container_ids.values()):
-                raise AssertionError("recorded container still exists; workspace preserved")
+            attached = set(present).intersection(self.container_ids.values())
+            if attached:
+                cid = sorted(attached)[0]
+                raise AssertionError(f"recorded container {cid} still exists; workspace preserved")
+            # Also cover unrecorded containers after partial setup or failed ID resolution.
+            for cid in present:
+                command = f"docker inspect {cid}"
+                raw = _raw_inspect(cid)
+                assert isinstance(raw, dict) and raw.get("Id") == cid, \
+                    "container inspection identity mismatch; workspace preserved"
+                mounts = raw.get("Mounts")
+                assert isinstance(mounts, list), "unknown container mounts; workspace preserved"
+                for mount in mounts:
+                    assert isinstance(mount, dict) and mount.get("Type") in (
+                        "bind", "volume", "tmpfs", "npipe", "image"), "unknown mount metadata"
+                    if mount["Type"] == "bind":
+                        source = mount.get("Source")
+                        assert isinstance(source, str) and source, "unknown bind source"
+                        source, data = self._norm_path(source), self._norm_path(str(self.bind_dir))
+                        assert source != data and not source.startswith(data + "/") \
+                            and not data.startswith(source + "/"), \
+                            f"container {cid} still references workspace bind {source}; preserved"
             allowed = {self.marker_file.name, "trustflow.db", "trustflow.db-wal",
                        "trustflow.db-shm", "trustflow.db-journal"}
             if set(target.iterdir()) != {self.bind_dir}:
@@ -1108,8 +1157,8 @@ class _StackRun:
             target.rmdir()
             self._workspace_cleaned = True
         except BaseException as exc:
-            fail("workspace-cleanup", None, str(target),
-                 f"{type(exc).__name__}: {exc}")
+            fail("workspace-cleanup", cid, command,
+                 f"container_id={cid!r}: {type(exc).__name__}: {exc}")
 
     def teardown(self) -> list[BaseException]:
         """Resource-scoped verified teardown; returns failures.
@@ -1271,6 +1320,104 @@ def _run_stack_test(tmp_path: Path, *, project: str | None = None,
 
 def test_stack_loopback_binding_flow_and_negative_probe(tmp_path):
     _run_stack_test(tmp_path)
+
+
+def test_fcid_real_docker_prefix_preserves_attached_sqlite(tmp_path, monkeypatch, record_property):
+    """Full entrypoint: abbreviated Compose output, real stopped bind mounts."""
+    import hashlib
+    import sqlite3
+    import sys
+
+    real_run = _run
+    state = {"run": None, "full_ids": {}, "http": []}
+
+    def before(run):
+        state["run"] = run
+
+    def digest(path):
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    def boundary(args, timeout=600, cwd=None):
+        run = state["run"]
+        if args[:2] == ["docker", "compose"] and "create" in args:
+            with sqlite3.connect(run.bind_dir / "trustflow.db") as db:
+                db.execute("CREATE TABLE attached_sentinel(v TEXT)")
+                db.execute("INSERT INTO attached_sentinel VALUES ('FCID_KEEP_WHILE_ATTACHED')")
+            db.close()
+            (run.bind_dir / "trustflow.db-journal").write_bytes(b"FCID_JOURNAL_SENTINEL")
+            state["before"] = {name: digest(run.bind_dir / name)
+                               for name in ("trustflow.db", "trustflow.db-journal")}
+        if args[:2] == ["docker", "compose"] and "start" in args:
+            return subprocess.CompletedProcess(args, 1, "", "PRIMARY_FCID_REAL_SETUP")
+        if args[:2] == ["docker", "rm"] and args[-1] in state["full_ids"].values():
+            return subprocess.CompletedProcess(args, 1, "", "FCID_REAL_REMOVAL_REFUSED")
+        proc = real_run(args, timeout=timeout, cwd=cwd)
+        if args[:2] == ["docker", "compose"] and "ps" in args and proc.returncode == 0:
+            cid = proc.stdout.strip()
+            assert re.fullmatch(r"[0-9a-f]{64}", cid), cid
+            state["full_ids"][args[-1]] = cid
+            return subprocess.CompletedProcess(args, 0, cid[:12] + "\n", proc.stderr)
+        return proc
+
+    def http(*args, **kwargs):
+        state["http"].append(args[:2])
+        raise AssertionError("F-CID probe must not start the backend")
+
+    monkeypatch.setattr(sys.modules[__name__], "_run", boundary)
+    monkeypatch.setattr(sys.modules[__name__], "_http", http)
+    try:
+        with pytest.raises(BaseException) as caught:
+            _run_stack_test(tmp_path, before_start=before)
+        run = state["run"]
+        evidence = {"before": state["before"], "recorded_ids": run.container_ids,
+                    "actual_ids": state["full_ids"], "http": state["http"],
+                    "workspace_exists": run.workspace.exists(),
+                    "after": {name: digest(run.bind_dir / name)
+                              for name in state["before"] if (run.bind_dir / name).exists()},
+                    "graph": _exception_graph_text(caught.value), "containers": []}
+        for cid in state["full_ids"].values():
+            proc = real_run(["docker", "container", "inspect", cid], timeout=120)
+            assert proc.returncode == 0, proc.stderr
+            raw = json.loads(proc.stdout)[0]
+            evidence["containers"].append({"Id": raw["Id"], "Mounts": raw["Mounts"],
+                                           "State": raw["State"]})
+        record_property("fcid_preservation", json.dumps(evidence))
+        assert evidence["workspace_exists"] and evidence["before"] == evidence["after"]
+        assert run.container_ids == state["full_ids"]
+        assert not state["http"] and "PRIMARY_FCID_REAL_SETUP" in evidence["graph"]
+        assert "workspace-cleanup" in evidence["graph"]
+        assert all(not raw["State"]["Running"] for raw in evidence["containers"])
+        backend = next(raw for raw in evidence["containers"]
+                       if raw["Id"] == state["full_ids"]["backend"])
+        assert any(mount["Type"] == "bind" and mount["Destination"] == "/data"
+                   and _StackRun._norm_path(mount["Source"])
+                   == _StackRun._norm_path(run.bind_dir.as_posix()) for mount in backend["Mounts"])
+    finally:
+        # Only positively identified containers from this fixture; never force.
+        run = state["run"]
+        if run is not None:
+            for cid in state["full_ids"].values():
+                proc = real_run(["docker", "container", "inspect", cid], timeout=120)
+                if proc.returncode != 0:
+                    continue
+                raw = json.loads(proc.stdout)[0]
+                labels = raw["Config"]["Labels"]
+                assert labels[PROJECT_LABEL] == run.project and labels[RUN_LABEL] == run.run_id
+                assert not raw["State"]["Running"]
+                assert real_run(["docker", "rm", cid], timeout=120).returncode == 0
+            for kind in ("network", "image"):
+                proc = real_run(["docker", kind, "ls", "-q", "--no-trunc", "--filter",
+                                 f"label={PROJECT_LABEL}={run.project}"], timeout=120)
+                assert proc.returncode == 0, proc.stderr
+                for identity in set(proc.stdout.split()):
+                    raw = json.loads(real_run(
+                        ["docker", kind, "inspect", identity], timeout=120).stdout)[0]
+                    labels = ((raw.get("Config") or {}).get("Labels")
+                              if kind == "image" else raw.get("Labels"))
+                    assert labels[PROJECT_LABEL] == run.project and labels[RUN_LABEL] == run.run_id
+                    argv = ["docker", "rmi", identity] if kind == "image" else [
+                        "docker", "network", "rm", identity]
+                    assert real_run(argv, timeout=120).returncode == 0
 
 
 def test_stack_rejects_preexisting_namespace(tmp_path):
