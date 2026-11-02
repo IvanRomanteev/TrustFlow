@@ -12,6 +12,8 @@ import math
 import random
 import re
 import time
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from typing import Any, Protocol
 
 import httpx
@@ -344,12 +346,18 @@ class MetaResponsesProvider:
         def delay(attempt: int, response: httpx.Response | None = None) -> float | None:
             seconds = self._settings.llm_backoff_seconds * (2 ** attempt)
             if response is not None:
+                value = response.headers.get("retry-after", "0")
                 try:
-                    requested = float(response.headers.get("retry-after", "0"))
-                    if math.isfinite(requested):
-                        seconds = max(seconds, requested)
+                    requested = float(value)
                 except ValueError:
-                    pass
+                    try:
+                        retry_at = parsedate_to_datetime(value)
+                        requested = (retry_at - datetime.now(UTC)).total_seconds() \
+                            if retry_at.tzinfo is not None else 0
+                    except (TypeError, ValueError, OverflowError):
+                        requested = 0  # Invalid dates retain the bounded local backoff.
+                if math.isfinite(requested):
+                    seconds = max(seconds, requested)
             # Do not retry earlier than a long server cooldown. End this
             # bounded call and let the operator schedule a later session.
             if seconds > 10:
@@ -464,7 +472,9 @@ class MetaResponsesProvider:
             body_is_json = True
             try:
                 data = resp.json()
-            except ValueError:
+            except (ValueError, RecursionError):
+                # Unparseable envelopes have unknown usage; the record below
+                # retains the reservation and follows the normal typed failure path.
                 body_is_json = False
             usage = data.get("usage") if isinstance(data, dict) else None
             if not isinstance(usage, dict):
@@ -516,7 +526,7 @@ class MetaResponsesProvider:
                     fail(record, "Malformed live response: envelope was not a JSON object")
                 try:
                     parsed = _decode_object(data, str(payload["model"]))
-                except (ValueError, LLMResponseError) as exc:
+                except (ValueError, RecursionError, LLMResponseError) as exc:
                     fail(record, "Malformed live response: invalid or incomplete JSON", exc)
                 if not isinstance(parsed, dict):
                     fail(record, "Live response JSON was not an object")
@@ -541,7 +551,7 @@ class MetaResponsesProvider:
                 )
             try:
                 parsed = _decode_object(data, str(payload["model"]))
-            except (ValueError, LLMResponseError):
+            except (ValueError, RecursionError, LLMResponseError):
                 record.failure_reason = "invalid_response"
                 record.validation_outcome = "failed"
                 raise _attempt_error(
