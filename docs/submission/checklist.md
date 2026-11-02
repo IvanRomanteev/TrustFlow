@@ -13,7 +13,8 @@ independent M5.4 acceptance and external publication remain open.
   timed narration and offline HTML/PDF slides are prepared.
 - [x] Independent M5.2 report and original screenshot/evidence copies retain
   exact bytes with a provenance manifest; original accepted README is retained.
-- [ ] Repository URL: **PENDING — no Git remote is configured in this checkout.**
+- [x] Repository URL: [IvanRomanteev/TrustFlow](https://github.com/IvanRomanteev/TrustFlow),
+  confirmed public on 2026-11-03. Accepted M5.2 branch/SHA is published.
 - [ ] Judge-accessible branch/commit permalink: **PENDING — local commit only;
   exact SHA is in the delivery message and `git rev-parse HEAD`.**
 - [ ] Confirm entrant/team identity, chosen track/theme, applicable license and
@@ -31,16 +32,22 @@ Publishing links requires the appropriate later authorization.
   [architecture graphic](architecture.svg) are available locally.
 - [x] S4 timeout/late worker and S6 post-COMMIT SIGKILL are explicitly labelled
   controlled fault injection; the S4 semantic failure is explicitly injected.
-- [ ] Record narration/video; review pacing, readable hashes, sandbox labels,
-  original `tx_id` values and recovery sequence. A script/deck is not a video.
-- [ ] Produce captions/transcript matching the final recording.
-- [ ] Video URL and duration: **PENDING**. Verify judges can access the final link.
+- [x] Export [local MP4](video/trustflow-demo.mp4): 120 seconds, 1920×1080,
+  24 fps, H.264/AAC; static screenshots with labelled editorial zooms, not UI footage.
+- [x] Add local English synthetic narration and 30 matching captions; retain
+  [transcript](video/transcript.md), [SRT](video/captions.srt) and [WebVTT](video/captions.vtt).
+- [x] Verify full audio/video decode, readable hash/approval/transaction/ledger/
+  recovery crops, stream timing and caption track. See [finish validation](validation-finish.md).
+- [ ] Final human listening review and authorized video-host publication.
+- [ ] Public video URL: **PENDING**. Verify judges can access the processed upload.
 - [ ] Complete portal-specific summary, team fields, attachments and consent
   requirements after inspecting the current submission form.
 
-The two-minute format is the requested package format, not a verified official
-video-length rule. The submission portal could not be inspected by the browsing
-tool during packaging; its fields and attachment limits remain unverified.
+The two-minute format is the owner's target, not a verified official rule. The
+anonymous project-entry page is readable, but authenticated fields and upload
+limits remain unverified. [Public requirement check](official-requirements.md).
+The [exact submission copy](submission-text.md) includes a 365-character summary
+and a 2,246-character full description, matching the owner's preparation targets.
 
 ## Meta integration and results
 
@@ -71,18 +78,21 @@ tool during packaging; its fields and attachment limits remain unverified.
   logs. The historical M5.2 acceptance is supporting evidence, not this new run.
 - [ ] Confirm all artifact URLs and the final SHA after authorized publication.
 
-M5.4 assembly did not execute Docker, cleanup, application tests or model calls.
-Its validation is confined to documentation, copied evidence and rendering.
-[Executed packaging checks](validation.md).
+M5.4 assembly and video work did not execute Docker, cleanup, application tests
+or model calls. Validation covers documentation, evidence, local media synthesis,
+export, decoding and playback. [Initial checks](validation.md),
+[finish checks](validation-finish.md).
 
 ## Current organizer information and final portal check
 
 Meta's event page lists the project deadline as **4 November 2026, 9:00 PM ET**
 (**5 November 2026, 07:00 Asia/Qyzylorda**), subject to organizer changes.
-Checked 2026-11-01. Recheck before submitting.
+Rechecked 2026-11-03. Recheck before submitting.
 [Official event page](https://dev.meta.ai/events/global-hackathon).
 
-- [ ] Recheck the current official rules, selected-participant access, submission
+- [x] Review publicly available event information and submission entry on 2026-11-03;
+  record accessible facts and unknown constraints in [official-requirements.md](official-requirements.md).
+- [ ] Check complete official rules, selected-participant access, submission
   deadline and portal-specific requirements through the organizer.
 - [ ] Confirm which prepared files and links the portal actually requires;
   do not infer compliance from this internal preparation checklist.
@@ -92,3 +102,6 @@ Checked 2026-11-01. Recheck before submitting.
   receipt, submitted URLs, timestamp and exact source commit.
 
 Submission URL / receipt: **PENDING**. Public deployment: **none claimed**.
+
+Follow [integration.md](integration.md) for the final account, publication,
+commit-link and manual submission steps. M5.3 evidence placeholders are preserved.

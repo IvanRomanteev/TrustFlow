@@ -19,6 +19,13 @@ There is no real banking integration or public deployment.
 [Presentation PDF](docs/submission/presentation.pdf) ·
 [Submission checklist](docs/submission/checklist.md)
 
+The final [120-second MP4](docs/submission/video/trustflow-demo.mp4) reuses the
+accepted screenshots and existing deck, with readable detail crops, local
+English synthetic narration and captions. It is explicitly a static-capture
+montage, not recorded UI footage. [Player and re-export](docs/submission/video/README.md) ·
+[Copy-ready submission text](docs/submission/submission-text.md) ·
+[Public repository](https://github.com/IvanRomanteev/TrustFlow).
+
 ## See the accepted demonstration
 
 ![Real M5.2 Chromium capture: execution waits for the exact plan hash](docs/submission/evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S2-awaiting-exact-hash.png)

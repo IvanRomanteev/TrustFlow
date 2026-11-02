@@ -1,0 +1,3 @@
+# Video tooling only; not an application dependency change.
+playwright==1.58.0
+imageio-ffmpeg==0.6.0

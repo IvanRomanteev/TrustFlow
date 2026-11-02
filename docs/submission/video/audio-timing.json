@@ -1,0 +1,258 @@
+{
+  "voice": {
+    "voice": "Microsoft David Desktop",
+    "engine": "Windows System.Speech / local SAPI",
+    "rate": 1,
+    "network_calls": 0
+  },
+  "duration_seconds": 120,
+  "sample_rate": 22050,
+  "cues": [
+    {
+      "scene": 1,
+      "start": 0.34997732426303857,
+      "end": 4.375600907029479,
+      "text": "This video uses accepted Chromium screenshots, not live footage."
+    },
+    {
+      "scene": 1,
+      "start": 4.375600907029479,
+      "end": 7.093922902494331,
+      "text": "Everything is synthetic; inference is fake."
+    },
+    {
+      "scene": 1,
+      "start": 7.093922902494331,
+      "end": 11.488798185941043,
+      "text": "TrustFlow asks: was the action authorized, and did it happen once?"
+    },
+    {
+      "scene": 2,
+      "start": 12.35002267573696,
+      "end": 16.07061224489796,
+      "text": "The Planner proposes. Deterministic policy decides risk."
+    },
+    {
+      "scene": 2,
+      "start": 16.07061224489796,
+      "end": 20.52589569160998,
+      "text": "Humans approve high-risk actions. Execution preserves operation identity."
+    },
+    {
+      "scene": 2,
+      "start": 20.52589569160998,
+      "end": 24.495873015873016,
+      "text": "Verification reads ledger evidence. Muse inference remains pending."
+    },
+    {
+      "scene": 3,
+      "start": 25.350022675736962,
+      "end": 28.49750566893424,
+      "text": "This synthetic five-thousand-dollar transfer pauses."
+    },
+    {
+      "scene": 3,
+      "start": 28.49750566893424,
+      "end": 32.17673469387755,
+      "text": "The screen shows the plan version, payload and full hash."
+    },
+    {
+      "scene": 3,
+      "start": 32.17673469387755,
+      "end": 35.043673469387755,
+      "text": "Approval authorizes that exact snapshot."
+    },
+    {
+      "scene": 3,
+      "start": 35.043673469387755,
+      "end": 39.87986394557823,
+      "text": "Accepted checks reject missing credentials, wrong hashes and replayed decisions."
+    },
+    {
+      "scene": 3,
+      "start": 39.87986394557823,
+      "end": 42.43641723356009,
+      "text": "The model cannot grant itself permission."
+    },
+    {
+      "scene": 4,
+      "start": 43.35002267573696,
+      "end": 46.309886621315194,
+      "text": "After approval, one transaction commits."
+    },
+    {
+      "scene": 4,
+      "start": 46.309886621315194,
+      "end": 51.05678004535147,
+      "text": "Independent SQLite observations match the authorized operation and conserved total."
+    },
+    {
+      "scene": 4,
+      "start": 51.05678004535147,
+      "end": 54.48503401360544,
+      "text": "A separate concurrent approval test produces one transfer."
+    },
+    {
+      "scene": 5,
+      "start": 55.35002267573696,
+      "end": 59.02063492063492,
+      "text": "A rejected three-thousand-dollar request creates no transfer."
+    },
+    {
+      "scene": 5,
+      "start": 59.02063492063492,
+      "end": 62.783310657596374,
+      "text": "Reload preserves rejection; late approval cannot revive it."
+    },
+    {
+      "scene": 5,
+      "start": 62.783310657596374,
+      "end": 65.48285714285714,
+      "text": "The ledger independently supports the result."
+    },
+    {
+      "scene": 6,
+      "start": 66.34997732426304,
+      "end": 69.9047619047619,
+      "text": "Controlled fault injection holds a real worker past timeout."
+    },
+    {
+      "scene": 6,
+      "start": 69.9047619047619,
+      "end": 74.36557823129252,
+      "text": "After that worker commits, reconciliation finds the original transaction."
+    },
+    {
+      "scene": 6,
+      "start": 74.36557823129252,
+      "end": 77.858231292517,
+      "text": "An injected fake review failure leaves verification pending."
+    },
+    {
+      "scene": 6,
+      "start": 77.858231292517,
+      "end": 81.46126984126984,
+      "text": "Verification-only retry completes without another transfer."
+    },
+    {
+      "scene": 7,
+      "start": 82.34997732426304,
+      "end": 86.5517006802721,
+      "text": "Now the backend is killed after SQLite commit, before saving success."
+    },
+    {
+      "scene": 7,
+      "start": 86.5517006802721,
+      "end": 91.72290249433107,
+      "text": "Signal nine interrupts the process. The same container restarts into verification pending."
+    },
+    {
+      "scene": 7,
+      "start": 91.72290249433107,
+      "end": 96.61809523809524,
+      "text": "Verification-only retry preserves the original transaction, approval hash and snapshot."
+    },
+    {
+      "scene": 7,
+      "start": 96.61809523809524,
+      "end": 100.47437641723356,
+      "text": "This demonstrates a controlled checkpoint, not every storage failure."
+    },
+    {
+      "scene": 8,
+      "start": 101.35002267573697,
+      "end": 106.10498866213152,
+      "text": "Missing mandatory policy evidence fails closed before tools run."
+    },
+    {
+      "scene": 8,
+      "start": 106.10498866213152,
+      "end": 110.49061224489796,
+      "text": "This is a local retrieval check, with no ledger mutation."
+    },
+    {
+      "scene": 9,
+      "start": 111.35002267573697,
+      "end": 114.6156462585034,
+      "text": "One command repeats six scenarios and publishes evidence."
+    },
+    {
+      "scene": 9,
+      "start": 114.6156462585034,
+      "end": 117.04349206349207,
+      "text": "Accepted results are fake-mode checks."
+    },
+    {
+      "scene": 9,
+      "start": 117.04349206349207,
+      "end": 119.48920634920636,
+      "text": "Live Muse evaluation remains pending."
+    }
+  ],
+  "scenes": [
+    {
+      "scene": 1,
+      "raw_seconds": 12.426122448979593,
+      "tempo_factor": 1.1094752186588923,
+      "speech_start": 0.34997732426303857,
+      "speech_end": 11.488798185941043
+    },
+    {
+      "scene": 2,
+      "raw_seconds": 14.581133786848072,
+      "tempo_factor": 1.1951749005613175,
+      "speech_start": 12.35002267573696,
+      "speech_end": 24.495873015873016
+    },
+    {
+      "scene": 3,
+      "raw_seconds": 17.464625850340138,
+      "tempo_factor": 1.0153852238569847,
+      "speech_start": 25.350022675736962,
+      "speech_end": 42.43641723356009
+    },
+    {
+      "scene": 4,
+      "raw_seconds": 11.716462585034014,
+      "tempo_factor": 1.0461127308066085,
+      "speech_start": 43.35002267573696,
+      "speech_end": 54.48503401360544
+    },
+    {
+      "scene": 5,
+      "raw_seconds": 10.533242630385487,
+      "tempo_factor": 1.0326708461162244,
+      "speech_start": 55.35002267573696,
+      "speech_end": 65.48285714285714
+    },
+    {
+      "scene": 6,
+      "raw_seconds": 15.801587301587302,
+      "tempo_factor": 1.039578111946533,
+      "speech_start": 66.34997732426304,
+      "speech_end": 81.46126984126984
+    },
+    {
+      "scene": 7,
+      "raw_seconds": 20.532743764172338,
+      "tempo_factor": 1.1281727342951835,
+      "speech_start": 82.34997732426304,
+      "speech_end": 100.47437641723356
+    },
+    {
+      "scene": 8,
+      "raw_seconds": 7.977551020408163,
+      "tempo_factor": 0.8671251109139309,
+      "speech_start": 101.35002267573697,
+      "speech_end": 110.49061224489796
+    },
+    {
+      "scene": 9,
+      "raw_seconds": 8.956961451247166,
+      "tempo_factor": 1.092312372103313,
+      "speech_start": 111.35002267573697,
+      "speech_end": 119.48920634920636
+    }
+  ],
+  "narration_sha256": "a43cef56740a9b1ad5d034a0fa1226b14268b7b1728d0eb46b70ec09111512ca"
+}

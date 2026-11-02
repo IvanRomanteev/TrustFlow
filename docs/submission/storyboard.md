@@ -27,3 +27,10 @@ The full 14-screenshot inventory for each canonical replay is retained. Scenes
 select from it; omitted images remain available as supporting evidence. No
 screen claims that recovery reverses a committed transfer or that replaying a
 request creates a new authorization.
+
+The completed [MP4](video/trustflow-demo.mp4) retains these nine scene boundaries
+and adds 19 shots, including ten editorial detail crops. Exact source rectangles
+and timing are in [video/timeline.json](video/timeline.json). The intro and
+persistent labels identify static captures; no recorded workflow footage was
+available in the targeted M5.2 inventory. The [final transcript](video/transcript.md)
+and [captions](video/captions.srt) describe the actual exported audio.

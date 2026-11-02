@@ -1,4 +1,10 @@
-# M5.4 packaging validation
+# Initial M5.4 packaging validation · 1 November 2026
+
+This historical check applies to initial assembly commit
+`cc39725e77ce12e9bba971709bc065c35d27fe42`, before the video follow-up.
+Current video/export validation is recorded separately in
+[validation-finish.md](validation-finish.md). Initial presentation/PDF/evidence
+assets are preserved; older statements below describe that initial check.
 
 Executed on 2026-11-01 (Asia/Qyzylorda). Scope: **documentation, archival
 consistency and presentation rendering only**. No application test, Docker
@@ -11,8 +17,9 @@ Historical M5.2 test outcomes are attributed separately in the
 Base/start SHA: `38cc3942dbd715681d59bfd893e47643210294a9`.
 Branch: `m5.4/hackathon-submission`.
 Worktree: `C:/Users/vanya/Projects/TrustFlow-context/m54-hackathon-submission/worktree`.
-Final package SHA is the commit reported in the delivery message and returned
-by `git rev-parse HEAD`; its parent is the base above.
+The initial package SHA is `cc39725e77ce12e9bba971709bc065c35d27fe42`;
+its parent is the base above. Later documentation/video commits do not alter
+that initial identity or extend its acceptance scope.
 
 The patch is confined to root `README.md` and new `docs/submission/` artifacts.
 All pre-existing files except the README retain their accepted Git blobs. The

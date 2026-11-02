@@ -106,7 +106,7 @@ See [test counts](evidence/m52/logs/test-counts.json),
 | Live Meta integration/evaluation | PENDING; NOT RUN in M5.4 | Explicit authorization; actual model/config; sanitized results; failed/successful attempt usage per workflow; ledger evidence; independent verdict |
 | M5.4 README clean-machine setup | PENDING | Fresh environment execution of documented setup/replay with logs; inherited results do not replace this check |
 | Independent M5.4 acceptance | PENDING | Review of final package commit and claims |
-| Final repository/video/portal materials | PENDING | Authorized published URLs, narrated recording and current portal requirements |
+| Final published M5.4/video/portal materials | PENDING publication/form check | Public repository and accepted M5.2 are confirmed; a verified local narrated MP4 exists. Publish the exact M5.4 candidate/video only after authorization, then verify portal requirements and URLs. |
 
 Controlled late-worker/post-COMMIT faults were checked in one
 Windows/Docker/Chromium environment. Container recreation, every crash schedule,

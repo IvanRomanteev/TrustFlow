@@ -1,9 +1,15 @@
-# Two-minute narrated demonstration
+# Original two-minute narration plan
+
+This is the preserved narration plan for the existing nine-slide deck. The
+finished [MP4](video/trustflow-demo.mp4) now uses an adapted
+[final transcript](video/transcript.md), including an explicit spoken static-
+screenshot disclosure. Use that transcript and its captions for the exact
+exported words. The scene boundaries remain unchanged.
 
 **Format:** nine scenes, exactly 120 seconds of planned screen time. English
 narration is 250 words by the packaging word-count check; rehearse to the scene boundaries and leave
-short visual pauses. This is a script and an offline presentation, not an already
-recorded or hosted video. Use the [storyboard](storyboard.md),
+short visual pauses. This original plan accompanied the offline presentation;
+the final MP4 is linked above, and a hosted video URL remains pending. Use the [storyboard](storyboard.md),
 [HTML slides](presentation.html) or [PDF](presentation.pdf).
 
 Keep **“Accepted M5.2 · fake mode · synthetic funds”** visible throughout. Screens
@@ -74,6 +80,7 @@ avoid a crop that hides the sandbox banner or the approved hash. Add any zoom as
 a presentation treatment without editing the evidence file. Runtime duration of
 the full replay is distinct from this edited two-minute narration.
 
-Record with a local microphone/editor only when desired. A finished recording,
-subtitles and a judge-accessible video URL remain checklist items; no voice
-generation or paid media service was invoked for this package.
+The final export uses local Windows SAPI English narration, sentence-level
+captions and editorial screenshot crops. No paid media/model service was used.
+A human voice replacement is optional; the judge-accessible video URL remains
+pending publication. See [video export details](video/README.md).

@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-03",
+  "status": "VERIFIED_LOCAL_MP4",
+  "media_kind": "accepted static Chromium screenshot montage; editorial detail crops; local synthetic narration; no live UI footage",
+  "accepted_runtime_sha": "38cc3942dbd715681d59bfd893e47643210294a9",
+  "package_start_sha": "cc39725e77ce12e9bba971709bc065c35d27fe42",
+  "video_url": "PENDING: publication not authorized",
+  "files": [
+    {
+      "path": "audio-timing.json",
+      "bytes": 7306,
+      "sha256": "24249e1aec632cf3231971613aa2642f4feab9b45b0d64b720ff409bfbce8d9c"
+    },
+    {
+      "path": "captions.ass",
+      "bytes": 3864,
+      "sha256": "27b46e660ba0188dff9fc4f138da15efa62481712ebcf58f127ef8ff2b94ce71"
+    },
+    {
+      "path": "captions.srt",
+      "bytes": 2846,
+      "sha256": "7f22660e514c172681ae54826f813efd0e3d6bb9bc590aab841965af4688829d"
+    },
+    {
+      "path": "captions.vtt",
+      "bytes": 2854,
+      "sha256": "191749250fc63f1e14e17b7bdb6d123fd0e009c55ada68efa35015d35c3e1423"
+    },
+    {
+      "path": "export-manifest.json",
+      "bytes": 11598,
+      "sha256": "9535bcaa463778667db6b5bfa201bd57a54261a88e75e0c9845ec082a335e10f"
+    },
+    {
+      "path": "export_video.py",
+      "bytes": 11853,
+      "sha256": "93106d4ae577c73a6bf2f9f99d8801c690819ca580c2ff0ded9ae4b06fe191f3"
+    },
+    {
+      "path": "index.html",
+      "bytes": 2800,
+      "sha256": "d0d3118ff22ce343fa94a204b53f12fa31966270f93ea129f00c471cbef3196b"
+    },
+    {
+      "path": "inspect_video.py",
+      "bytes": 4371,
+      "sha256": "90308590033980fe53f65fed4c5b8403411847f6fa5c3a92dcf8e028063056b4"
+    },
+    {
+      "path": "narration.wav",
+      "bytes": 5292044,
+      "sha256": "a43cef56740a9b1ad5d034a0fa1226b14268b7b1728d0eb46b70ec09111512ca"
+    },
+    {
+      "path": "poster.png",
+      "bytes": 462806,
+      "sha256": "485875e7ab87a15795af749db4613e8164ffb6e8f9b300827a7e191dfb578bf8"
+    },
+    {
+      "path": "prepare_audio.py",
+      "bytes": 7005,
+      "sha256": "82a861dc84f9c735eac28be20213db5f4fa6bdeb9a08160f5236db9b4f9d008d"
+    },
+    {
+      "path": "preview_video.py",
+      "bytes": 3146,
+      "sha256": "0df12b703c98826a46d73e1d7aafb49ea4f8c5a1717a2032589480c697463030"
+    },
+    {
+      "path": "README.md",
+      "bytes": 6922,
+      "sha256": "c3b478d0c795990305c83b38a5b19b37d2f9811c1b78bb34125b9bec529e92ae"
+    },
+    {
+      "path": "requirements-export.txt",
+      "bytes": 101,
+      "sha256": "607d55f061b1d9dc275d727cd73c76d8c1db3c49b99d8e4ef3223a30975a0614"
+    },
+    {
+      "path": "synthesize_narration.ps1",
+      "bytes": 1655,
+      "sha256": "6e754f7d97c64ee06cbe6096e40d93d85d2f78e135a5844aebd723b49c9b3479"
+    },
+    {
+      "path": "timeline.json",
+      "bytes": 5673,
+      "sha256": "272ca9c11f3d26ec4e5eb8aa708b26c61a8a4a3f114fe686d39a3d21d08d210c"
+    },
+    {
+      "path": "transcript.md",
+      "bytes": 2241,
+      "sha256": "2bbda8eb5bdc3d7be9b29b74305e6521b60dc6e88755d7a4012b20d8b1bd9c06"
+    },
+    {
+      "path": "trustflow-demo.mp4",
+      "bytes": 4971334,
+      "sha256": "e7c6330aa0483e7758dcfca8c60f60c08788b6afca593a0db216f997b12985f4"
+    }
+  ]
+}
