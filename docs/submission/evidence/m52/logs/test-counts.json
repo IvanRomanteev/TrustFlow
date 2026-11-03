@@ -1,0 +1,37 @@
+{
+  "targeted": {
+    "passed": 60,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0,
+    "total": 60
+  },
+  "pytest-full": {
+    "passed": 502,
+    "skipped": 19,
+    "failed": 0,
+    "errors": 0,
+    "total": 521
+  },
+  "cors": {
+    "passed": 2,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0,
+    "total": 2
+  },
+  "p205": {
+    "passed": 18,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0,
+    "total": 18
+  },
+  "m52-optin": {
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "errors": 0,
+    "total": 1
+  }
+}

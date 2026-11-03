@@ -1,6 +1,7 @@
 """Structured logging with recursive secret redaction."""
 
 import logging
+import os
 import re
 from typing import Any
 
@@ -26,7 +27,13 @@ _VALUE_TOKEN = re.compile(r"\b\S*(?:SECRET|API[-_]?KEY|ACCESS[-_]?TOKEN)\S*\b", 
 
 def redact(text: str) -> str:
     """Remove secret-looking values from a string."""
-    out = _SECRET_VALUE.sub("[REDACTED]", text)
+    # Exact credentials need not resemble any known key format.
+    out = text
+    for name in ("MODEL_API_KEY", "TRUSTFLOW_LLM_API_KEY", "TRUSTFLOW_APPROVAL_TOKEN"):
+        value = os.environ.get(name)
+        if value:
+            out = out.replace(value, "[REDACTED]")
+    out = _SECRET_VALUE.sub("[REDACTED]", out)
     out = _KV_SECRET.sub(r"\1[REDACTED]", out)
     out = _WS_SECRET.sub(r"\1[REDACTED]", out)
     return _VALUE_TOKEN.sub("[REDACTED]", out)

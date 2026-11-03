@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "duration_seconds": 120,
+  "fps": 24,
+  "width": 1920,
+  "height": 1080,
+  "media_kind": "narrated montage of accepted static Chromium screenshots; no recorded UI footage",
+  "accepted_sha": "38cc3942dbd715681d59bfd893e47643210294a9",
+  "presentation": "../presentation.html",
+  "screenshot_root": "../evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots",
+  "scenes": [
+    {"id": 1, "start": 0, "end": 12, "narration": [
+      "This video uses accepted Chromium screenshots, not live footage.",
+      "Everything is synthetic; inference is fake.",
+      "TrustFlow asks: was the action authorized, and did it happen once?"
+    ]},
+    {"id": 2, "start": 12, "end": 25, "narration": [
+      "The Planner proposes. Deterministic policy decides risk.",
+      "Humans approve high-risk actions. Execution preserves operation identity.",
+      "Verification reads ledger evidence. Muse inference remains pending."
+    ]},
+    {"id": 3, "start": 25, "end": 43, "narration": [
+      "This synthetic five-thousand-dollar transfer pauses.",
+      "The screen shows the plan version, payload and full hash.",
+      "Approval authorizes that exact snapshot.",
+      "Accepted checks reject missing credentials, wrong hashes and replayed decisions.",
+      "The model cannot grant itself permission."
+    ]},
+    {"id": 4, "start": 43, "end": 55, "narration": [
+      "After approval, one transaction commits.",
+      "Independent SQLite observations match the authorized operation and conserved total.",
+      "A separate concurrent approval test produces one transfer."
+    ]},
+    {"id": 5, "start": 55, "end": 66, "narration": [
+      "A rejected three-thousand-dollar request creates no transfer.",
+      "Reload preserves rejection; late approval cannot revive it.",
+      "The ledger independently supports the result."
+    ]},
+    {"id": 6, "start": 66, "end": 82, "narration": [
+      "Controlled fault injection holds a real worker past timeout.",
+      "After that worker commits, reconciliation finds the original transaction.",
+      "An injected fake review failure leaves verification pending.",
+      "Verification-only retry completes without another transfer."
+    ]},
+    {"id": 7, "start": 82, "end": 101, "narration": [
+      "Now the backend is killed after SQLite commit, before saving success.",
+      "Signal nine interrupts the process. The same container restarts into verification pending.",
+      "Verification-only retry preserves the original transaction, approval hash and snapshot.",
+      "This demonstrates a controlled checkpoint, not every storage failure."
+    ]},
+    {"id": 8, "start": 101, "end": 111, "narration": [
+      "Missing mandatory policy evidence fails closed before tools run.",
+      "This is a local retrieval check, with no ledger mutation."
+    ]},
+    {"id": 9, "start": 111, "end": 120, "narration": [
+      "One command repeats six scenarios and publishes evidence.",
+      "Accepted results are fake-mode checks.",
+      "Live Muse evaluation remains pending."
+    ]}
+  ],
+  "shots": [
+    {"start": 0, "end": 12, "scene": 1, "view": "overview"},
+    {"start": 12, "end": 25, "scene": 2, "view": "overview"},
+    {"start": 25, "end": 29, "scene": 3, "view": "overview"},
+    {"start": 29, "end": 37, "scene": 3, "view": "detail", "source": "S2-awaiting-exact-hash.png", "rect": [1040, 548, 385, 340], "label": "Exact plan version, full SHA-256 hash and operation payload"},
+    {"start": 37, "end": 43, "scene": 3, "view": "detail", "source": "S2-awaiting-exact-hash.png", "rect": [1040, 695, 385, 310], "label": "Approval gates the exact synthetic transfer"},
+    {"start": 43, "end": 46, "scene": 4, "view": "overview"},
+    {"start": 46, "end": 49, "scene": 4, "view": "detail", "source": "S2-approved-verified.png", "rect": [540, 485, 485, 145], "label": "Original committed transaction ID: tx_0001"},
+    {"start": 49, "end": 55, "scene": 4, "view": "detail", "source": "S2-approved-verified.png", "rect": [540, 640, 485, 320], "label": "Ledger conservation, transaction match and intent coverage"},
+    {"start": 55, "end": 66, "scene": 5, "view": "overview"},
+    {"start": 66, "end": 70, "scene": 6, "view": "overview"},
+    {"start": 70, "end": 75, "scene": 6, "view": "detail", "source": "S4-uncertain-fault-injected.png", "rect": [540, 350, 485, 370], "label": "Controlled timeout: EXECUTION_UNCERTAIN; reconcile before retry"},
+    {"start": 75, "end": 82, "scene": 6, "view": "detail", "source": "S4-recovered-no-duplicate.png", "rect": [540, 480, 485, 415], "label": "Recovered evidence retains tx_0003; no new transfer"},
+    {"start": 82, "end": 85, "scene": 7, "view": "overview"},
+    {"start": 85, "end": 91, "scene": 7, "view": "detail", "source": "S6-after-sigkill-recovered-pending.png", "rect": [540, 350, 485, 315], "label": "After controlled SIGKILL: VERIFICATION_PENDING; verify only"},
+    {"start": 91, "end": 96, "scene": 7, "view": "detail", "source": "S6-after-sigkill-recovered-pending.png", "rect": [1040, 500, 385, 205], "label": "Exact approval hash survives the same-container restart"},
+    {"start": 96, "end": 101, "scene": 7, "view": "detail", "source": "S6-durable-ui-reload.png", "rect": [540, 480, 485, 420], "label": "Original tx_0004 and ledger checks after verification-only recovery"},
+    {"start": 101, "end": 105, "scene": 8, "view": "overview"},
+    {"start": 105, "end": 111, "scene": 8, "view": "detail", "source": "S5-missing-mandatory-evidence.png", "rect": [540, 350, 485, 245], "label": "Required retrieval evidence absent: execution fails closed"},
+    {"start": 111, "end": 120, "scene": 9, "view": "overview"}
+  ]
+}

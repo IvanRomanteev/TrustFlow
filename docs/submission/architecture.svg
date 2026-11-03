@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="980" viewBox="0 0 1560 980" role="img" aria-labelledby="title description">
+<title id="title">TrustFlow architecture and evidence boundary</title>
+<desc id="description">Planner uses a Muse LLM Provider boundary with accepted fake output and pending live Meta evidence. Deterministic PolicyEngine gates Human Approval, Executor writes the SQLite Ledger, Verifier reads it independently. Recovery is verification only. Observability records audit hashes, workflow usage and evidence.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#547084"/></marker></defs>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#173147}.h{font-size:24px;font-weight:700}.s{font-size:18px}.l{font-size:16px;fill:#425d72}.box{fill:#fff;stroke:#c6d6df;stroke-width:2}.edge{fill:none;stroke:#547084;stroke-width:2.5;marker-end:url(#arrow)}.dash{stroke-dasharray:7 6}</style>
+<rect width="1560" height="980" rx="20" fill="#f0f5f7"/>
+<text x="60" y="60" style="font-size:34px;font-weight:700">TrustFlow</text>
+<text x="60" y="94" class="s">Model proposals &#8594; deterministic authorization &#8594; independent ledger evidence</text>
+<rect x="1110" y="29" width="390" height="42" rx="21" fill="#d8eee5"/>
+<text x="1305" y="56" text-anchor="middle" class="s">Accepted M5.2 · FAKE · synthetic funds</text>
+<text x="60" y="145" class="l">WorkflowEngine · FastAPI / Next.js UI · trusted local single-instance runtime</text>
+<rect x="60" y="180" width="230" height="130" rx="15" fill="#fff" stroke="#c6d6df" stroke-width="2"/>
+<text x="80" y="216" class="h">Planner</text>
+<text x="80" y="249" class="s">Typed plan</text>
+<text x="80" y="275" class="s">Model cannot set risk</text>
+<rect x="345" y="180" width="230" height="130" rx="15" fill="#fff" stroke="#c6d6df" stroke-width="2"/>
+<text x="365" y="216" class="h">PolicyEngine</text>
+<text x="365" y="249" class="s">Deterministic risk</text>
+<text x="365" y="275" class="s">Backend authority</text>
+<rect x="630" y="180" width="250" height="130" rx="15" fill="#fff" stroke="#c6d6df" stroke-width="2"/>
+<text x="650" y="216" class="h">Human Approval</text>
+<text x="650" y="249" class="s">Version + SHA-256</text>
+<text x="650" y="275" class="s">Exact snapshot</text>
+<rect x="935" y="180" width="230" height="130" rx="15" fill="#fff" stroke="#c6d6df" stroke-width="2"/>
+<text x="955" y="216" class="h">Executor</text>
+<text x="955" y="249" class="s">Authorized intents</text>
+<text x="955" y="275" class="s">Stable operation keys</text>
+<rect x="1220" y="180" width="280" height="130" rx="15" fill="#fff" stroke="#c6d6df" stroke-width="2"/>
+<text x="1240" y="216" class="h">Verifier</text>
+<text x="1240" y="249" class="s">Deterministic checks</text>
+<text x="1240" y="275" class="s">Independent ledger read</text>
+<path d="M290 245 H345" class="edge"/>
+<path d="M575 245 H630" class="edge"/>
+<text x="583" y="228" class="l">HIGH</text>
+<path d="M880 245 H935" class="edge"/>
+<path d="M1165 245 H1220" class="edge"/>
+<path d="M460 310 V375 H1050 V310" class="edge"/>
+<text x="490" y="363" class="l">LOW · backend-authorized intent</text>
+<text x="665" y="343" class="l">Reject &#8594; no transfer</text>
+<rect x="60" y="465" width="380" height="180" rx="15" fill="#fff7e0" stroke="#bf963c" stroke-width="2" stroke-dasharray="7 6"/>
+<text x="80" y="501" class="h">Muse LLM Provider</text>
+<text x="80" y="534" class="s">FakeLLMProvider: accepted</text>
+<text x="80" y="560" class="s">MetaResponsesProvider: PENDING</text>
+<text x="80" y="586" class="s">POST /responses · strict schemas</text>
+<path d="M175 465 V310" class="edge"/>
+<text x="190" y="419" class="l">plan</text>
+<rect x="630" y="465" width="430" height="160" rx="15" fill="#fff" stroke="#c6d6df" stroke-width="2"/>
+<text x="650" y="501" class="h">SQLite Ledger</text>
+<text x="650" y="534" class="s">Atomic synthetic transfers</text>
+<text x="650" y="560" class="s">UNIQUE idempotency_key</text>
+<text x="650" y="586" class="s">Run / approval / audit tables share DB</text>
+<path d="M1050 310 V412 H845 V465" class="edge"/>
+<text x="856" y="443" class="l">atomic commit</text>
+<path d="M1060 505 H1130 V345 H1360 V310" class="edge"/>
+<text x="1150" y="383" class="l">independent evidence</text>
+<rect x="1220" y="465" width="280" height="150" rx="15" fill="#fff" stroke="#c6d6df" stroke-width="2"/>
+<text x="1240" y="501" class="h">Semantic reviewer</text>
+<text x="1240" y="534" class="s">Goal + plan + evidence</text>
+<text x="1240" y="560" class="s">PASS cannot override</text>
+<text x="1240" y="586" class="s">deterministic FAIL</text>
+<path d="M1360 310 V465" class="edge"/>
+<path d="M1220 570 H1155 V685 H250 V645" class="edge"/>
+<text x="495" y="673" class="l">schema-bound review via provider</text>
+<rect x="60" y="735" width="380" height="80" rx="15" fill="#fff" stroke="#c6d6df" stroke-width="2"/>
+<text x="80" y="771" class="h">Local policy corpus</text>
+<text x="80" y="804" class="s">Evidence spans / required retrieval</text>
+<path d="M60 770 H30 V245 H60" class="edge"/>
+<rect x="630" y="735" width="430" height="80" rx="15" fill="#fff" stroke="#c6d6df" stroke-width="2"/>
+<text x="650" y="771" class="h">Recovery</text>
+<text x="650" y="804" class="s">Reconcile existing operation · verify only</text>
+<path d="M845 625 V735" class="edge"/>
+<text x="860" y="718" class="l">startup / explicit recovery</text>
+<path d="M1060 775 H1525 V245 H1500" class="edge"/>
+<rect x="60" y="870" width="1440" height="80" rx="15" fill="#dfede7" stroke="#9dbdb0" stroke-width="2"/>
+<text x="80" y="906" class="h">Observability</text>
+<text x="80" y="939" class="s">All stages: audit payload hashes · per-workflow usage · evidence spans · browser logs · manifests</text>
+<path d="M1110 625 V870" class="edge dash"/>
+<text x="60" y="966" class="l">Live inference, public deployment, production banking and container recreation durability are not established by M5.2.</text>
+</svg>

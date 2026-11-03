@@ -1,0 +1,115 @@
+M5.3 FINAL INDEPENDENT OFFLINE ACCEPTANCE: BLOCKED
+
+Независимое ревью от 2026-11-03, Asia/Qyzylorda. **F1 и H1 исправлены на точном кандидате; все запрошенные функциональные и regression gates подтверждены независимым исполнением. Общий verdict блокирует нарушение сохранности исторических evidence, допущенное мной при запуске reviewer runner. Это процедурный инцидент ревью, а не обнаруженный дефект приложения или регрессия кандидата.**
+
+Мой runner перезаписал три исторических JUnit-файла предыдущего ревью. Исходный BLOCKED-отчёт сохранён, `source-audit.json` восстановлен побайтно, но исходные XML не восстановлены. Поэтому обязательный gate historical evidence preservation не закрыт. Новых блокирующих находок в коде `53394d4` не установлено. Реальных Meta API calls и платных inference: **0**. Все фактические live server compatibility, model quality, latency и billing gates остаются **PENDING**.
+
+Проверенная идентичность:
+
+| Поле | Подтверждённое значение |
+|---|---|
+| Репозиторий / implementation worktree | `C:\Users\vanya\Projects\TrustFlow-context\m53-meta-live-ready\worktree` |
+| Ветка | `m5.3/meta-live-ready` |
+| Начальный и конечный HEAD | `53394d48c67827abfdffa53407e524af6af92610` |
+| Единственный parent | `ef30a6881a7c00790f56a6a6def65862f43c2c05` |
+| Начальный и конечный tree | `177fbbbff704129d19d5bb570789418d8c8fb0e5` |
+| Согласованный remediation range | `ef30a6881a7c00790f56a6a6def65862f43c2c05..53394d48c67827abfdffa53407e524af6af92610`, один коммит |
+| Принятая база M5.2 | `38cc3942dbd715681d59bfd893e47643210294a9`, ancestry подтверждена; до кандидата 6 коммитов |
+| Git status кандидата | Clean в начале, в конце и до/после каждого записанного запуска |
+| Tracked source manifest SHA-256 | `7f821ea92e2af3b81007b07c5691fe9c7e421e22cfc5b8b020de45733c5ad6ae`, 133 файла |
+
+`git rev-parse 'HEAD^' 'HEAD^{tree}'`, `git diff --name-status/--numstat`, `git diff --check`, ancestry и сверка каждого рабочего файла через `git hash-object --path=...` подтвердили кандидата. Diff минимален: `src/trustflow/llm/provider.py` — 17 добавленных / 7 удалённых строк; новый `tests/unit/test_m53_parser_remediation.py` — 399 строк. Остальные tracked файлы совпадают с parent. AST `FakeLLMProvider`, `PLAN_SCHEMA`, `REVIEW_SCHEMA` совпадает с parent и M5.2. Engine, policy, approval, executor, ledger, recovery, persistence, frontend и integration scripts не изменены remediation-коммитом. [Source audit](../evidence/source-audit.json), [diff](../evidence/candidate.diff), [provenance](../evidence/provenance.json).
+
+Пользовательские AGENTS.md-инструкции применены. Дополнительных AGENTS.md в проверенных предках и relevant worktrees не найдено. Прочитаны предыдущий BLOCKED-отчёт, developer `IMPLEMENTATION.md`, `HANDOFF.md`, `docs/m53-live.md`, текущий M5.3-контракт `docs/m5.md`, архитектурные и M5.2-документы, provider/usage/errors и соответствующие engine/semantic-review paths. Developer results считались утверждениями для проверки; приведённые ниже результаты получены заново. M5.4, production RBAC, реальные средства и multi-host execution не включены в текущий offline acceptance. Старые M0/M1-документы содержат исторические описания; текущие требования определялись по M5.3-контракту и коду.
+
+**F1: подтверждённое исправление прежнего blocker.**
+
+Места исправления: `src/trustflow/llm/provider.py:475` — outer `resp.json()`; `:529` — inner `_decode_object` с tracker; `:554` — inner `_decode_object` без tracker. `RecursionError` попадает в существующие typed failure paths. Глобальный recursion limit не изменён; broad catch в engine не добавлен.
+
+Исходная независимая проба `parser_recursion_probe.py` скопирована **без изменения байтов** в новые `original-red/` и `original-green/`; SHA-256 всех копий `4f36690369c1af4ae7e35d6909ec3f19419c5cc26e7f6022d394fb4c360f08e5`. Для RED parent извлечён через `git archive ef30a688...` в собственный `parent-source/`, без checkout/reset, создания worktree или изменения Git refs. RED использовал его `src` через `PYTHONPATH`; GREEN — исходники точного кандидата. Проба блокирует внешний `httpx.HTTPTransport` и использует MockTransport/ASGITransport.
+
+| Исходная blocker-проба, depth=5000 | Parent RED | Candidate GREEN |
+|---|---|---|
+| Inner / outer exception | `RecursionError` / `RecursionError` | `LLMResponseError` / `LLMResponseError` |
+| Direct tracker records на одну HTTP-попытку | 0 / 0 | 1 / 1 |
+| Post-COMMIT `/approve` | HTTP 500, `VERIFYING`, 1 persisted usage record при 2 HTTP attempts | HTTP 200, `VERIFICATION_PENDING`, 2 persisted records после planning + failed review |
+| Ledger | Один перевод 1500 USD | Один перевод 1500 USD |
+| После предусмотренного исходной пробой restart и здорового review | 2 usage records при 3 attempts | 4 records при 4 attempts, один ledger tx |
+
+Исходная проба повторяет **повреждённый** review при первом `/verify-retry`, поэтому на GREEN этот конкретный retry закономерно остаётся `VERIFICATION_PENDING`; затем она использует здоровый provider после restart. Успех здорового retry **без restart** проверен отдельно ниже. В JSON исходной неизменённой пробы поле `candidate_sha` жёстко задано старым автором как `ef30a688...`; оно не использовалось как доказательство identity. Фактический source selection указан в новых command JSON и provenance. [RED command](../evidence/original-red.command.json), [GREEN command](../evidence/original-green.command.json), [RED observations](../original-red/evidence/parser-recursion.json), [GREEN observations](../original-green/evidence/parser-recursion.json).
+
+Новая независимая проба, не использующая developer test helpers, дополнительно подтвердила:
+
+- Оба parser layers × Spark/Wonder × tracker/no-tracker: `429 → ReadTimeout → 503 → malformed 200`, затем отдельный здоровый вызов. Ровно 5 records на 5 реальных MockTransport attempts, transport attempts первой logical call `[1,2,3,4]`, logical attempts `[1,1,1,1,2]`. Malformed HTTP 200 завершает вызов без дополнительного transport retry.
+- Typed parser failures не включают private sentinel в сообщение и имеют `__cause__ is None`. С tracker уже учтённые failed records не передаются повторно через `exc.record/records`; без tracker caller получает terminal record с prior attempts и разворачивает его один раз.
+- Inner JSON сохраняет authoritative `111 input + 37 output`; outer JSON оставляет оба token count `null`, `usage_unknown=true` и положительный reservation в `budget_charge_usd`. Текст usage в непарсируемом envelope не выскребается. Session charge совпадает с суммой records.
+- Восемь одновременно работающих workflow с общим provider получают по своим двум records; всего 16 attempts. Workflow IDs/request IDs не смешиваются; shared budget accounting сходится.
+- Четыре API/SQLite-прогона: inner/outer × тот же Container/новый Container. После настоящего ledger COMMIT и `503 → malformed review` `/approve` возвращает `VERIFICATION_PENDING`. Здоровый `/verify-retry` завершает `COMPLETED`, в том числе **без перезапуска**. Два конкурентных retry и последующий replay не создают дополнительных inference calls или переводов.
+- В каждом таком прогоне сохранены исходные `tx_id=tx_0001`, operation ID/idempotency key, `approved_hash`, весь `approved_plan_snapshot`; один перевод 1500 USD. Реестр инструментов на verification retry заменён запретом: ни один tool не вызывался. Независимые read-only SQL-запросы до/после подтвердили неизменность transactions/accounts и `PRAGMA integrity_check=ok`. На четыре HTTP attempts сохранены четыре usage records; logical attempts `[1,1,1,2]`.
+- Maintained F1-тесты дополнительно подтвердили success до/после ошибки, request/cost caps с unknown usage, semantic-attempt exhaustion, сохранность incurred overshoot и запрет последующего inference по durable workflow budget после повторного открытия Container.
+
+[Independent command](../evidence/independent-v2.command.json), [полные direct/concurrency/H1 observations](../evidence/independent-v2/independent-probes.json), [inner без restart](../evidence/independent-v2/recovery-inner-same-process/observations.json), [outer без restart](../evidence/independent-v2/recovery-outer-same-process/observations.json). В этих каталогах сохранены synthetic SQLite; остальные два прогона лежат рядом с суффиксом `-restart`.
+
+**H1: подтверждённое исправление совместимости Retry-After.**
+
+`src/trustflow/llm/provider.py:346` использует numeric delta либо stdlib `parsedate_to_datetime` и разницу с UTC time. Старый parent на future HTTP-date `Thu, 01 Jan 2099 00:00:00 GMT` делает ранний retry с паузой 0; кандидат прекращает текущий bounded call после одной попытки, без sleep и раннего retry.
+
+Независимо проверены 13 случаев, включая numeric `0`, `2.25`, `10`, `10.001`, `60`, future HTTP-date на 2/10/11 секунд и сутки, past date, invalid, `nan`, `inf`. На границе 10 секунд ожидание ограничено 10; cooldown >10 прекращает вызов. Maintained 11 H1 cases также покрывают timezone-less/overflow date и local backoff. Время и sleep контролировались только внутри проб; настоящие cooldown sleeps и внешние HTTP не выполнялись. H1 RED/GREEN и все delays записаны в independent observations. Это закрывает офлайн-обработку заголовка, не доказывает поведение настоящего сервера.
+
+Подтверждённые regression gates:
+
+| Gate / фактическая команда | Независимый результат | Evidence |
+|---|---|---|
+| `python -m pytest -q --junitxml <new evidence>/pytest-final.xml` | **609 passed, 19 skipped**, 0 failures/errors | [command](../evidence/pytest-final.command.json), [JUnit](../evidence/pytest-final.xml) |
+| `TRUSTFLOW_DOCKER_TESTS=1`; `python -m pytest tests/integration/test_m5_docker_e2e.py -q --junitxml ...` | **18 passed**, 0 skipped | [command с фактическим ошибочным XML target](../evidence/docker.command.json), [сохранённая копия результата](../evidence/misrouted-docker.xml) |
+| `TRUSTFLOW_M52_DEMO_TESTS=1`; `python -m pytest tests/integration/test_m52_demo.py -q -s --junitxml <new evidence>/m52.xml` | **1 passed**; два полных real Chromium replay S1–S6 и comparison | [command](../evidence/m52.command.json), [JUnit](../evidence/m52.xml), [summary](../evidence/m52-summary.json) |
+| M5.3: `test_m53_meta.py test_m53_harness.py test_m53_parser_remediation.py` | **107 passed**: существующие 68 + новые 39 (28 F1 / 11 H1) | [command](../evidence/m53.command.json), [JUnit](../evidence/m53.xml) |
+| `python -m ruff check src tests scripts` | PASS | [command](../evidence/ruff.command.json) |
+| `python -m mypy src` | PASS, 50 source files | [command](../evidence/mypy.command.json) |
+| `npm.cmd run build`, cwd `frontend` | PASS | [command](../evidence/frontend.command.json) |
+| `python -m trustflow.evaluation --out <new evidence>/m4 --repeat 2 --ablations` | **33/33**, critical **20/20**, safety **0**, оба repeat reproducible | [command](../evidence/m4.command.json), [report](../evidence/m4/evaluation-report.md), [repeats](../evidence/m4/repeats.json) |
+| `python -m trustflow.evaluation.live --offline --profile all --max-requests 27 --max-cost-usd 1 --out <new evidence>/mock` | Spark/Wonder/mixed **5/5 каждый**, 27 MockTransport attempts | [command](../evidence/mock.command.json), [SQL crosscheck](../evidence/mock-sqlite-crosscheck.json) |
+| Plan-only CLI; rendered live Compose с placeholder key | 0 inference; отдельные synthetic volume/project и loopback ports 18000/13000 | [plan](../evidence/plan.command.json), [config](../evidence/compose-live-config.command.json) |
+
+Все эти gates исполнялись на committed `53394d48...` с чистым Git и неизменным source manifest, а не только на developer dirty tree. Использован Python 3.12.10 из существующего `C:\Users\vanya\Projects\TrustFlow-context\m52-reproducible-demo\worktree\.venv\Scripts\python.exe`, с `PYTHONPATH` на candidate source. Credential variables исключались по имени из окружения subprocess; применялись placeholder key, fake default, пустой обычный DB_PATH и `NEXT_TELEMETRY_DISABLED=1`. Значения настоящих credentials не читались и не сохранялись. `npm ci` не выполнялся; dependency installation и vulnerability audit не заявляются. Предупреждения pytest/P2-05 сохранены в stdout/stderr.
+
+19 default skips закрыты отдельными Docker и Chromium executions. Оба Chromium replay использовали **145.0.7632.6**, по 6/6 сценариев, cleanup/preservation true; SHA в обоих manifest — точный кандидат, dirty=false. Все manifest artifact hashes повторно проверены после копирования в `evidence/m52-runs`. Normalized digest обоих: `a17849b150ae8207b5efa629ef4384176ce334666590bfcd3165e59de8e3a370`. Gate включает concurrent approval winner, late worker, actual owned-backend SIGKILL после COMMIT и verification-only recovery без duplicate transfer. Это fake-model regression, не live Muse test.
+
+Отдельная SQL-сверка offline matrix подтвердила в каждом profile ровно два уникальных ledger transfers `[1500,1200] USD`, общую сумму 16200 USD, `integrity=ok`, точное равенство plan/approved/snapshot hashes. Fake comparator даёт ожидаемые **4/5**: прежняя heuristic не обнаруживает semantic-negative amount mismatch. Это известная baseline limitation, не новая регрессия или результат оценки настоящей модели. `$0.103175`, tokens и latency matrix относятся к fixtures, не к реальному billing.
+
+**Открытая находка E1 — P2, reviewer-induced procedural incident: исторические evidence перезаписаны.**
+
+Место: первоначальная версия нового `review_runner.py:70`, выражение `COMMANDS = dict(h.COMMANDS)`; исходный helper `C:\Users\vanya\Projects\TrustFlow-context\review-m53-ef30a68-acceptance\review_runner.py:85` (также строки 91, 92) заранее создавал команды с историческим `OUT`. Последующее присваивание `h.OUT` не меняет уже созданные `Path` в command tuples. В текущей исправленной версии нового runner строка 71 начинает явный command map. Существующие тесты или приложение не были причиной инцидента.
+
+Условие воспроизведения: импортировать прежний helper, переназначить его globals, скопировать уже построенный `COMMANDS`, выполнить `pytest/docker/m52/source-audit`. Фактически stdout/stderr и command JSON уходили в новый каталог, но JUnit targets и одна source-audit команда оставались историческими. Это подтверждают argv в `pytest.command.json`, `docker.command.json`, `source-audit.command.json` и snapshot comparison.
+
+Последствия: исходные три XML предыдущего ревью заменены; их содержимое больше нельзя считать доказательством старого `ef30a688...`. После обнаружения остановлен только собственный orchestration process; все нужные gates, кроме уже записанного успешного P2-05, исполнены с явными корректными outputs. Повторный Chromium pair полностью прошёл. Конечный Docker inventory не содержит оставшихся test resources. Interrupted первый M5.2 invocation/JUnit с нулём тестов не использован как успешный gate.
+
+| Исторический файл под `review-m53-ef30a68-acceptance/evidence/` | Исходный SHA-256 | Конечный SHA-256 |
+|---|---|---|
+| `pytest.xml` | `18c62905ad7c885a466b0499946dc32c5e84fdce562b9ed9908b549a10b24872` | `b02b6bd8b96b8a8430e3886be96dc1945ff9b515db6943386eb7418f0599ef84` |
+| `docker.xml` | `d6a987afa9283a5220584b6c29a2b4f3e8875ca77b3ebb91ce2792db817b6598` | `ace5d092a51f64ebc1e6e1ae296aa840a43c4ac0f598be2a919293c935a25438` |
+| `m52.xml` | `d15ea4767260f3f82db515e55bab46da002fb207f44afb47e21cdbdd2b88a308` | `1057e571d6509f130186505ba7dbb1725a246c53fdeed84ec14bd1c792a37598` |
+
+`source-audit.json` восстановлен только после точного совпадения реконструированных байтов с исходным SHA-256 `5a22635f7b15278a24f918ba588ad4d1cec1f725efc8dea283ad9d04ae27add8`; похожая подмена исходных XML новыми результатами не предпринималась. В проверенном `TrustFlow-context` точных резервных XML с исходными хешами не найдено. Созданный этим ревью Python bytecode в старом каталоге удалён; этот derived cache не был исходным evidence. Исторический BLOCKED-отчёт `REVIEW/.md` неизменён: SHA-256 `9028d9542caac5086926e15322f081eb56fea3efca9a762ee69b19ed28a0afe9`.
+
+Минимальное направление закрытия E1: получить исходные три XML из независимой резервной копии, проверить указанные исходные SHA-256 и восстановить их, затем повторить comparison исторического inventory. **Изменений application code для этого не требуется.** Исправленный reviewer runner строит command map явно и проверяет принадлежность output paths текущему review directory; прежние command logs и отрицательные диагностические результаты оставлены. [Начальный historical manifest](../evidence/snapshot-before-history.json), [конечный](../evidence/snapshot-after-history.json), [диагностика](../evidence/history-diagnostic.json), [resource comparison](../evidence/resource-preservation.json). Приношу извинения за повреждение исторических XML.
+
+Других актуальных находок или непроверенных подозрений по кандидату в выполненной области нет. Первые собственные диагностические запуски содержали ошибки fixture/model selection и AST обработки annotated schema assignments; они исправлены только во внешних reviewer scripts и повторены успешно. Их failed logs сохранены (`independent.command.json`, `source-audit-final.command.json`) и не представлены как дефекты приложения.
+
+Сохранность пользовательских ресурсов, подтверждённая конечным snapshot:
+
+- Все исходные **2 containers / 31 images / 4 networks / 1 volume** совпадают целиком по записанным safe metadata, runtime state/mounts, image tags/digests/labels. Содержимое `/data` исходного backend проверено read-only `docker cp ... -` и SHA-256. Пользовательский стек не запускался, не останавливался и не удалялся. Global prune/force cleanup не выполнялись; используются test lifecycle cleanup. BuildKit cache и daemon counters не входят в обещание неизменности inventory.
+- `C:\Users\vanya\Projects\TrustFlow\data\trustflow.db`, 4096 bytes: `42f67cde08aaa4db17432058fdd3521a7199a1dfd4afe740ca486d6b49226302` — неизменён.
+- `trustflow.db-wal`, 86552 bytes: `901373d2368c643962a0369dfcc71bbadd3b804c791e20b3249c827c8d00087a` — неизменён.
+- `trustflow.db-shm`, 32768 bytes: `4a0f9920aef8575322e6d149d2698e1a15cc37290c1a3245e8f96d7b8a04ff06` — неизменён.
+- Git identity/status всех пяти существующих worktrees, refs и ветки совпадают с началом. Основной checkout остаётся `m5/deployment-demo`, `f4fb1b6ee7769641222035dab7ed0c7e92680900`, с исходными untracked `conversation-2026-10-28-171132.txt` и `conversation-2026-10-30-200536.txt`; содержимое этих двух файлов отдельно не хешировалось. Все 133 tracked candidate files неизменны.
+- Developer remediation directory и все исходные исторические файлы, **кроме трёх XML E1**, совпадают по SHA-256. Код приложения и существующие тесты не редактировались; commits/tags/merge/push/deploy не выполнялись. Созданы собственные synthetic DB, offline diagnostic artifacts, isolated test resources и ignored caches/build output.
+
+[Before](../evidence/snapshot-before.json), [after](../evidence/snapshot-after.json), [resource preservation](../evidence/resource-preservation.json), [19 записанных command runs](../evidence/acceptance-gates.json). Полные argv/cwd, source digest, start/end SHA/status, exit codes, duration и hashes stdout/stderr сохранены в command JSON; ошибочные исторические outputs обозначены явно, а не скрыты.
+
+Acceptance gates identity/minimal diff, F1, H1, typed sanitization/usage ownership, post-COMMIT recovery без restart, immutable operation/approval/tx, отсутствие duplicate transfers и весь запрошенный regression набор закрыты. Gate **historical evidence preservation остаётся открытым из-за E1**. Независимый итог поэтому не объявляет milestone принятым.
+
+Live-smoke readiness: технические offline prerequisites подтверждены; F1/H1 больше не являются препятствием в проверенных случаях. Финальный acceptance удерживается до закрытия E1; это ревью не предоставляет разрешения на платный smoke. Actual Meta account/model access, server-side strict-schema acceptance, настоящие Spark/Wonder/mixed task results и schema validity, model quality/ranking, latency, фактические tokens/cost и provider billing — **PENDING**. Их может закрыть только отдельно авторизованное конечное live execution с ограниченными requests/cost/output и synthetic storage. Публикация, deployment и live stack здесь не выполнялись. Никакая офлайн fixture не доказывает реальную server compatibility или качество модели.
+
+Начальный SHA = конечный SHA = `53394d48c67827abfdffa53407e524af6af92610`; конечный Git status кандидата **clean**. Область текущего blocker — сохранность исторических review artifacts, не исправление F1/H1 в приложении.

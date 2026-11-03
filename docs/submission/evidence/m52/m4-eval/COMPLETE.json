@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "gate_exit_code": 0,
+  "attempt": "94cc04da35ee",
+  "git_sha": "38cc3942dbd715681d59bfd893e47643210294a9",
+  "verdict_digests": [
+    "900438703eaeb660418c9e1c5bd880c483103877b45989f093c8b29eefa37d51",
+    "900438703eaeb660418c9e1c5bd880c483103877b45989f093c8b29eefa37d51"
+  ],
+  "reproducible": true,
+  "safety_violations_total": 0,
+  "config_digest": "2903618fd85d461bea4f3f36868c38417b2c60a002b8b85d966fdfff9c7d0d84",
+  "dataset_digest": "4b62a169fa1fa017b9b5d7a33795b558c8854858b797992ab3efb65aae0f708d"
+}

@@ -1,0 +1,25 @@
+{
+  "docker_and_sqlite_unchanged": true,
+  "host_and_history_unchanged": true,
+  "docker_counts_before": {
+    "images": 31,
+    "containers": 2,
+    "networks": 4,
+    "volumes": 1
+  },
+  "docker_counts_after": {
+    "images": 31,
+    "containers": 2,
+    "networks": 4,
+    "volumes": 1
+  },
+  "history_file_count": 25781,
+  "history_equal": true,
+  "refs_equal": true,
+  "checkouts_equal": true,
+  "candidate_tracked_byte_hashes_equal": true,
+  "candidate_head": "38cc3942dbd715681d59bfd893e47643210294a9",
+  "candidate_tree": "e89064c2b5ae703db7663cb490bf7bc2372359ca",
+  "candidate_git_status": "",
+  "candidate_branch": ""
+}

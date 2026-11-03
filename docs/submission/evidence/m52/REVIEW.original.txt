@@ -1,0 +1,140 @@
+M5.2 FINAL INDEPENDENT ACCEPTANCE: PASS
+
+Независимое read-only acceptance review завершено 2026-11-01 (Asia/Qyzylorda, дата сеанса из задания). Проверен exact commit `38cc3942dbd715681d59bfd893e47643210294a9`, tree `e89064c2b5ae703db7663cb490bf7bc2372359ca`. Этот exact commit пригоден для M5.2 accepted checkpoint. Acceptance tag не создавался.
+
+**Кандидат, база и границы.** Согласованный диапазон — `d497043810073d53a6ebaa94ba550a4c2c6b9b08..38cc3942dbd715681d59bfd893e47643210294a9`. `git merge-base --is-ancestor` вернул 0. Ровно три implementation commits:
+
+| SHA | Назначение |
+|---|---|
+| `86c2ffbd3b8b8c4e5b0da4509dd772a3e5f9ac74` | reproducible browser/ledger runner |
+| `46f77083bc7cb69743abb96901f2be75ac5db7f5` | короткие Windows storage paths |
+| `38cc3942dbd715681d59bfd893e47643210294a9` | Dockerfile внутри build context |
+
+Исходный checkout `C:/Users/vanya/Projects/TrustFlow` был и остался на `m5/deployment-demo`, `f4fb1b6ee7769641222035dab7ed0c7e92680900`, с прежними двумя untracked conversation-файлами. Implementation worktree был и остался clean на `m5.2/reproducible-demo`, `38cc3942dbd715681d59bfd893e47643210294a9`. Accepted P2-05 worktree остался на `d497043810073d53a6ebaa94ba550a4c2c6b9b08`. Исполнение проводилось в отдельном локальном checkout `candidate/`, detached HEAD `38cc3942dbd715681d59bfd893e47643210294a9`; начальный и конечный SHA/tree совпадают, конечный `git status --porcelain=v1` пуст. Bundle/clone не изменяют исходные refs. Checkout использует обычное Git LF→CRLF преобразование Windows: все tracked files совпадают с Git blobs после нормализации только окончания строк; их фактические byte hashes до/после также равны.
+
+`git diff --exit-code` подтвердил отсутствие изменений `src/`, `frontend/`, production `Dockerfile`, `docker-compose.yml`, `.dockerignore`, принятого `tests/integration/test_m5_docker_e2e.py`. Изменения M5.2 ограничены demo scripts/tests/docs и optional dependency group. Применены инструкции пользователя из AGENTS.md в сообщении; дополнительных применимых AGENTS.md на проверенных путях/в Git tree не обнаружено. Прочитаны `docs/m5.md` (M5.2 и границы последующих этапов), `docs/m52-demo.md`, новый код и связанные approval/ledger/recovery/UI реализации. Developer IMPLEMENTATION и прежнее acceptance прочитаны как утверждения и исторический контекст; результаты ниже получены заново. M5.3 live integration и M5.4 submission не принимались.
+
+Доказательства: [identity](logs/candidate-identity.stdout.log), [diff](logs/candidate-diff.stdout.log), [runtime equality](logs/runtime-unchanged.command.json), [file provenance](logs/candidate-blobs-before.json), [Git/history preservation](logs/preservation-summary.json).
+
+**Реальные независимые запуски.** Environment: Windows 11, Python 3.12.10, Docker Engine `29.9.2`, Compose `5.6.1`, Playwright `1.58.0`, Chromium `145.0.7632.6`. Использован установленный Python environment реализации, но `PYTHONPATH` указывал на отдельный exact-SHA checkout. Реальные FastAPI/Next.js containers, loopback ports, Chromium, UI interactions и SQLite; без подмены Docker, browser, HTTP responses или ledger в acceptance executions. Только FakeLLMProvider; credentials удалены из дочернего environment, реальные API keys не использованы. Registry/package traffic во время сборки не является model inference.
+
+Канонические команды (точный executable/cwd/exit code — в command JSON):
+
+```powershell
+python scripts/run_m52_demo.py --out C:\tf52r-d131ca8d\a
+python scripts/run_m52_demo.py --out C:\tf52r-d131ca8d\b --compare C:\tf52r-d131ca8d\a\3cf94d5897b843e0bf751242513e2b1f
+```
+
+Оба exit code — 0. Свежие private DB, disjoint workflow IDs, разные run/project/ports. Maintained opt-in test затем выполнил ещё два полных canonical subprocess invocations с `--compare`.
+
+| Запуск | Свежий manifest | Сценарии | Browser assertions | PNG | Независимость SQLite |
+|---|---|---:|---:|---:|---|
+| `first` | [fa2265c3d5f243489307f1695a310dad](runs/optin/first/fa2265c3d5f243489307f1695a310dad/manifest.json) | 6/6 | 60 | 14 | сверка raw evidence + maintained assertions |
+| `second` | [5bc6c982106e4127bd95ed741f68a68b](runs/optin/second/5bc6c982106e4127bd95ed741f68a68b/manifest.json) | 6/6 | 60 | 14 | сверка raw evidence + maintained assertions |
+| `replay-1` | [3cf94d5897b843e0bf751242513e2b1f](runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/manifest.json) | 6/6 | 60 | 14 | отдельная read-only SQLite + backup |
+| `replay-2` | [075897be048d47229697cab98e1d7de2](runs/replay-2/075897be048d47229697cab98e1d7de2/manifest.json) | 6/6 | 60 | 14 | отдельная read-only SQLite + backup |
+
+У всех четырёх successful executions по 38 scenario assertions, 0 FAIL/NOT_RUN/SKIP, `COMPLETE.json`, проверенные artifact hashes и cleanup. Оригинальные outputs сохранены, копии в `runs/` проверены побайтно. [Canonical #1 command](logs/replay-1.command.json), [#2](logs/replay-2.command.json), [opt-in](logs/m52-optin.command.json), [197/199 независимых checks канонической пары и checks дополнительных replay](logs/independent-crosschecks.json).
+
+**S1–S6 — отдельные acceptance gates.**
+
+| Gate | Статус | Независимо подтверждено |
+|---|---|---|
+| S1 | GREEN | UI balance request; policy LOW, нет approvals; COMPLETED и verifier PASS; ledger count 0 и исходные balances неизменны; SQLite/API/audit согласованы |
+| S2 | GREEN | HIGH/AWAITING_APPROVAL; на экране полный persisted hash; missing/wrong token 401/403, wrong hash 409; UI approval даёт один transfer 5000; approved snapshot/hash совпадают; duplicate 409 без эффекта; отдельный UI-created 1500: concurrent valid approvals `[200,409]`, один decision/grant/tx |
+| S3 | GREEN | UI rejection 3000, persisted REJECTED; нет transfer и успешного audit grant; balances неизменны; late approval 409; reload сохраняет rejection, hash и decision |
+| S4 | GREEN | Реальный mutating worker удержан до timeout 0.15 s; EXECUTION_UNCERTAIN; reconcile при живом worker не исполняет повтор; release → настоящий late commit tx_0003; reconciliation → VERIFICATION_PENDING после явно injected Fake semantic FAIL; UI verification-only retry → COMPLETED; исходный tx_id/operation сохранены; concurrent terminal recovery не создаёт новых вызовов/переводов |
+| S5 | GREEN | UI mandatory-evidence checkbox, unmatched query `zzqqxxyy wwkknn` / `zzqq wwkknn`; genuine retrieval contract вернул 0 hits; FAILED/retrieval_unavailable до plan/tools; причина в audit, ledger unchanged |
+| S6 | GREEN | Настоящий COMMIT tx_0004 при persisted EXECUTING до succeeded transfer StepResult; checkpoint → owned backend SIGKILL; Docker signal 9 / exit 137; start того же полного container ID; startup recovery из SQLite → VERIFICATION_PENDING; UI verify-retry → COMPLETED с тем же tx/hash/snapshot; отдельный graceful restart и reload сохраняют результат |
+
+В `scripts/m52/fault_backend.py:92` wrapper вызывает настоящий `ToolRegistry.invoke`, затем наблюдает outcome/COMMIT; SQL inserts для изготовления платежей или status edits отсутствуют. `:166` связывает hook с fake mode, exact owned storage/marker и authorization; это test-only image. S4 journal ordering: worker-entered seq14 → release15 → genuine ledger-committed16 → worker-returned17 → injected semantic failure18 → review19. S6: ledger checkpoint24/25 → process-start26 → startup reconciliation28 → review29; после checkpoint ни одного mutating invocation. В каждом replay всего четыре `simulate_transfer` calls и три process starts. Сверены raw ledger checkpoints, audit, fault journal, Docker commands и **отдельно** daemon events. [Lifecycle correlation](logs/lifecycle-and-visual-checks.json), [daemon events #1](logs/replay-1-docker-events.jsonl), [#2](logs/replay-2-docker-events.jsonl).
+
+S5 является локальной retrieval fail-closed проверкой, не доказательством отказа реального банка. S6 подтверждает same-container kill/start и отдельный restart; durability при container recreation не заявляется.
+
+**SQLite, authorization и evidence.** Схема прочитана непосредственно через `sqlite_master`: `runs`, `ledger_accounts`, `ledger_transactions`, `ledger_meta`, `audit_events`, schema migrations; уникальные `tx_id` и `idempotency_key`. Для канонической пары собственный observer после сценариев открывал отдельную `mode=ro` connection, включал query_only, выполнял `BEGIN`, читал все таблицы и integrity_check, сохранял SQLite backup и явно закрывал оба handle до cleanup. БД и structured SQL observations находятся в [snapshot #1](independent-sqlite/replay-1/ledger-after/sqlite-readonly.json), [backup #1](independent-sqlite/replay-1/ledger-after/snapshot.db), [#2 observations](independent-sqlite/replay-2/ledger-after/sqlite-readonly.json), [backup #2](independent-sqlite/replay-2/ledger-after/snapshot.db). Это не вывод из одного API COMPLETED или scenario-results.
+
+| tx_id | Сумма USD | Направление | Workflow |
+|---|---:|---|---|
+| tx_0001 | 5000 | acc_alice → acc_bob | S2 UI-approved |
+| tx_0002 | 1500 | acc_alice → acc_bob | S2 concurrent approvals |
+| tx_0003 | 25 | acc_alice → acc_bob | S4 late worker |
+| tx_0004 | 5000 | acc_alice → acc_bob | S6 COMMIT/crash |
+
+В каждой DB четыре уникальных operation keys и tx IDs. Ручной независимый replay этих ledger rows из Alice25000/Bob1200/Ops10000 дал Alice13475/Bob12725/Ops10000; total до/после36200. S1/S3/S5 не владеют ни одним committed transfer. Для каждой строки найден ровно один workflow/intent с `authorized` и `ever_authorized`, точным authorized payload; для HIGH — ровно один persisted APPROVED и один audit `approval_granted`, тот же полный SHA-256 одобренного snapshot и текущего плана. Хеши планов пересчитаны своей canonical-функцией без вызова application helper. Audit payload SHA пересчитаны; итоговая SQLite точно совпала с raw run/audit/ledger artifacts. Дополнительно пересчитаны canonical ledger snapshot hash/derived ID и точные text offsets/hash ledger citations. S4/S6 original tx IDs не изменились, повторных и неавторизованных переводов не обнаружено.
+
+**Browser и авторитетное состояние.** В обоих canonical replay непосредственно просмотрены девять запрошенных важных PNG: S1 verified; S2 awaiting/full-hash и approved; S3 rejected; S4 uncertain и recovered; S5 missing evidence; S6 pending after SIGKILL и durable reload. Все14 PNG каждого replay существуют, имеют PNG signature и manifest SHA; визуально статусы, operation amounts, decisions и recovery соответствуют raw DB/GET. Поля approval password пусты. [Полный список осмотренных файлов](logs/lifecycle-and-visual-checks.json).
+
+`scripts/m52/browser.py:164` реально вызывает fill/set_checked/click и проверяет POST201, selection и authoritative GET; `:255` реально нажимает approve/reject/recovery и очищает password; `:290` сравнивает DOM со свежим backend GET/audit; `:327` сохраняет настоящий screenshot. Проверены persisted title/description/mandatory flag и точные workflow IDs. В дополнительной **настоящей fault-execution** внешний observer записал фактические вызовы Playwright fill/click/set_checked/select_option, не меняя их результатов: [actions](logs/real-browser-actions.json). Это дополнительное доказательство реальных действий, не статические mock screenshots.
+
+В canonical #1 zero pageerrors и один ожидаемый `ERR_EMPTY_RESPONSE` при backend interruption; в #2 zero pageerrors и два таких ожидаемых GET failures (`workflows`, `health`). Unexpected failures нет. Реальные response/authoritative_get события и assertion outcomes сохранены в browser-log каждого replay; отдельный фактический action log — в дополнительной fault-execution. Crash errors отделены от обычных ошибок, pageerror не разрешается даже внутри crash bracket. Проверена санитизация runtime/browser artifacts, без HAR/trace/video/headers/approval literal.
+
+В `frontend/app/page.tsx:54–76` state применяется только из guarded GET, `:111` invalidates pre-action polls; selection epoch/action sequence подавляют поздние acknowledgements/errors. Собственная дополнительная offline Node probe исполнила настоящий pre-render Home implementation с deferred API boundary: четыре GREEN случая — stale list, stale detail GET, A→B→A, поздняя ошибка после нового action. [Probe/results](logs/ui-races.json), [command](logs/ui-races-green.command.json). Это отдельная scheduling диагностика с моделируемым API boundary; она не подменяет четыре настоящих Chromium/Docker replay и не доказывает universal race freedom.
+
+**Reproducibility.** Свежий digest всех четырёх successful runs:
+
+`a17849b150ae8207b5efa629ef4384176ce334666590bfcd3165e59de8e3a370`
+
+Второй canonical запуск выполнил документированный `--compare`, `equivalent=true`. Digest пересчитан независимо; совпадение с developer claim установлено только после свежего исполнения. Изучены normalization-rules и `evidence.normalized`: исключены volatile UUID/timestamps/ports/paths/runtime identities и derived hashes; сохранены scenario/assertion outcomes, stable ordered tx IDs/payloads, balances/conservation, final states, approval counts, audit action counts, verification check outcomes, semantic attempts, browser assertion names/outcomes, screenshot inventory, cleanup/preservation. Финальные verified outcomes также представлены соответствующими scenario assertions. Сам digest не является самостоятельным authorization proof: raw hashes/snapshot/span identities проверены отдельно внутри каждого invocation.
+
+Свои 18 perturbation probes подтвердили чувствительность к значимым изменениям, включая `[200,200]`, сумму, tx_id, ordering, balances/total, state, verification check, decision count, audit count, attempts, browser assertion, screenshot, cleanup/preservation; volatile projection control не меняет digest. [Независимая матрица](logs/normalization-independent-probes.json). Pixel identity не требовалась.
+
+**Failure/COMPLETE boundary.** Все required artifacts, manifest SHA и ссылки на PNG проверены. По `scripts/m52/evidence.py:114` COMPLETE публикуется последним после проверок сценариев/browser/evidence/cleanup/preservation. Independent probes дали:
+
+| Проба | Scope | Итог |
+|---|---|---|
+| Chromium отсутствует | настоящий canonical CLI, отдельный PLAYWRIGHT_BROWSERS_PATH | exit1, FAILED_ATTEMPT, COMPLETE отсутствует, до Docker/storage startup |
+| missing mandatory artifact | отдельная копия своего successful evidence, genuine finalizer | exit1, FAILED_ATTEMPT, no COMPLETE |
+| malformed browser artifact | тот же publication boundary | exit1, FAILED_ATTEMPT, no COMPLETE |
+| interrupted atomic COMPLETE publication | injected PermissionError на финальном rename в своей копии | exit1, FAILED_ATTEMPT, no COMPLETE; sentinel/temp invariants сохранены |
+| failed mandatory scenario | offline finalizer с false mandatory result | exit1, no COMPLETE |
+| unknown Docker ownership/inventory | настоящий accepted host cleanup, scripted inconclusive Docker response, реальная review-owned SQLite | bytes DB сохранены, no destructive Docker calls, cleanup=false, publication exit1/no COMPLETE |
+| reuse already completed success | finalizer против отдельной successful copy | отказ, все прежние bytes/manifest/COMPLETE неизменны |
+| failed mandatory assertion через весь runner | **реальные Docker/FastAPI/Next.js/Chromium S1–S6**, runtime-only diagnostic wrapper добавляет false assertion после исходного S6 | runner exit1, FAILED_ATTEMPT, COMPLETE отсутствует; cleanup и preservation PASS; предыдущий successful invocation побайтно сохранён |
+
+Application/tests/scripts/docs кандидата не редактировались; fault wrapper и publication fixtures находятся только в `probes/`/`failure-probes/`. Диагностические copied artifacts явно не считаются реальными scenario executions. [Fault summary](logs/failure-probes-summary.json), [unknown ownership proof](logs/unknown-ownership-probe.json), [whole-runner fault](logs/real-failure-summary.json), [exit code](logs/real-mandatory-failure.command.json).
+
+**Docker и сохранность ресурсов.** Engine первоначально не отвечал; Docker Desktop запущен Hidden без остановки/удаления пользовательских ресурсов. Stable baseline получен после read-only wake через `docker cp` и двух одинаковых awake inventories. До/после каждого canonical run, P2-05, opt-in и real-failure probe сохранены независимые inventories и host/container data hashes; whole-session equality подтверждена.
+
+До/после: **{'images': 31, 'containers': 2, 'networks': 4, 'volumes': 1} = {'images': 31, 'containers': 2, 'networks': 4, 'volumes': 1}**. Image IDs/tags/digests/labels/rootfs, containers/state/mounts/networks, networks/attachments, named volumes равны. Built-in bridge `35a430ce4141c381b825a56c7aae469459b89870433122a5bcfcbc31e8f0da6b` не менялся после стабильного baseline и не подвергался manipulation. Named volume `trustflow_tf-data` прочитан через `docker cp <existing-full-ID>:/data/. -`, исходный stopped container не запускался. Private bind mounts и actual ownership/mount inspection предшествуют startup; unique namespace/run labels, dynamic127.0.0.1 bindings, frontend API URL и CORS подтверждены runtime config/inspect. Нет adoption existing storage, tag-based cleanup, project-wide down, prune, recursive unknown deletion или удаления attached storage. Unknown state сохраняется fail-closed, что подтверждено собственным host probe и реальными P2-05 refusal tests.
+
+| Исходный host file | SHA-256, неизменен |
+|---|---|
+| `C:\Users\vanya\Projects\TrustFlow\data\trustflow.db` | `42f67cde08aaa4db17432058fdd3521a7199a1dfd4afe740ca486d6b49226302` |
+| `C:\Users\vanya\Projects\TrustFlow\data\trustflow.db-shm` | `4a0f9920aef8575322e6d149d2698e1a15cc37290c1a3245e8f96d7b8a04ff06` |
+| `C:\Users\vanya\Projects\TrustFlow\data\trustflow.db-wal` | `901373d2368c643962a0369dfcc71bbadd3b804c791e20b3249c827c8d00087a` |
+
+| Named-volume file | SHA-256, неизменен |
+|---|---|
+| `trustflow_tf-data/./trustflow.db` | `1d5123b5ad6efbf6e89d68be5d24f45f0c73de23c476f93013eed323db4275d4` |
+| `trustflow_tf-data/./trustflow.db-shm` | `fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb` |
+| `trustflow_tf-data/./trustflow.db-wal` | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+
+Git refs/accepted tags и tracked/user conversation hashes равны; historical evidence **25781 файлов** побайтно неизменно. Historical hashing scope/exclusions доступны в `probes/common.py::host_integrity`: reports/logs/evidence context и developer artifacts; generated caches, virtualenvs, node_modules и чужие candidate/worktree trees исключены; tracked contents трёх исходных checkout измерены отдельно. Это не заявление о hash-проверке каждого cache byte. `git fsck --full` до/после exit0. [Before](logs/preservation-before.json), [after](logs/preservation-after.json), [host before](logs/host-before.json), [after](logs/host-after.json), [summary](logs/preservation-summary.json).
+
+P2-05 lifecycle source/assertions неизменны. Для соблюдения запрета force removal reviewer observer преобразовал два прежних fixture `docker rm -f` в обычный `docker rm`, только после полного ID, create receipt, ownership и `Running=false`; оба фактических exit0. Ни один pre-existing ID не был допустимой целью. [Proofs](logs/p205-force-normalizations.json), [actual command audit](logs/docker-mutation-audit.json), [полный journal](logs/p205-events.json). Ресурсы owned by runner удалены успешно; uncertain/diagnostic host workspaces оставлены как evidence, не очищались рекурсивно. P2-05 host fixtures скопированы в `p205-fixtures/`, исходные короткие directories сохранены.
+
+**Свежие regression/quality gates.** Skipped tests не считаются passed. Все команды, cwd, exit codes и stdout/stderr — в `logs/*.command.json` / `*.log`.
+
+| Gate | Независимый результат |
+|---|---|
+| New M5.2 targeted | 60 passed, exit0 |
+| Full default pytest | 502 passed, 19 skipped, 0 failed/error, exit0 |
+| Accepted P2-05 opt-in Docker suite | 18 passed, 0 skipped, exit0; 331.01s |
+| M5.2 opt-in integration | 1 passed, 0 skipped, exit0; два real canonical replay внутри, 159.74s |
+| Дополнительная обязательная canonical пара | 2 полных PASS, оба exit0, `--compare` GREEN |
+| Ruff `check src tests scripts` | PASS, exit0 |
+| mypy `src` | PASS, 48 source files, exit0 |
+| Frontend `npm ci --offline --no-audit --no-fund`; `npm run build` | PASS, оба exit0 |
+| `docker compose config --format json` | PASS, обе host bindings127.0.0.1; runtime URL/CORS также GREEN |
+| CORS отдельно | 2 passed, exit0 |
+| M4 `--repeat 2 --ablations` | 33/33, critical20/20, safety violations0, repeat reproducible=true, exit0 |
+
+M4 exact SHA `38cc3942dbd715681d59bfd893e47643210294a9`, dirty=false, fake, seed42, corpus digest `4b62a169fa1fa017b9b5d7a33795b558c8854858b797992ab3efb65aae0f708d`; оба repeat verdict digest `900438703eaeb660418c9e1c5bd880c483103877b45989f093c8b29eefa37d51`. [JUnit counts](logs/test-counts.json), [quality](logs/quality-results.json), [Docker gates](logs/docker-gate-results.json), [M4 report](m4-eval/evaluation-report.md), [repeats](m4-eval/repeats.json), [ablations](m4-eval/ablations.json). Offline Python socket guards quality/eval/P2-05 не зарегистрировали внешних попыток; model credentials не передавались. Docker build network не блокировался.
+
+**Находки, диагностические неудачи и ограничения.** Открытых demonstrated blocking findings нет; новая safety/runtime регрессия не воспроизведена. Прежние accepted P2-05 findings не объявлены актуальными. Production RBAC/PostgreSQL/cloud/real banking/live-model performance и malicious Docker administrator isolation вне контракта и не превращены в blockers.
+
+Две предварительные попытки `canonical-1/2` **не засчитаны** как successful acceptance runs: собственный первый observer оставлял SQLite handles открытыми при параллельной работе Windows host/Linux container. Наблюдались S1 API/host-view KeyError и cleanup WinError32; последнее непосредственно вызвано открытыми reviewer handles. Точный механизм KeyError отдельно не локализован, поэтому эта загрязнённая probe не приписана кандидату. После исправления **только внешнего observer** (explicit closing, чтение после сценариев) unchanged candidate прошёл оба canonical replay с independent SQL, затем ещё два uninstrumented maintained replay; cleanup/resource-preservation GREEN. Неудачные attempts, FAILED markers, SQL/command logs и сохранённые review-owned workspaces оставлены в `runs/canonical-1`, `runs/canonical-2` и коротком root из `logs/short-root.json`. False COMPLETE не было. Первый offline UI extraction probe также остановился на CRLF в собственном extractor до исполнения Home; после in-memory CRLF normalization четыре cases GREEN, source не менялся.
+
+Проверена эта Windows/Docker/Python/Chromium среда и контролируемые late-worker/post-COMMIT checkpoints; не заявлены все ОС/версии, universal crash/race freedom, container recreation durability или malicious same-user/admin isolation. Publication/unknown-metadata faults кроме explicitly real CLI/whole-runner пробы являются безопасной offline fault injection и маркированы соответственно. Общий verified outcome принят по raw SQLite/evidence и checks, не по одному normalized digest или числу зелёных тестов.
+
+Все обязательные M5.2 gates CLOSED в указанном scope, открытых mandatory gates нет. Для accepted checkpoint дополнительное исправление этого exact commit не требуется. Запись checkpoint/tag остаётся отдельным действием; commit/push/merge/rebase/reset/tag/deploy и платные/live API calls в этом review не выполнялись. Начальный/конечный reviewed SHA `38cc3942dbd715681d59bfd893e47643210294a9`, clean; original/implementation/accepted checkout состояния, пользовательские данные и historical artifacts сохранены. [Machine-readable gates](logs/acceptance-gates.json).

@@ -1,0 +1,42 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,40,&H00FFFFFF,&H00FFFFFF,&H00102026,&H00102026,0,0,0,0,100,100,0,0,3,2,0,2,70,70,24,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.35,0:00:04.38,Default,,0,0,0,,This video uses accepted Chromium screenshots, not live footage.
+Dialogue: 0,0:00:04.38,0:00:07.09,Default,,0,0,0,,Everything is synthetic; inference is fake.
+Dialogue: 0,0:00:07.09,0:00:11.49,Default,,0,0,0,,TrustFlow asks: was the action authorized, and did it happen once?
+Dialogue: 0,0:00:12.35,0:00:16.07,Default,,0,0,0,,The Planner proposes. Deterministic policy decides risk.
+Dialogue: 0,0:00:16.07,0:00:20.53,Default,,0,0,0,,Humans approve high-risk actions. Execution preserves operation identity.
+Dialogue: 0,0:00:20.53,0:00:24.50,Default,,0,0,0,,Verification reads ledger evidence. Muse inference remains pending.
+Dialogue: 0,0:00:25.35,0:00:28.50,Default,,0,0,0,,This synthetic five-thousand-dollar transfer pauses.
+Dialogue: 0,0:00:28.50,0:00:32.18,Default,,0,0,0,,The screen shows the plan version, payload and full hash.
+Dialogue: 0,0:00:32.18,0:00:35.04,Default,,0,0,0,,Approval authorizes that exact snapshot.
+Dialogue: 0,0:00:35.04,0:00:39.88,Default,,0,0,0,,Accepted checks reject missing credentials, wrong hashes and replayed\Ndecisions.
+Dialogue: 0,0:00:39.88,0:00:42.44,Default,,0,0,0,,The model cannot grant itself permission.
+Dialogue: 0,0:00:43.35,0:00:46.31,Default,,0,0,0,,After approval, one transaction commits.
+Dialogue: 0,0:00:46.31,0:00:51.06,Default,,0,0,0,,Independent SQLite observations match the authorized operation and conserved\Ntotal.
+Dialogue: 0,0:00:51.06,0:00:54.49,Default,,0,0,0,,A separate concurrent approval test produces one transfer.
+Dialogue: 0,0:00:55.35,0:00:59.02,Default,,0,0,0,,A rejected three-thousand-dollar request creates no transfer.
+Dialogue: 0,0:00:59.02,0:01:02.78,Default,,0,0,0,,Reload preserves rejection; late approval cannot revive it.
+Dialogue: 0,0:01:02.78,0:01:05.48,Default,,0,0,0,,The ledger independently supports the result.
+Dialogue: 0,0:01:06.35,0:01:09.90,Default,,0,0,0,,Controlled fault injection holds a real worker past timeout.
+Dialogue: 0,0:01:09.90,0:01:14.37,Default,,0,0,0,,After that worker commits, reconciliation finds the original transaction.
+Dialogue: 0,0:01:14.37,0:01:17.86,Default,,0,0,0,,An injected fake review failure leaves verification pending.
+Dialogue: 0,0:01:17.86,0:01:21.46,Default,,0,0,0,,Verification-only retry completes without another transfer.
+Dialogue: 0,0:01:22.35,0:01:26.55,Default,,0,0,0,,Now the backend is killed after SQLite commit, before saving success.
+Dialogue: 0,0:01:26.55,0:01:31.72,Default,,0,0,0,,Signal nine interrupts the process. The same container restarts into\Nverification pending.
+Dialogue: 0,0:01:31.72,0:01:36.62,Default,,0,0,0,,Verification-only retry preserves the original transaction, approval hash\Nand snapshot.
+Dialogue: 0,0:01:36.62,0:01:40.47,Default,,0,0,0,,This demonstrates a controlled checkpoint, not every storage failure.
+Dialogue: 0,0:01:41.35,0:01:46.10,Default,,0,0,0,,Missing mandatory policy evidence fails closed before tools run.
+Dialogue: 0,0:01:46.10,0:01:50.49,Default,,0,0,0,,This is a local retrieval check, with no ledger mutation.
+Dialogue: 0,0:01:51.35,0:01:54.62,Default,,0,0,0,,One command repeats six scenarios and publishes evidence.
+Dialogue: 0,0:01:54.62,0:01:57.04,Default,,0,0,0,,Accepted results are fake-mode checks.
+Dialogue: 0,0:01:57.04,0:01:59.49,Default,,0,0,0,,Live Muse evaluation remains pending.

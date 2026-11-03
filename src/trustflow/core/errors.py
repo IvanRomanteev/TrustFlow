@@ -62,9 +62,36 @@ class TokenBudgetExceededError(TrustFlowError):
     """Raised when a workflow exceeds its application-inference token budget."""
 
 
+class LiveBudgetExceededError(LLMResponseError):
+    """A process/session HTTP or estimated-cost limit blocked a request."""
+
+
 class ConflictingOperationError(TrustFlowError):
     """Raised when an operation identity is reused with different arguments."""
 
 
 class IntentConflictError(TrustFlowError):
     """Raised when a revision changes a committed intent or is ambiguous."""
+
+
+class ConcurrentUpdateError(TrustFlowError):
+    """Raised when a persisted run changed since it was loaded (M3).
+
+    Optimistic-concurrency backstop that keeps hash-bound approvals
+    single-use across processes; the API maps it to HTTP 409.
+    """
+
+
+class EvidenceValidationError(TrustFlowError):
+    """Typed mandatory-evidence failure (M2, docs/m2.md).
+
+    Carries stable span/retrieval codes. In mandatory mode this never
+    degrades to silently absent evidence: before a commit it fails the
+    run before mutation; after a commit the engine routes it into
+    bounded verification-only recovery.
+    """
+
+    def __init__(self, codes: list[str]) -> None:
+        self.codes = list(codes)
+        super().__init__(
+            "Evidence validation failed: " + ",".join(sorted(set(self.codes))))

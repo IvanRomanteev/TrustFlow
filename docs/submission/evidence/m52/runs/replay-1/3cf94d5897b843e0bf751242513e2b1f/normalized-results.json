@@ -1,0 +1,550 @@
+{
+  "balances": {
+    "acc_alice": 13475.0,
+    "acc_bob": 12725.0,
+    "acc_ops": 10000.0
+  },
+  "browser_assertions": [
+    {
+      "name": "no_unexpected_browser_page_or_network_errors",
+      "passed": true
+    },
+    {
+      "name": "real_chromium_frontend_connected_to_fake_sqlite_backend",
+      "passed": true
+    },
+    {
+      "name": "ui_approve",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:AWAITING_APPROVAL",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:COMPLETED",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:EXECUTION_UNCERTAIN",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:FAILED",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:REJECTED",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:VERIFICATION_PENDING",
+      "passed": true
+    },
+    {
+      "name": "ui_create:Check balance",
+      "passed": true
+    },
+    {
+      "name": "ui_create:Transfer 1500 concurrently",
+      "passed": true
+    },
+    {
+      "name": "ui_create:Transfer 25 with a held worker",
+      "passed": true
+    },
+    {
+      "name": "ui_create:Transfer 3000 rejected",
+      "passed": true
+    },
+    {
+      "name": "ui_create:Transfer 5000",
+      "passed": true
+    },
+    {
+      "name": "ui_create:Transfer 5000 at a crash checkpoint",
+      "passed": true
+    },
+    {
+      "name": "ui_create:zzqqxxyy wwkknn",
+      "passed": true
+    },
+    {
+      "name": "ui_high_risk_exact_plan_hash_inspection",
+      "passed": true
+    },
+    {
+      "name": "ui_reconcile",
+      "passed": true
+    },
+    {
+      "name": "ui_reject",
+      "passed": true
+    },
+    {
+      "name": "ui_reload_authoritative_persisted_state",
+      "passed": true
+    },
+    {
+      "name": "ui_run_selection",
+      "passed": true
+    },
+    {
+      "name": "ui_verify-retry",
+      "passed": true
+    }
+  ],
+  "cleanup_passed": true,
+  "preservation_passed": true,
+  "runs": [
+    {
+      "approval_count": 0,
+      "audit_actions": {
+        "execution_finished": 1,
+        "plan_created": 1,
+        "retrieval_attached": 1,
+        "verification_finished": 1,
+        "workflow_created": 1
+      },
+      "checks": [
+        {
+          "name": "all_steps_succeeded",
+          "passed": true
+        },
+        {
+          "name": "no_failed_steps",
+          "passed": true
+        },
+        {
+          "name": "ledger_conservation",
+          "passed": true
+        }
+      ],
+      "semantic_attempts": 1,
+      "status": "COMPLETED",
+      "title": "Check balance"
+    },
+    {
+      "approval_count": 1,
+      "audit_actions": {
+        "approval_granted": 1,
+        "approval_required": 1,
+        "execution_finished": 1,
+        "execution_resumed": 1,
+        "plan_created": 1,
+        "retrieval_attached": 1,
+        "verification_finished": 1,
+        "workflow_created": 1
+      },
+      "checks": [
+        {
+          "name": "all_steps_succeeded",
+          "passed": true
+        },
+        {
+          "name": "no_failed_steps",
+          "passed": true
+        },
+        {
+          "name": "ledger_conservation",
+          "passed": true
+        },
+        {
+          "name": "transfer_ledger_match:v1-step-2",
+          "passed": true
+        },
+        {
+          "name": "intent_coverage:<intent>",
+          "passed": true
+        }
+      ],
+      "semantic_attempts": 1,
+      "status": "COMPLETED",
+      "title": "Transfer 1500 concurrently"
+    },
+    {
+      "approval_count": 0,
+      "audit_actions": {
+        "execution_finished": 1,
+        "plan_created": 1,
+        "retrieval_attached": 1,
+        "verification_finished": 2,
+        "workflow_created": 1
+      },
+      "checks": [
+        {
+          "name": "all_steps_succeeded",
+          "passed": true
+        },
+        {
+          "name": "no_failed_steps",
+          "passed": true
+        },
+        {
+          "name": "ledger_conservation",
+          "passed": true
+        },
+        {
+          "name": "transfer_ledger_match:v1-step-2",
+          "passed": true
+        },
+        {
+          "name": "intent_coverage:<intent>",
+          "passed": true
+        }
+      ],
+      "semantic_attempts": 2,
+      "status": "COMPLETED",
+      "title": "Transfer 25 with a held worker"
+    },
+    {
+      "approval_count": 1,
+      "audit_actions": {
+        "approval_rejected": 1,
+        "approval_required": 1,
+        "plan_created": 1,
+        "retrieval_attached": 1,
+        "workflow_created": 1
+      },
+      "checks": [],
+      "semantic_attempts": 0,
+      "status": "REJECTED",
+      "title": "Transfer 3000 rejected"
+    },
+    {
+      "approval_count": 1,
+      "audit_actions": {
+        "approval_granted": 1,
+        "approval_required": 1,
+        "execution_finished": 1,
+        "execution_resumed": 1,
+        "plan_created": 1,
+        "retrieval_attached": 1,
+        "verification_finished": 1,
+        "workflow_created": 1
+      },
+      "checks": [
+        {
+          "name": "all_steps_succeeded",
+          "passed": true
+        },
+        {
+          "name": "no_failed_steps",
+          "passed": true
+        },
+        {
+          "name": "ledger_conservation",
+          "passed": true
+        },
+        {
+          "name": "transfer_ledger_match:v1-step-2",
+          "passed": true
+        },
+        {
+          "name": "intent_coverage:<intent>",
+          "passed": true
+        }
+      ],
+      "semantic_attempts": 1,
+      "status": "COMPLETED",
+      "title": "Transfer 5000"
+    },
+    {
+      "approval_count": 1,
+      "audit_actions": {
+        "approval_granted": 1,
+        "approval_required": 1,
+        "execution_resumed": 1,
+        "plan_created": 1,
+        "restart_recovered": 1,
+        "retrieval_attached": 1,
+        "verification_finished": 1,
+        "workflow_created": 1
+      },
+      "checks": [
+        {
+          "name": "all_steps_succeeded",
+          "passed": true
+        },
+        {
+          "name": "no_failed_steps",
+          "passed": true
+        },
+        {
+          "name": "ledger_conservation",
+          "passed": true
+        },
+        {
+          "name": "transfer_ledger_match:v1-step-2",
+          "passed": true
+        },
+        {
+          "name": "intent_coverage:<intent>",
+          "passed": true
+        }
+      ],
+      "semantic_attempts": 1,
+      "status": "COMPLETED",
+      "title": "Transfer 5000 at a crash checkpoint"
+    },
+    {
+      "approval_count": 0,
+      "audit_actions": {
+        "mandatory_evidence_invalid": 1,
+        "retrieval_attached": 1,
+        "workflow_created": 1
+      },
+      "checks": [],
+      "semantic_attempts": 0,
+      "status": "FAILED",
+      "title": "zzqqxxyy wwkknn"
+    }
+  ],
+  "scenarios": [
+    {
+      "assertions": [
+        {
+          "name": "low_risk_no_approval_completed",
+          "passed": true
+        },
+        {
+          "name": "deterministic_and_semantic_verified",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "no_transfer_balances_unchanged",
+          "passed": true
+        }
+      ],
+      "concurrent_statuses": null,
+      "id": "S1",
+      "verdict": "PASS"
+    },
+    {
+      "assertions": [
+        {
+          "name": "high_risk_awaits_exact_hash",
+          "passed": true
+        },
+        {
+          "name": "missing_token_401",
+          "passed": true
+        },
+        {
+          "name": "incorrect_token_403",
+          "passed": true
+        },
+        {
+          "name": "wrong_or_stale_hash_409",
+          "passed": true
+        },
+        {
+          "name": "invalid_decisions_never_mutate",
+          "passed": true
+        },
+        {
+          "name": "ui_correct_approval_verified",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "exactly_one_5000_transfer_approved_hash",
+          "passed": true
+        },
+        {
+          "name": "duplicate_approval_409_no_transfer",
+          "passed": true
+        },
+        {
+          "name": "concurrent_valid_decisions_one_winner",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "concurrent_one_decision_one_transfer",
+          "passed": true
+        }
+      ],
+      "concurrent_statuses": [
+        200,
+        409
+      ],
+      "id": "S2",
+      "verdict": "PASS"
+    },
+    {
+      "assertions": [
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "durable_rejected_no_successful_approval",
+          "passed": true
+        },
+        {
+          "name": "rejection_zero_transfer_unchanged_balances",
+          "passed": true
+        },
+        {
+          "name": "later_approval_409_no_transfer",
+          "passed": true
+        }
+      ],
+      "concurrent_statuses": null,
+      "id": "S3",
+      "verdict": "PASS"
+    },
+    {
+      "assertions": [
+        {
+          "name": "real_timeout_execution_uncertain",
+          "passed": true
+        },
+        {
+          "name": "held_worker_no_commit_yet",
+          "passed": true
+        },
+        {
+          "name": "live_worker_reconcile_fails_closed",
+          "passed": true
+        },
+        {
+          "name": "ledger_reconcile_to_verification_pending",
+          "passed": true
+        },
+        {
+          "name": "verification_only_retry_completed",
+          "passed": true
+        },
+        {
+          "name": "concurrent_terminal_recovery_idempotent",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "recovery_no_mutating_invocation_or_duplicate",
+          "passed": true
+        }
+      ],
+      "concurrent_statuses": null,
+      "id": "S4",
+      "verdict": "PASS"
+    },
+    {
+      "assertions": [
+        {
+          "name": "real_mandatory_retrieval_missing_failed",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "missing_evidence_reason_in_audit",
+          "passed": true
+        },
+        {
+          "name": "missing_evidence_blocks_all_tools_and_transfers",
+          "passed": true
+        }
+      ],
+      "concurrent_statuses": null,
+      "id": "S5",
+      "verdict": "PASS"
+    },
+    {
+      "assertions": [
+        {
+          "name": "actual_commit_before_step_result_persisted",
+          "passed": true
+        },
+        {
+          "name": "restart_bound_hash_and_no_reexecution",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "crash_recovery_verified_same_transaction_ids",
+          "passed": true
+        },
+        {
+          "name": "api_audit_sqlite_consistent",
+          "passed": true
+        },
+        {
+          "name": "graceful_restart_preserves_all_tx_and_approvals",
+          "passed": true
+        }
+      ],
+      "concurrent_statuses": null,
+      "id": "S6",
+      "verdict": "PASS"
+    }
+  ],
+  "schema_version": 1,
+  "screenshots": [
+    "screenshots/S1-low-risk-verified.png",
+    "screenshots/S2-approved-verified.png",
+    "screenshots/S2-authoritative-refresh.png",
+    "screenshots/S2-awaiting-exact-hash.png",
+    "screenshots/S2-concurrent-one-winner.png",
+    "screenshots/S3-rejected-authoritative.png",
+    "screenshots/S4-recovered-no-duplicate.png",
+    "screenshots/S4-uncertain-fault-injected.png",
+    "screenshots/S4-verification-pending.png",
+    "screenshots/S5-missing-mandatory-evidence.png",
+    "screenshots/S6-after-graceful-restart.png",
+    "screenshots/S6-after-sigkill-recovered-pending.png",
+    "screenshots/S6-before-crash-approval.png",
+    "screenshots/S6-durable-ui-reload.png"
+  ],
+  "total": 36200.0,
+  "transfers": [
+    {
+      "amount": 5000.0,
+      "currency": "USD",
+      "from_account": "acc_alice",
+      "to_account": "acc_bob",
+      "tx_id": "tx_0001"
+    },
+    {
+      "amount": 1500.0,
+      "currency": "USD",
+      "from_account": "acc_alice",
+      "to_account": "acc_bob",
+      "tx_id": "tx_0002"
+    },
+    {
+      "amount": 25.0,
+      "currency": "USD",
+      "from_account": "acc_alice",
+      "to_account": "acc_bob",
+      "tx_id": "tx_0003"
+    },
+    {
+      "amount": 5000.0,
+      "currency": "USD",
+      "from_account": "acc_alice",
+      "to_account": "acc_bob",
+      "tx_id": "tx_0004"
+    }
+  ]
+}

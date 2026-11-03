@@ -1,0 +1,23 @@
+{
+  "failures": [
+    [
+      "workspace-cleanup",
+      null,
+      "docker container ls -a -q --no-trunc",
+      "container_id=None: AssertionError: ('unexpected Docker boundary', ['docker', 'container', 'ls', '-a', '-q', '--no-trunc'])"
+    ]
+  ],
+  "commands": [
+    [
+      "docker",
+      "container",
+      "ls",
+      "-a",
+      "-q",
+      "--no-trunc"
+    ]
+  ],
+  "db_sha256": "d1a5e73815deddbb45aa188382d7c0c5343445da2e87a90e2488ab5cd9cdebcf",
+  "db_preserved": true,
+  "path": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\failure-probes\\unknown-storage\\ws-bb324bf64d42402e94c96ac25e43c5ba\\data\\trustflow.db"
+}

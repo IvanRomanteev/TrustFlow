@@ -1,0 +1,31 @@
+# TrustFlow demo (M3): one command — docker compose up --build
+# Then open http://127.0.0.1:3000 in a browser (SANDBOX, synthetic only).
+# Approval token for the demo UI: demo-approval-token (panel 3).
+# WARNING: this token is a public demo value for local use only.
+# Never reuse it (or this Compose file unchanged) in a public deployment;
+# set TRUSTFLOW_APPROVAL_TOKEN from a secret source instead.
+# Both services publish on IPv4 loopback only (P1-01): the demo is a
+# trusted local-only boundary, not a network service. This does not
+# isolate against untrusted local processes or Docker daemon access.
+services:
+  backend:
+    build: .
+    environment:
+      TRUSTFLOW_LLM_MODE: "fake"
+      TRUSTFLOW_DB_PATH: "/data/trustflow.db"
+      TRUSTFLOW_APPROVAL_TOKEN: "demo-approval-token"
+    volumes:
+      - tf-data:/data
+    ports:
+      - "127.0.0.1:8000:8000"
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: "http://127.0.0.1:8000"
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - backend
+volumes:
+  tf-data:

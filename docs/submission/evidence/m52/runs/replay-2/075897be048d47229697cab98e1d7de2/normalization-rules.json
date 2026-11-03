@@ -1,0 +1,11 @@
+[
+  "Compare only the versioned projection in normalized-results.json, never raw artifacts.",
+  "Exclude invocation/project/container/image identities, paths, ports, UUIDs and timestamps.",
+  "Exclude raw plan hashes (operation identities are random); recompute/bind them per run.",
+  "Exclude audit payload hashes and evidence snapshot IDs; validate them independently per run.",
+  "Retain scenario IDs/verdicts and each assertion name/outcome, final workflow statuses,",
+  "transfer payloads/tx_id order, balances, audit action counts, verification check outcomes,",
+  "browser assertion names, screenshot filenames and resource preservation/cleanup verdicts.",
+  "Map dynamic intent check suffixes to :<intent>; aggregate counts, preserving multiplicity.",
+  "Exclude concurrent winner identity/event order; retain the exact HTTP status multiset."
+]

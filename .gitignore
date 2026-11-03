@@ -5,6 +5,14 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .env
+*.db
+*.db-wal
+*.db-shm
+data/
+artifacts/
+frontend/node_modules/
+frontend/.next/
+frontend/.npm-cache/
 *.egg-info/
 dist/
 build/

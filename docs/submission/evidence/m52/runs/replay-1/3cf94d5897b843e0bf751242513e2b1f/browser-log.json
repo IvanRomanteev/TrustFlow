@@ -1,0 +1,1934 @@
+{
+  "assertions": [
+    {
+      "name": "real_chromium_frontend_connected_to_fake_sqlite_backend",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:COMPLETED",
+      "passed": true
+    },
+    {
+      "name": "ui_create:Check balance",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:AWAITING_APPROVAL",
+      "passed": true
+    },
+    {
+      "name": "ui_create:Transfer 5000",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:AWAITING_APPROVAL",
+      "passed": true
+    },
+    {
+      "name": "ui_high_risk_exact_plan_hash_inspection",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:AWAITING_APPROVAL",
+      "passed": true
+    },
+    {
+      "name": "ui_run_selection",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:COMPLETED",
+      "passed": true
+    },
+    {
+      "name": "ui_approve",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:COMPLETED",
+      "passed": true
+    },
+    {
+      "name": "ui_reload_authoritative_persisted_state",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:AWAITING_APPROVAL",
+      "passed": true
+    },
+    {
+      "name": "ui_create:Transfer 1500 concurrently",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:COMPLETED",
+      "passed": true
+    },
+    {
+      "name": "ui_reload_authoritative_persisted_state",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:AWAITING_APPROVAL",
+      "passed": true
+    },
+    {
+      "name": "ui_create:Transfer 3000 rejected",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:AWAITING_APPROVAL",
+      "passed": true
+    },
+    {
+      "name": "ui_high_risk_exact_plan_hash_inspection",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:AWAITING_APPROVAL",
+      "passed": true
+    },
+    {
+      "name": "ui_run_selection",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:REJECTED",
+      "passed": true
+    },
+    {
+      "name": "ui_reject",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:REJECTED",
+      "passed": true
+    },
+    {
+      "name": "ui_reload_authoritative_persisted_state",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:EXECUTION_UNCERTAIN",
+      "passed": true
+    },
+    {
+      "name": "ui_create:Transfer 25 with a held worker",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:EXECUTION_UNCERTAIN",
+      "passed": true
+    },
+    {
+      "name": "ui_run_selection",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:EXECUTION_UNCERTAIN",
+      "passed": true
+    },
+    {
+      "name": "ui_reconcile",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:EXECUTION_UNCERTAIN",
+      "passed": true
+    },
+    {
+      "name": "ui_run_selection",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:VERIFICATION_PENDING",
+      "passed": true
+    },
+    {
+      "name": "ui_reconcile",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:VERIFICATION_PENDING",
+      "passed": true
+    },
+    {
+      "name": "ui_run_selection",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:COMPLETED",
+      "passed": true
+    },
+    {
+      "name": "ui_verify-retry",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:COMPLETED",
+      "passed": true
+    },
+    {
+      "name": "ui_reload_authoritative_persisted_state",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:FAILED",
+      "passed": true
+    },
+    {
+      "name": "ui_create:zzqqxxyy wwkknn",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:AWAITING_APPROVAL",
+      "passed": true
+    },
+    {
+      "name": "ui_create:Transfer 5000 at a crash checkpoint",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:AWAITING_APPROVAL",
+      "passed": true
+    },
+    {
+      "name": "ui_high_risk_exact_plan_hash_inspection",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:VERIFICATION_PENDING",
+      "passed": true
+    },
+    {
+      "name": "ui_reload_authoritative_persisted_state",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:VERIFICATION_PENDING",
+      "passed": true
+    },
+    {
+      "name": "ui_run_selection",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:COMPLETED",
+      "passed": true
+    },
+    {
+      "name": "ui_verify-retry",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:COMPLETED",
+      "passed": true
+    },
+    {
+      "name": "ui_reload_authoritative_persisted_state",
+      "passed": true
+    },
+    {
+      "name": "ui_authoritative_status_audit_verification:COMPLETED",
+      "passed": true
+    },
+    {
+      "name": "ui_reload_authoritative_persisted_state",
+      "passed": true
+    },
+    {
+      "name": "no_unexpected_browser_page_or_network_errors",
+      "passed": true
+    }
+  ],
+  "chromium_version": "145.0.7632.6",
+  "events": [
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/css/bfb6f4035c5d48b3.css"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/webpack-db0a529a99835594.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/main-app-f38f0d9153b95312.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/app/page-3bd63de47b637877.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/684-0b45fc6eb6472010.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/4bd1b696-edd73b72b9809ea9.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "POST",
+      "status": 201,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/4d0be702-c761-4ce1-8c5e-51e8bfbe2b32"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/4d0be702-c761-4ce1-8c5e-51e8bfbe2b32/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/4d0be702-c761-4ce1-8c5e-51e8bfbe2b32",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/4d0be702-c761-4ce1-8c5e-51e8bfbe2b32/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "POST",
+      "status": 201,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1/audit",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1/audit"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "POST",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1/approve"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/css/bfb6f4035c5d48b3.css"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/webpack-db0a529a99835594.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/4bd1b696-edd73b72b9809ea9.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/684-0b45fc6eb6472010.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/main-app-f38f0d9153b95312.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/app/page-3bd63de47b637877.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/65d2d0fc-4fad-4394-9d0c-d5df9f6a8bc1/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "POST",
+      "status": 201,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/7eb716df-c4c1-4392-9ca7-0b943bff895a"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/7eb716df-c4c1-4392-9ca7-0b943bff895a/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/7eb716df-c4c1-4392-9ca7-0b943bff895a",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/7eb716df-c4c1-4392-9ca7-0b943bff895a/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/css/bfb6f4035c5d48b3.css"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/webpack-db0a529a99835594.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/4bd1b696-edd73b72b9809ea9.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/684-0b45fc6eb6472010.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/main-app-f38f0d9153b95312.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/app/page-3bd63de47b637877.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/7eb716df-c4c1-4392-9ca7-0b943bff895a"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/7eb716df-c4c1-4392-9ca7-0b943bff895a/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/7eb716df-c4c1-4392-9ca7-0b943bff895a",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/7eb716df-c4c1-4392-9ca7-0b943bff895a/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "POST",
+      "status": 201,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214/audit",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "POST",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214/reject"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/css/bfb6f4035c5d48b3.css"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/webpack-db0a529a99835594.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/4bd1b696-edd73b72b9809ea9.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/684-0b45fc6eb6472010.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/main-app-f38f0d9153b95312.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/app/page-3bd63de47b637877.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214/audit"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/6a411366-7161-4a9f-bb69-0e0d36a9d214/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "POST",
+      "status": 201,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "POST",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891/reconcile"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "POST",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891/reconcile"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "POST",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891/verify-retry"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/css/bfb6f4035c5d48b3.css"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/webpack-db0a529a99835594.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/4bd1b696-edd73b72b9809ea9.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/684-0b45fc6eb6472010.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/main-app-f38f0d9153b95312.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/app/page-3bd63de47b637877.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/82436269-0294-4e85-b6fe-956e3602d891/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "POST",
+      "status": 201,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/d3e29293-d801-4ee3-bc03-4b64d48130cc"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/d3e29293-d801-4ee3-bc03-4b64d48130cc/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/d3e29293-d801-4ee3-bc03-4b64d48130cc",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/d3e29293-d801-4ee3-bc03-4b64d48130cc/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "POST",
+      "status": 201,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit",
+      "status": 200
+    },
+    {
+      "kind": "backend_interruption_begin"
+    },
+    {
+      "expected": true,
+      "failure": "net::ERR_EMPTY_RESPONSE",
+      "kind": "requestfailed",
+      "method": "GET",
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "kind": "console",
+      "level": "error",
+      "text": "Failed to load resource: net::ERR_EMPTY_RESPONSE"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/css/bfb6f4035c5d48b3.css"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/webpack-db0a529a99835594.js"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/4bd1b696-edd73b72b9809ea9.js"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/684-0b45fc6eb6472010.js"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/main-app-f38f0d9153b95312.js"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/app/page-3bd63de47b637877.js"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit",
+      "status": 200
+    },
+    {
+      "kind": "backend_interruption_end"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "POST",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/verify-retry"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit",
+      "status": 200
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/css/bfb6f4035c5d48b3.css"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/webpack-db0a529a99835594.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/4bd1b696-edd73b72b9809ea9.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/684-0b45fc6eb6472010.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/main-app-f38f0d9153b95312.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/app/page-3bd63de47b637877.js"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866"
+    },
+    {
+      "expected": false,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit",
+      "status": 200
+    },
+    {
+      "kind": "backend_interruption_begin"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/css/bfb6f4035c5d48b3.css"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/webpack-db0a529a99835594.js"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/4bd1b696-edd73b72b9809ea9.js"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/684-0b45fc6eb6472010.js"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/main-app-f38f0d9153b95312.js"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52548/_next/static/chunks/app/page-3bd63de47b637877.js"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/health"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit"
+    },
+    {
+      "expected": true,
+      "kind": "response",
+      "method": "GET",
+      "status": 200,
+      "url": "http://127.0.0.1:52547/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866"
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866",
+      "status": 200
+    },
+    {
+      "kind": "authoritative_get",
+      "path": "/workflows/c7a311e0-fcee-43c4-a5d0-dd044ed70866/audit",
+      "status": 200
+    },
+    {
+      "kind": "backend_interruption_end"
+    }
+  ],
+  "screenshots": [
+    "screenshots/S1-low-risk-verified.png",
+    "screenshots/S2-awaiting-exact-hash.png",
+    "screenshots/S2-approved-verified.png",
+    "screenshots/S2-authoritative-refresh.png",
+    "screenshots/S2-concurrent-one-winner.png",
+    "screenshots/S3-rejected-authoritative.png",
+    "screenshots/S4-uncertain-fault-injected.png",
+    "screenshots/S4-verification-pending.png",
+    "screenshots/S4-recovered-no-duplicate.png",
+    "screenshots/S5-missing-mandatory-evidence.png",
+    "screenshots/S6-before-crash-approval.png",
+    "screenshots/S6-after-sigkill-recovered-pending.png",
+    "screenshots/S6-durable-ui-reload.png",
+    "screenshots/S6-after-graceful-restart.png"
+  ]
+}

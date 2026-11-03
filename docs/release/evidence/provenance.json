@@ -1,0 +1,31 @@
+{
+  "files": [
+    {
+      "path": "M53-OWNER-DECISION.original.txt",
+      "source_label": "m53-evidence-recovery/OWNER-DECISION.md",
+      "sha256": "ae3eeabc03bd67ea8c1dcc9e1b2e582c843c6293760deb2b0c0861ea981ff207",
+      "bytes": 6473,
+      "byte_exact_copy": true
+    },
+    {
+      "path": "M53-ACCEPTANCE-ADDENDUM.original.txt",
+      "source_label": "m53-evidence-recovery/ACCEPTANCE-ADDENDUM.md",
+      "sha256": "71b22e11234e5b1b9d70dac062c80a331e1511425ffa0a5b0fd423d4192ebbaf",
+      "bytes": 12507,
+      "byte_exact_copy": true
+    },
+    {
+      "path": "M53-REVIEW.original.txt",
+      "source_label": "review-m53-53394d4-final/REVIEW/.md",
+      "sha256": "04b600e6451ee48010f5f6b80d6b36885ad0014dfb70bb9dc2fe695aa0581c4e",
+      "bytes": 27084,
+      "byte_exact_copy": true
+    },
+    {
+      "path": "spark-planning.json",
+      "sha256": "9e972ad37d8d198f36275840299add79fb697516ea0dee6371234b4b0b39cbe5",
+      "byte_exact_copy": false,
+      "source_sha256": "e6727630ca5dd423efdb8bc43bd94d18a144c3e56e5a09bb2cbda0ca95f220ea"
+    }
+  ]
+}

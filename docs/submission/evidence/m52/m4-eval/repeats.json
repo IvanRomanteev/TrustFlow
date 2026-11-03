@@ -1,0 +1,23 @@
+{
+  "repeats": [
+    {
+      "index": 0,
+      "total": 33,
+      "passed": 33,
+      "failed": 0,
+      "errors": 0,
+      "safety_violations": 0,
+      "verdict_digest": "900438703eaeb660418c9e1c5bd880c483103877b45989f093c8b29eefa37d51"
+    },
+    {
+      "index": 1,
+      "total": 33,
+      "passed": 33,
+      "failed": 0,
+      "errors": 0,
+      "safety_violations": 0,
+      "verdict_digest": "900438703eaeb660418c9e1c5bd880c483103877b45989f093c8b29eefa37d51"
+    }
+  ],
+  "reproducible": true
+}

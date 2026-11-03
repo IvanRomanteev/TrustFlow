@@ -1,0 +1,198 @@
+[
+  {
+    "assertions": [
+      {
+        "name": "low_risk_no_approval_completed",
+        "passed": true
+      },
+      {
+        "name": "deterministic_and_semantic_verified",
+        "passed": true
+      },
+      {
+        "name": "api_audit_sqlite_consistent",
+        "passed": true
+      },
+      {
+        "name": "no_transfer_balances_unchanged",
+        "passed": true
+      }
+    ],
+    "id": "S1",
+    "verdict": "PASS"
+  },
+  {
+    "assertions": [
+      {
+        "name": "high_risk_awaits_exact_hash",
+        "passed": true
+      },
+      {
+        "name": "missing_token_401",
+        "passed": true
+      },
+      {
+        "name": "incorrect_token_403",
+        "passed": true
+      },
+      {
+        "name": "wrong_or_stale_hash_409",
+        "passed": true
+      },
+      {
+        "name": "invalid_decisions_never_mutate",
+        "passed": true
+      },
+      {
+        "name": "ui_correct_approval_verified",
+        "passed": true
+      },
+      {
+        "name": "api_audit_sqlite_consistent",
+        "passed": true
+      },
+      {
+        "name": "exactly_one_5000_transfer_approved_hash",
+        "passed": true
+      },
+      {
+        "name": "duplicate_approval_409_no_transfer",
+        "passed": true
+      },
+      {
+        "name": "concurrent_valid_decisions_one_winner",
+        "passed": true
+      },
+      {
+        "name": "api_audit_sqlite_consistent",
+        "passed": true
+      },
+      {
+        "name": "concurrent_one_decision_one_transfer",
+        "passed": true
+      }
+    ],
+    "concurrent_statuses": [
+      200,
+      409
+    ],
+    "id": "S2",
+    "verdict": "PASS"
+  },
+  {
+    "assertions": [
+      {
+        "name": "api_audit_sqlite_consistent",
+        "passed": true
+      },
+      {
+        "name": "durable_rejected_no_successful_approval",
+        "passed": true
+      },
+      {
+        "name": "rejection_zero_transfer_unchanged_balances",
+        "passed": true
+      },
+      {
+        "name": "later_approval_409_no_transfer",
+        "passed": true
+      }
+    ],
+    "id": "S3",
+    "verdict": "PASS"
+  },
+  {
+    "assertions": [
+      {
+        "name": "real_timeout_execution_uncertain",
+        "passed": true
+      },
+      {
+        "name": "held_worker_no_commit_yet",
+        "passed": true
+      },
+      {
+        "name": "live_worker_reconcile_fails_closed",
+        "passed": true
+      },
+      {
+        "name": "ledger_reconcile_to_verification_pending",
+        "passed": true
+      },
+      {
+        "name": "verification_only_retry_completed",
+        "passed": true
+      },
+      {
+        "name": "concurrent_terminal_recovery_idempotent",
+        "passed": true
+      },
+      {
+        "name": "api_audit_sqlite_consistent",
+        "passed": true
+      },
+      {
+        "name": "recovery_no_mutating_invocation_or_duplicate",
+        "passed": true
+      }
+    ],
+    "fault_injected": true,
+    "id": "S4",
+    "verdict": "PASS"
+  },
+  {
+    "assertions": [
+      {
+        "name": "real_mandatory_retrieval_missing_failed",
+        "passed": true
+      },
+      {
+        "name": "api_audit_sqlite_consistent",
+        "passed": true
+      },
+      {
+        "name": "missing_evidence_reason_in_audit",
+        "passed": true
+      },
+      {
+        "name": "missing_evidence_blocks_all_tools_and_transfers",
+        "passed": true
+      }
+    ],
+    "id": "S5",
+    "verdict": "PASS"
+  },
+  {
+    "assertions": [
+      {
+        "name": "actual_commit_before_step_result_persisted",
+        "passed": true
+      },
+      {
+        "name": "restart_bound_hash_and_no_reexecution",
+        "passed": true
+      },
+      {
+        "name": "api_audit_sqlite_consistent",
+        "passed": true
+      },
+      {
+        "name": "crash_recovery_verified_same_transaction_ids",
+        "passed": true
+      },
+      {
+        "name": "api_audit_sqlite_consistent",
+        "passed": true
+      },
+      {
+        "name": "graceful_restart_preserves_all_tx_and_approvals",
+        "passed": true
+      }
+    ],
+    "fault_injected": true,
+    "id": "S6",
+    "interrupted_request": "RemoteProtocolError",
+    "interruption": "actual owned-container SIGKILL after SQLite COMMIT",
+    "verdict": "PASS"
+  }
+]

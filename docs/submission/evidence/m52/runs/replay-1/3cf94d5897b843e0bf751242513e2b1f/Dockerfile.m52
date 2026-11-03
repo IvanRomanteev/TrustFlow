@@ -1,0 +1,9 @@
+# Test-only image: keep the fault entrypoint inside the build context.
+FROM python:3.12-slim
+WORKDIR /app
+COPY pyproject.toml README.md ./
+COPY src ./src
+RUN pip install --no-cache-dir .
+COPY scripts/m52 /app/demo
+EXPOSE 8000
+CMD ["uvicorn", "demo.fault_backend:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]

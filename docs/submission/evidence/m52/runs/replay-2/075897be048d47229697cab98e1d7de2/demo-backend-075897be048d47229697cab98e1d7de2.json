@@ -1,0 +1,21 @@
+{
+  "services": {
+    "backend": {
+      "build": {
+        "dockerfile": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate\\scripts\\m52\\Dockerfile"
+      },
+      "command": [
+        "uvicorn",
+        "demo.fault_backend:create_app",
+        "--factory",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000"
+      ],
+      "environment": {
+        "TRUSTFLOW_M52_RUN_ID": "075897be048d47229697cab98e1d7de2"
+      }
+    }
+  }
+}

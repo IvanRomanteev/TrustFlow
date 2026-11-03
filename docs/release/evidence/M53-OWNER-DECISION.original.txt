@@ -1,0 +1,47 @@
+# TrustFlow M5.3 — OWNER DECISION
+
+Решение: **APPROVE — M53-E1-EXCEPTION-01**.
+
+Автор решения: владелец проекта TrustFlow, GitHub **IvanRomanteev**, как указано в его явном сообщении в этой беседе. Источник полномочия — сообщение владельца; этот документ фиксирует его решение, а не заменяет его решением ревьюера.
+
+Фактическая дата фиксации: **2026-11-03**, **2026-11-03T23:44:41+05:00**, Asia/Qyzylorda; UTC **2026-11-03T18:44:41+00:00**. Это время создания записи, а не приписанное владельцу время цифровой подписи.
+
+| Привязка | Точное значение |
+|---|---|
+| Exception ID | `M53-E1-EXCEPTION-01` |
+| Commit | `53394d48c67827abfdffa53407e524af6af92610` |
+| Tree | `177fbbbff704129d19d5bb570789418d8c8fb0e5` |
+| Incident report | [REPORT.md](REPORT.md), E1 — P2, reviewer-induced loss of historical JUnit evidence |
+| REPORT.md SHA-256 из [REPORT.sha256](REPORT.sha256), проверен по текущим байтам | `aa08cc59ac03f05b1d10eafb0d31792025410cadd21d719415b4de77188cbead` |
+| Исходный отчёт об инциденте | [review-m53-53394d4-final/REVIEW/.md](../review-m53-53394d4-final/REVIEW/.md) |
+| Историческое ревью | [review-m53-ef30a68-acceptance/REVIEW/.md](../review-m53-ef30a68-acceptance/REVIEW/.md) |
+
+Явное решение владельца, воспроизведённое из текущего сообщения:
+
+> Я, владелец проекта TrustFlow (GitHub: IvanRomanteev), явно ОДОБРЯЮ исключение M53-E1-EXCEPTION-01.
+> Исключение действует исключительно для offline acceptance кандидата:
+> Commit: 53394d48c67827abfdffa53407e524af6af92610
+> Tree: 177fbbbff704129d19d5bb570789418d8c8fb0e5
+> Я признаю утрату трёх оригинальных исторических JUnit XML из review-m53-ef30a68-acceptance: pytest.xml, docker.xml и m52.xml. Принимаю ограниченный риск неполноты исторической цепочки evidence.
+> Разрешаю закрыть только соответствующее требование historical evidence preservation посредством документированного исключения, опираясь на проверенные сохранившиеся независимые результаты.
+> Это решение не означает, что оригинальные XML восстановлены, что предыдущий BLOCKED был PASS или что исторические доказательства теперь побайтно целостны.
+> Сохрани исторические отчёты, оригинальные ожидаемые SHA-256 и перезаписанные XML без изменений.
+> Создай отдельный OWNER-DECISION.md с моим решением, фактической датой, точным SHA-256 REPORT.md из REPORT.sha256 и ссылкой на инцидент.
+> После этого подготовь отдельный acceptance addendum: PASS WITH APPROVED EVIDENCE-PRESERVATION EXCEPTION.
+> Не запускай платные API-вызовы, не изменяй исходный код, Git refs и пользовательские ресурсы. Не объявляй безусловный FINAL PASS.
+
+Область утверждённого исключения — только требование historical evidence preservation для трёх файлов под `C:\Users\vanya\Projects\TrustFlow-context\review-m53-ef30a68-acceptance\evidence`, только для offline acceptance указанного commit/tree:
+
+| XML | Ожидаемый исходный SHA-256 — сохранён без изменения | SHA-256 перезаписанной версии — проверен без изменения | Состояние оригинала |
+|---|---|---|---|
+| `pytest.xml` | `18c62905ad7c885a466b0499946dc32c5e84fdce562b9ed9908b549a10b24872` | `b02b6bd8b96b8a8430e3886be96dc1945ff9b515db6943386eb7418f0599ef84` | UNRECOVERED |
+| `docker.xml` | `d6a987afa9283a5220584b6c29a2b4f3e8875ca77b3ebb91ce2792db817b6598` | `ace5d092a51f64ebc1e6e1ae296aa840a43c4ac0f598be2a919293c935a25438` | UNRECOVERED |
+| `m52.xml` | `d15ea4767260f3f82db515e55bab46da002fb207f44afb47e21cdbdd2b88a308` | `1057e571d6509f130186505ba7dbb1725a246c53fdeed84ec14bd1c792a37598` | UNRECOVERED |
+
+Владелец явно принял ограниченный риск неполноты исторической цепочки evidence и разрешил закрыть только соответствующее acceptance requirement документированным исключением. Фактическая утрата и неполнота исторической побайтной целостности сохраняются. Ни один XML не восстановлен. Прежние BLOCKED-отчёты, REPORT.md, исходные ожидаемые hashes, перезаписанные XML и их incident-копии не изменены.
+
+Исключение не переносится на другие файлы или кандидаты, live gates, платные API-вызовы, изменение кода, refs, пользовательских ресурсов, публикацию или deployment. Никакого такого разрешения из решения не выводится.
+
+Требуемая следующая запись: отдельный [ACCEPTANCE-ADDENDUM.md](ACCEPTANCE-ADDENDUM.md) с verdict **PASS WITH APPROVED EVIDENCE-PRESERVATION EXCEPTION**. Безусловный FINAL PASS этим решением не разрешён.
+
+Проверки перед фиксацией: [preflight-verification.json](acceptance-addendum-evidence/preflight-verification.json). Документ создаётся отдельно и один раз; исходные evidence manifest и seal не обновляются. Hash этого документа будет записан в отдельном ACCEPTANCE-ADDENDUM-MANIFEST.json.

@@ -1,0 +1,12 @@
+{
+  "exit_code": 1,
+  "false_complete": false,
+  "failed_marker": true,
+  "cleanup_passed": true,
+  "resources_unchanged": true,
+  "earlier_success_preserved": true,
+  "actual_runner_main": true,
+  "real_chromium": true,
+  "real_docker": true,
+  "fault": "runtime-only Demo.s6 wrapper appends deliberate false mandatory assertion after original six scenarios; app/state/ledger not edited"
+}
