@@ -1,5 +1,12 @@
 # M5.3: Meta Muse live readiness
 
+Current release note (2026-11-04): one separately authorized Spark read-only
+planning diagnostic succeeded at `c48c2affd3dda652e00aca9f690404c82182b694`
+with cap4096/low, HTTP 200/completed, 191 input / 974 output tokens, zero tools.
+[Evidence and exact limitations](submission/m53-live-results.md).
+The dated procedure below preserves the earlier diagnosis; no additional paid
+request is authorized by final integration. Full live acceptance/Wonder remain pending.
+
 ## First Spark failure: diagnostic procedure (2026-11-04)
 
 The first live report `artifacts/m53-live/d248e486874d40e1b065452c6c2652ca/report.json`

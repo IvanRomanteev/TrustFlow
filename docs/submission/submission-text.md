@@ -1,48 +1,56 @@
 # Final submission text
 
-Copy-ready English values. Length limits below are the project owner's preparation targets, not verified portal limits. Public-form inspection is documented in [official requirements](official-requirements.md).
+Current release fields. Organizer limits, eligibility and authenticated rules remain unverified. The repository/video URLs are intended publication targets until remote verification succeeds. This package does not submit the entry.
 
 ## Title
 
 TrustFlow: Verifiable Agent Workflows
 
-## Short summary
+## Summary
 
-TrustFlow turns natural-language tasks into inspectable synthetic workflows. Deterministic policy, hash-bound approvals, stable payment intents and ledger-grounded verification help prevent unauthorized or duplicate actions through timeouts and controlled crashes. The demo uses independently accepted fake-mode M5.2 evidence; live Meta Muse results remain pending.
+TrustFlow makes agent proposals inspectable through deterministic policy, hash-bound approvals, stable payment identities and independent ledger verification. Built with Meta Muse Code; powered through a typed Meta Responses API boundary. The demo shows accepted fake-mode crash recovery. One real Spark read-only planning request is verified; full live acceptance and Wonder remain pending. Synthetic funds only.
 
 ## Full description
 
-An agent can say a payment succeeded without establishing whether the exact action was authorized, whether it happened once, or what a timeout means. Retrying can be dangerous when a worker commits after its caller stops waiting.
+An agent can claim a payment succeeded without establishing whether the exact action was authorized or whether a timeout hid a late commit. Blindly retrying can create a second payment.
 
-TrustFlow explores this problem in a local financial sandbox with synthetic accounts and funds. A Planner proposes typed steps; a deterministic PolicyEngine decides risk. High-risk actions pause for a human decision bound to the plan version, payload and full SHA-256 hash. Approval freezes an isolated snapshot and authorizes its payment intents.
+TrustFlow explores this problem with synthetic accounts and funds. A Planner proposes typed steps; deterministic PolicyEngine classifies risk. High-risk actions require a single-use human decision bound to the plan version and SHA-256 hash. Approval freezes the exact snapshot and authorizes its payment intents.
 
-The Executor checks authorized payloads at the mutation boundary and uses stable operation identities as idempotency keys. SQLite atomically checks the key, changes balances and records the transaction. Verification independently reads ledger rows, matches authorized operations, checks intent coverage and confirms conservation. A semantic PASS cannot override deterministic failure.
+The Executor checks authorized payloads and stable operation identities at the mutation boundary. SQLite atomically checks an idempotency key, updates balances and records the transaction. Verification reads ledger rows independently, checks approved payloads, intent coverage and conservation. A semantic PASS cannot override deterministic failure. Recovery after uncertain execution retries verification without issuing another transfer.
 
-The two-minute video uses actual Chromium screenshots from independently accepted M5.2, with clearly labelled editorial zooms rather than live footage. It shows exact-hash approval, a matching transaction, durable rejection, a late worker commit, missing mandatory evidence and recovery after SIGKILL at a real post-COMMIT checkpoint. Recovery verifies the original transaction without issuing another transfer. The accepted experiments cover four complete fake-mode replays; the separate 33-case offline regression evaluation is not a model benchmark.
+The developer credits Meta Muse Code as an extensive AI-assisted engineering collaborator; Codex also contributed implementation and independent reviews. The human developer retained final decisions. MetaResponsesProvider integrates structured planning and semantic review through Meta's Responses API, with configurable Muse Spark and Muse Wonder. One real muse-spark-1.3 read-only planning diagnostic completed successfully: 191 input and 974 output tokens, estimated $0.00437825, zero tool executions. Full multi-scenario live acceptance and Wonder inference remain pending.
 
-The accepted source contains MetaResponsesProvider for structured planning and semantic review through Meta's Responses API, with flat strict schemas. Live Muse compatibility, quality, latency, usage and cost remain pending independently supported M5.3 evidence. The video uses FakeLLMProvider throughout.
+The 120-second video is a narrated montage of actual accepted M5.2 Chromium screenshots, with labelled editorial crops and captions. It demonstrates exact-hash approval, rejection, late commits, missing evidence and controlled post-COMMIT SIGKILL recovery using FakeLLMProvider. The archived 33-case M4 evaluation is an offline regression gate, not a model benchmark.
 
-After prerequisite installation, one command reproduces all six scenarios: python scripts/run_m52_demo.py --out artifacts/m5.2/latest. Manifests, screenshots and ledger observations make the outcome inspectable. This is a trusted local single-instance SQLite prototype with a shared demo token: no production banking readiness, public deployment, universal crash guarantee or container recreation durability is claimed.
+After prerequisite installation, reproduce six scenarios with python scripts/run_m52_demo.py --out artifacts/m5.2/latest. New candidates require their own validation. This is a trusted local single-instance SQLite prototype with a shared demo token, no production banking or multi-host exactly-once guarantee. Keep it local; older frontend dependencies have known security advisories.
 
-## GitHub repository URL
+## Repository url
 
-[https://github.com/IvanRomanteev/TrustFlow](https://github.com/IvanRomanteev/TrustFlow)
+https://github.com/IvanRomanteev/TrustFlow
 
-## Accepted M5.2 source
+## Accepted m52 source url
 
-[https://github.com/IvanRomanteev/TrustFlow/tree/38cc3942dbd715681d59bfd893e47643210294a9](https://github.com/IvanRomanteev/TrustFlow/tree/38cc3942dbd715681d59bfd893e47643210294a9)
+https://github.com/IvanRomanteev/TrustFlow/tree/38cc3942dbd715681d59bfd893e47643210294a9
 
-## Final M5.4 commit URL
+## Final m54 commit url
 
-PENDING: publish the exact reviewed M5.4 commit only after authorization
+https://github.com/IvanRomanteev/TrustFlow/tree/b0558e8da93b3b5ce94d722d0de3fca8348ce1e4
 
-## Demo video URL
+## Demo video url
 
-PENDING: publish the verified local MP4 only after authorization
+https://github.com/IvanRomanteev/TrustFlow/blob/b0558e8da93b3b5ce94d722d0de3fca8348ce1e4/docs/submission/video/trustflow-demo.mp4
 
-## Meta Muse usage
+## Local demo video
 
-The accepted source implements MetaResponsesProvider for schema-constrained planning and semantic review via POST /responses. Planning and review default to muse-wonder-1.0; muse-spark-1.3 is configured as a fast model. These are source configuration facts, not proof of live invocation. Accepted M5.2 and this video use FakeLLMProvider. Independently verified live M5.3 results: PENDING.
+video/trustflow-demo.mp4
+
+## Technology stack
+
+Python 3.12+; FastAPI; Pydantic; Next.js / React; TypeScript; SQLite; Docker Compose; Playwright Chromium; Meta Responses API adapter; FFmpeg for offline video export; Windows SAPI for local English narration
+
+## Meta model usage
+
+Meta Muse Code collaboration is attributed by the developer. MetaResponsesProvider uses POST https://api.meta.ai/v1/responses with strict typed schemas. Spark is the cost-conscious configurable planning/inference option; Wonder is configurable for planning/review. One real Spark read-only plan succeeded at M5.3 c48c2af; no tools executed. Full live acceptance and Wonder inference: PENDING. Video: fake-mode M5.2.
 
 ## Architecture
 
@@ -54,7 +62,7 @@ The prototype connects an exact approved snapshot, backend-owned payment identit
 
 ## Reproducibility
 
-Accepted runtime base: 38cc3942dbd715681d59bfd893e47643210294a9. The M5.4 branch preserves that implementation. Canonical command: python scripts/run_m52_demo.py --out artifacts/m5.2/latest. A fresh run records its own SHA and must independently pass; archived acceptance does not prove a new clean-machine run. Video export is local and uses existing presentation/evidence assets.
+Historical accepted M5.2: 38cc3942dbd715681d59bfd893e47643210294a9. Integrated M5.3: c48c2affd3dda652e00aca9f690404c82182b694; M5.4: b0558e8da93b3b5ce94d722d0de3fca8348ce1e4. Each new SHA needs its own gates. Canonical fake replay: python scripts/run_m52_demo.py --out artifacts/m5.2/latest. Video remains archived fake-mode evidence.
 
 ## Setup instructions
 
@@ -62,18 +70,8 @@ Install Python 3.12+, Git, a running Linux-container Docker Engine and Compose 2
 
 ## Limitations
 
-Synthetic funds and tools; trusted local single instance; SQLite and a shared demo token; no production identity/RBAC or banking integration; no public deployment; controlled timeout and same-container SIGKILL checkpoints only; no universal crash/race or container recreation guarantee. Live Meta evaluation and independent M5.4 acceptance remain pending.
+Synthetic funds/tools; trusted local single instance, SQLite and shared demo token; no production RBAC, banking integration, public deployment, universal crash/race or multi-host exactly-once guarantee. Full live matrix, Wonder and organizer authenticated form/rules remain pending. M5.3 historical acceptance includes approved exception M53-E1-EXCEPTION-01; not unconditional PASS.
 
-## Independently verified M5.3 results
+## Verified live m53 results
 
-PENDING: populate only from actual evidence and an independent verdict; no M5.3 merge or paid inference was performed for this package
-
-## Technology stack
-
-Python 3.12+, FastAPI, Pydantic, Next.js / React, TypeScript, SQLite, Docker Compose, Playwright Chromium, Meta Responses API adapter, FFmpeg for offline video export, Windows SAPI for local English narration.
-
-## Prepared field sizes
-
-Short summary: 365 characters. Full description: 2246 characters, including spaces and paragraph separators as stored in JSON.
-
-The local video is [trustflow-demo.mp4](video/trustflow-demo.mp4). The video URL and final commit URL remain pending publication. Use [integration.md](integration.md) for the authorized next steps; do not submit this package automatically.
+ONE READ-ONLY PLANNING DIAGNOSTIC VERIFIED: HTTP 200/completed; muse-spark-1.3; 191 input/974 output, 893 reasoning within output; estimate $0.00437825; cap4096/low; typed plan valid; zero tools/transfers. Full live matrix and Wonder: PENDING. See m53-live-results.md and ../release/evidence/spark-planning.json.

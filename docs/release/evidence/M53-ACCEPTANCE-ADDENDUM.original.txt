@@ -1,0 +1,77 @@
+# TrustFlow M5.3 — Independent Offline Acceptance Addendum
+
+**PASS WITH APPROVED EVIDENCE-PRESERVATION EXCEPTION**
+
+Дата: **2026-11-03**, **2026-11-03T23:44:41+05:00**, Asia/Qyzylorda. Это добавочное disposition только для offline acceptance exact candidate. Безусловный FINAL INDEPENDENT ACCEPTANCE PASS не выдан.
+
+## Идентичность и основание решения
+
+| Поле | Подтверждённое значение |
+|---|---|
+| Candidate worktree | `C:\Users\vanya\Projects\TrustFlow-context\m53-meta-live-ready\worktree` |
+| Ветка | `m5.3/meta-live-ready` |
+| Начальный и конечный HEAD этой фиксации | `53394d48c67827abfdffa53407e524af6af92610` |
+| Начальный и конечный tree | `177fbbbff704129d19d5bb570789418d8c8fb0e5` |
+| Git status кандидата | Clean до и после записи; контроль в postflight-verification.json |
+| Проверенный remediation range | `ef30a6881a7c00790f56a6a6def65862f43c2c05..53394d48c67827abfdffa53407e524af6af92610`, один дочерний коммит |
+| Tracked source manifest | 133 files; `7f821ea92e2af3b81007b07c5691fe9c7e421e22cfc5b8b020de45733c5ad6ae` |
+| Утверждённое исключение | `M53-E1-EXCEPTION-01` |
+| Решение владельца | [OWNER-DECISION.md](OWNER-DECISION.md), APPROVE, владелец TrustFlow / GitHub IvanRomanteev |
+| OWNER-DECISION.md SHA-256 | `ae3eeabc03bd67ea8c1dcc9e1b2e582c843c6293760deb2b0c0861ea981ff207` |
+| Неизменённый incident report | [REPORT.md](REPORT.md), SHA-256 `aa08cc59ac03f05b1d10eafb0d31792025410cadd21d719415b4de77188cbead` из [REPORT.sha256](REPORT.sha256) |
+
+Рабочий каталог IDE `C:\Users\vanya\Projects\TrustFlow` остаётся отдельным checkout: ветка `m5/deployment-demo`, HEAD `f4fb1b6ee7769641222035dab7ed0c7e92680900`; он не является кандидатом. Его два исходных untracked conversation-файла не редактировались.
+
+Между прошлым отчётом и началом этой операции обнаружены три изменения только под `refs/codex/turn-diffs/*`: одна ссылка отсутствует и две добавлены, object ID `9aef0de751a8bfe59b8850f41f1a9229cfbbfb58`. Ветки, tags и состояния worktrees за этот интервал совпали. Точные ref names и before/after SHA сохранены в [refs-since-previous-report.json](acceptance-addendum-evidence/refs-since-previous-report.json). Авторство и причина этих заранее существовавших изменений не устанавливались. Сохранность всех refs в настоящей операции проверяется относительно её собственного git-before.json, а не объявляется неизменностью служебных refs со времени прошлого отчёта.
+
+Предыдущая независимая проверка установила функциональную поддержку gates и оставила общий disposition BLOCKED из-за E1. Владелец теперь явно утвердил предусмотренное REPORT.md узкое исключение, привязанное к точному commit/tree и SHA-256 отчёта. Поэтому соответствующий offline acceptance blocker **RESOLVED BY OWNER-APPROVED EXCEPTION**. Это новое решение с текущей даты; прежние BLOCKED-отчёты не переписываются и задним числом PASS не объявляются.
+
+## APPLICATION FUNCTIONAL ACCEPTANCE — подтверждена в offline-области
+
+Основание — сохранившиеся результаты предыдущего независимого исполнения на exact committed candidate и их проверка при evidence recovery. Текущая фиксация проверила неизменность sealed evidence, исходных артефактов, candidate source и Git blobs. Новых runtime tests не выполнялось; количество 82 относится к прежним проверкам артефактов, а не к новому test run.
+
+| Acceptance gate | Сохранившееся независимое доказательство / итог |
+|---|---|
+| Exact committed candidate и clean Git | Command records start/end SHA/tree/status; тот же manifest 133 files. Сейчас повторно подтверждены текущие source SHA-256 и committed Git blobs. |
+| F1 GREEN | Parent RED / candidate GREEN исходной byte-identical parser probe; typed LLMResponseError, учёт failed attempts, оба parser layers и tracker/no-tracker. |
+| H1 GREEN | RED/GREEN future HTTP-date и 13 независимых Retry-After boundary cases, bounded retry без раннего повтора при cooldown >10 s. |
+| Semantic failure accounting | 8 layer/tracker/model combinations: 5 HTTP attempts / 5 usage records; inner known usage, outer unknown usage с reservation; workflow isolation при 16 concurrent attempts. |
+| Recovery после COMMIT | Четыре inner/outer × same-process/restart cases: VERIFICATION_PENDING → COMPLETED; usage сохранён; concurrent retry/replay без нового исполнения. |
+| Approval / operation / ledger identity | Один неизменный transfer 1500 USD; одинаковые approved_hash, approved_plan_snapshot, operation/intent/tx IDs; независимые SELECT по копиям synthetic SQLite и integrity_check=ok, выполненные ранее при recovery. |
+| Default pytest | **609 passed, 19 skipped**, 0 failures/errors; opt-in skips отдельно закрыты Docker/browser gates. |
+| P2-05 Docker | **18/18**, 0 skipped/failures/errors. `misrouted-docker.xml` используется как surviving result нового кандидата, не как оригинальный XML прежнего ревью. |
+| M5.2 browser | Два Chromium 145.0.7632.6 replay **S1–S6 6/6 PASS**, equivalent normalized digest, cleanup/preservation true; concurrent approval, late COMMIT и actual SIGKILL recovery отражены в raw artifacts. |
+| M4 | **33/33**, critical **20/20**, safety violations **0**, оба repeat reproducible. |
+| Остальные quality gates | Focused M5.3 107 passed; Ruff, mypy и frontend build PASS в сохранённых independent command records. |
+| User resources preservation | Прежние before/after Docker/SQLite/Git snapshots совпали. В текущей фиксации Docker и пользовательские SQLite не открывались; refs и все пять worktree states сверены до/после. |
+| No live Meta calls | Сохранённые offline argv, fake/MockTransport/ASGITransport, запрет внешнего HTTP в probes и paid_calls=0 поддерживают записанную offline процедуру. В этой фиксации API-вызовы не выполнялись. |
+
+Evidence: [REPORT.md](REPORT.md), [verified/gate-verification.json](verified/gate-verification.json), [command records](verified/verified-command-records.json), [ledger crosscheck](verified/synthetic-ledger-crosscheck.json), [browser crosscheck](verified/browser-crosscheck.json), [JUnit interpretation](verified/junit-interpretation.json). Interrupted historical m52.xml с tests=0 не используется как успешный gate.
+
+## HISTORICAL EVIDENCE INTEGRITY — оригиналы остаются утраченными
+
+Техническая целостность исторического набора **не восстановлена**. Оригиналы pytest.xml, docker.xml и m52.xml из review-m53-ef30a68-acceptance остаются UNRECOVERED. Их исходные ожидаемые SHA-256 и перезаписанные версии перечислены в [OWNER-DECISION.md](OWNER-DECISION.md) и [recovery-targets.json](recovery-targets.json) и сохранены без изменения.
+
+| Различаемый статус | Disposition |
+|---|---|
+| Факт утраты исторических XML / E1 | Сохраняется; не исправлен и не скрыт |
+| Требование их historical evidence preservation для этого exact offline candidate | **CLOSED BY APPROVED EXCEPTION M53-E1-EXCEPTION-01** |
+| Offline acceptance кандидата | **PASS WITH APPROVED EVIDENCE-PRESERVATION EXCEPTION** |
+| Прежние BLOCKED-отчёты | Сохраняются без изменения |
+| Безусловный FINAL PASS / полное восстановление evidence | Не заявляются |
+
+Исключение ограничено ровно тремя файлами и данным commit/tree. Оно не позволяет заменять XML результатами повторных тестов, менять ожидаемые hashes, присваивать новым артефактам старое происхождение либо переносить acceptance на другую версию.
+
+## Открытые gates и ограничения
+
+Actual Meta account/model access, server-side strict-schema acceptance, реальные Spark/Wonder/mixed task results и quality/ranking, latency, tokens/cost и provider billing остаются **PENDING**. Отдельный bounded live run требует отдельного явного разрешения; текущее решение его не предоставляет. Deployment, публикация и M5.4 этим addendum не принимаются.
+
+Дополнительного решения владельца для указанного offline exception больше не требуется: APPROVE получено и зарегистрировано. Текущий offline acceptance disposition оформлен этим addendum. Для иных кандидатов, дополнительных исключений или live execution потребуется самостоятельное основание.
+
+## Выполненные проверки и сохранность
+
+При этой фиксации: проверены REPORT.sha256 и SEAL.sha256 по фактическим байтам, все 70 entries исходного recovery EVIDENCE-MANIFEST.json, все 459 entries manifest финального ревью, inventories 258/460/239 файлов исторического/финального ревью и remediation, неизменность трёх перезаписанных XML и incident-копий. Текущие 133 source files и Git blobs сопоставлены с sealed manifest, HEAD/tree/branch/status/range проверены. Git snapshots и полный повтор этих проверок после записи хранятся в [acceptance-addendum-evidence](acceptance-addendum-evidence/).
+
+Новые writes ограничены OWNER-DECISION.md, этим addendum, отдельными sidecars/manifest и acceptance-addendum-evidence под m53-evidence-recovery. Исходный REPORT.md, REPORT.sha256, EVIDENCE-MANIFEST.json, SEAL.sha256 и все прежние artifacts не перезаписывались; новый набор получает отдельный ACCEPTANCE-ADDENDUM-MANIFEST.json и SHA-256 sidecar. Документы создаются exclusive creation, получают Windows ReadOnly и проверяемые hashes; аппаратный WORM не заявляется.
+
+Тесты приложения, Docker и Chromium не перезапускались. Исходный код, существующие тесты, Git refs и пользовательские ресурсы не изменялись; commits, tags, checkout, merge, push, deploy и платные API не выполнялись. Начальный = конечный HEAD кандидата **53394d48c67827abfdffa53407e524af6af92610**, tree **177fbbbff704129d19d5bb570789418d8c8fb0e5**, Git clean.

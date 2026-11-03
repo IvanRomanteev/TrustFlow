@@ -1,0 +1,95 @@
+{
+  "mode": "live_diagnostic",
+  "profile": "spark",
+  "model": "muse-spark-1.3",
+  "maximum_http_attempts": 1,
+  "retries": 0,
+  "repair_attempts": 0,
+  "reasoning_effort": "low",
+  "max_output_tokens": 4096,
+  "maximum_estimated_cost_usd": 0.03,
+  "typed_plan_valid": true,
+  "matches_read_goal": true,
+  "passed": true,
+  "live_integration_pass": false,
+  "tool_executions": 0,
+  "limitation": "One planning diagnostic; no workflow execution or semantic review.",
+  "candidate_sha": "c48c2affd3dda652e00aca9f690404c82182b694",
+  "candidate_tree": "25935582bacfceea40890a3e0d2bfd4aa214bf7d",
+  "working_tree_clean": true,
+  "ledger_before": {
+    "integrity": "ok",
+    "transactions": [],
+    "total_balance": 16200.0
+  },
+  "calls": [
+    {
+      "purpose": "plan",
+      "attempt": 1,
+      "transport_attempt": 1,
+      "model": "muse-spark-1.3",
+      "http_status": 200,
+      "input_tokens": 191,
+      "output_tokens": 974,
+      "latency_ms": 9868.45,
+      "estimated_cost_usd": 0.00437825,
+      "usage_unknown": false,
+      "budget_charge_usd": 0.00437825,
+      "validation_outcome": "typed_plan_valid",
+      "failure_reason": null,
+      "over_budget": false,
+      "response_metadata": {
+        "json_envelope_valid": true,
+        "response_status": "completed",
+        "incomplete_reason": null,
+        "reasoning_tokens": 893,
+        "output_token_cap_reached": false,
+        "has_error": false,
+        "has_choices": false,
+        "output_kind": "list",
+        "output_items_count": 2,
+        "output_items": [
+          {
+            "type": "reasoning",
+            "status": "completed",
+            "role": null,
+            "phase": null,
+            "content_types": [],
+            "output_text_chars": 0
+          },
+          {
+            "type": "message",
+            "status": "completed",
+            "role": "assistant",
+            "phase": null,
+            "content_types": [
+              "output_text"
+            ],
+            "output_text_chars": 246
+          }
+        ],
+        "output_items_truncated": false,
+        "parse_failure": null
+      }
+    }
+  ],
+  "http_attempts": 1,
+  "paid_requests_executed": 1,
+  "session_estimated_charge_usd": 0.00437825,
+  "ledger_after": {
+    "integrity": "ok",
+    "transactions": [],
+    "total_balance": 16200.0
+  },
+  "ledger_unchanged": true,
+  "provenance": {
+    "source_report_sha256": "e6727630ca5dd423efdb8bc43bd94d18a144c3e56e5a09bb2cbda0ca95f220ea",
+    "derived": true,
+    "removed_fields": [
+      "calls.workflow_id",
+      "calls.request_id",
+      "calls.response_id"
+    ],
+    "reason": "Public evidence excludes request/response and workflow identifiers; no raw content or credentials."
+  }
+}

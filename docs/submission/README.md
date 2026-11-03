@@ -1,5 +1,11 @@
 # TrustFlow · M5.4 submission package
 
+Final integration includes M5.3 `c48c2affd3dda652e00aca9f690404c82182b694`
+and this M5.4 archive. See [current release scope](../release/final-integration.md)
+and [verified single Spark planning case](m53-live-results.md). The original
+slides/video remain historical fake-mode M5.2 evidence; dated packaging reports
+and their branch-specific validation instructions are preserved as history.
+
 **A reviewable competition package built on independently accepted M5.2.**
 New narrative and presentation material is English. Original evidence retains
 its source language and exact bytes.
@@ -16,7 +22,7 @@ its source language and exact bytes.
 | Diagram and source map | [Architecture](architecture.md), [SVG](architecture.svg), [Mermaid](architecture.mmd) |
 | Hashes, operation identity, grounding, recovery | [Safety](safety.md) |
 | Accepted fake results and pending gates | [Evidence status](evidence-status.md) |
-| Future verified live results | [M5.3 template](m53-live-results.md) |
+| Verified planning evidence and pending live gates | [M5.3 results](m53-live-results.md) |
 | Submission readiness | [Checklist](checklist.md) |
 | Primary source and archival scope | [Evidence guide](evidence/README.md), [provenance](evidence/provenance.json) |
 | Submission copy and requirement check | [Exact text](submission-text.md), [JSON fields](submission-fields.json), [official check](official-requirements.md) |
