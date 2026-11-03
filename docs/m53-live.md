@@ -288,3 +288,32 @@ offline/real Docker gates, прочитать adapters и ledger evidence; devel
 серверное принятие strict schemas, реальные full task results/usage/latency/cost
 для обоих IDs и mixed. Закрыть их может только отдельно разрешённое исполнение.
 Полное M5.3 acceptance пока не заявляется; push/merge/tag/deploy не выполняются.
+## M5.3: evidence для semantic review после HIGH approval
+
+Реальный Spark run на `c48c2affd3dda652e00aca9f690404c82182b694` завершил
+recovery сценарием FAILED после корректного commit 1200 USD. HTTP/schema ошибки
+и повторный перевод не наблюдались. Сохранённого исходного HTTP request нет;
+офлайн-реконструкция по исходникам и сохранённому typed state выявила отсутствие
+approval hash, operation ID в plan steps, детерминированного отчёта и определения
+`simulate_transfer` как атомарной мутации synthetic ledger. Причина конкретного
+решения модели остаётся гипотезой до нового разрешённого live вызова.
+
+Для Meta review hash-bound transfer добавляется обязательный `execution_evidence`:
+plan/approved/snapshot hashes, проверка approval record, intent authorization,
+точный `find_by_key(operation_id)` lookup, полный ledger tx, worker tx/key join,
+детерминированный результат `Verifier.verify` с количеством и именами failed
+checks, признак verification-only retry. Worker claims не создают ledger evidence;
+неизвестная authority не подменяется одобрением. LOW auto-authorized flows
+сохраняют прежнее ограниченное представление; Fake provider не изменён.
+
+Детерминированный PASS подтверждает execution/ledger/intent checks и не доказывает
+соответствие исходной цели. Semantic FAIL сохраняется, committed transfer не
+откатывается, verify-retry не выполняет tools. Audit `verification_finished`
+разделяет `deterministic_passed`, `semantic_verdict` и итоговый `passed`.
+API и UI показывают SUCCEEDED step с tx_id отдельно от semantic и overall verdict.
+
+Схемы, typed validation, предел payload 6000 chars, approval, idempotency и budgets
+сохраняются. Обязательные данные не удаляются ради размера: overflow остаётся
+fail-closed до HTTP. Параметры следующей проверки: Spark, 4096 output, low effort,
+retries=0. MockTransport подтверждает evidence contract, но не качество Muse.
+Новый live PASS и полное M5.3 acceptance не заявляются.

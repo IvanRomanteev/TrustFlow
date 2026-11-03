@@ -236,12 +236,70 @@ class SemanticReviewer:
         return {"balances": snapshot.balances,
                 "transactions": snapshot.transactions}
 
+    def execution_evidence(self, plan: Plan, step_results: list | None,
+                           context: dict[str, Any] | None) -> dict[str, Any]:
+        """Join exact operation IDs to independently read ledger rows.
+
+        Missing approval/intent context stays unknown. A worker's success or
+        tx_id never creates ledger evidence. The booleans describe execution
+        binding only; a correct commit can still violate the original goal.
+        """
+        context = context or {}
+        by_step = {r.step_id: r for r in (step_results or [])}
+        intents = {i["intent_id"]: i for i in context.get("intents", [])}
+        operations = []
+        for step in plan.steps:
+            if step.tool_name != "simulate_transfer":
+                continue
+            tx = self._ledger.find_by_key(step.operation_id) if step.operation_id else None
+            worker = by_step.get(step.step_id)
+            intent = intents.get(step.intent_id or step.operation_id)
+            matches_plan = bool(tx is not None and tx.idempotency_key == step.operation_id
+                and tx.from_account == step.args.get("from_account")
+                and tx.to_account == step.args.get("to_account")
+                and not isinstance(step.args.get("amount"), bool)
+                and tx.amount == step.args.get("amount")
+                and tx.currency == step.args.get("currency", "USD"))
+            matches_worker = bool(tx is not None and worker is not None
+                and str(worker.status) == "SUCCEEDED"
+                and worker.idempotency_key == tx.idempotency_key
+                and worker.data.get("tx_id") == tx.tx_id)
+            operations.append({
+                "step_id": step.step_id, "intent_id": step.intent_id,
+                "operation_id": step.operation_id,
+                "ledger_lookup": "find_by_key(operation_id)",
+                "ledger_transaction": tx.model_dump(mode="json") if tx is not None else None,
+                "matches_plan": matches_plan, "matches_worker": matches_worker,
+                "worker_result": ({"status": str(worker.status), "tx_id": worker.data.get("tx_id"),
+                                   "idempotency_key": worker.idempotency_key}
+                                  if worker is not None else None),
+                "intent_authorized": intent.get("authorized") if intent is not None else None,
+                "intent_status": intent.get("status") if intent is not None else None,
+                "authorized_payload_matches": (
+                    intent["authorized_payload"] == step.args if intent is not None else None),
+            })
+        approved = context.get("approved_hash")
+        snapshot = context.get("approved_snapshot_hash")
+        return {"source": "independent synthetic ledger lookup; not worker claims",
+                "plan_hash": plan.plan_hash,
+                "approved_hash": approved, "approved_snapshot_hash": snapshot,
+                "approval_binding_matches": (
+                    approved == snapshot == plan.plan_hash
+                    if approved is not None or snapshot is not None
+                    else None),
+                "human_approval_matches": context.get("human_approval_matches"),
+                "run_id": context.get("run_id"),
+                "verification_only_retry": context.get("verification_only_retry"),
+                "deterministic_verification": context.get("deterministic_verification"),
+                "operations": operations}
+
     def review(self, goal: WorkflowGoal, plan: Plan,
                tracker: UsageTracker | None = None,
                evidence_spans: list[EvidenceSpan] | None = None,
                mandatory_citations: bool = False,
                ledger_snapshot: LedgerSnapshot | None = None,
-               step_results: list | None = None) -> SemanticReview:
+               step_results: list | None = None,
+               execution_context: dict[str, Any] | None = None) -> SemanticReview:
         # Span validation runs before any model call. Mandatory-mode
         # failures raise LLMResponseError so the engine follows the
         # existing bounded verification-only recovery (no re-execution).
@@ -350,6 +408,24 @@ class SemanticReviewer:
             ),
         })
         payload.mandatory_tx_ids_complete = True
+        if (getattr(self._llm, "supports_execution_evidence", False)
+                and execution_context is not None
+                and (execution_context.get("approved_hash") is not None
+                     or execution_context.get("approved_snapshot_hash") is not None)
+                and any(s.tool_name == "simulate_transfer" for s in plan.steps)):
+            # Identities are backend-owned; goal text and model arguments never
+            # supply approval/intent authority. Keep this evidence mandatory
+            # through provider compaction and optional retrieval fallback.
+            # This extension describes hash-bound approval. Auto-authorized
+            # LOW flows keep their bounded legacy evidence representation.
+            payload["plan_steps"] = [
+                {"tool_name": s.tool_name, "args": s.args, **(
+                    {"step_id": s.step_id, "intent_id": s.intent_id,
+                     "operation_id": s.operation_id}
+                    if s.tool_name == "simulate_transfer" else {})}
+                for s in plan.steps]
+            payload["execution_evidence"] = self.execution_evidence(
+                plan, step_results, execution_context)
         estimated = 0
         if tracker is not None:
             import json as _json
