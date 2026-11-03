@@ -1,0 +1,88 @@
+[
+  {
+    "label": "replay-1",
+    "backend_container": "8a6ccff7aa95c0580ade422a97f47715cdf9fe629c982fb04df3a1c56d996cf3",
+    "real_docker_kill_signal9": true,
+    "real_docker_exit137": true,
+    "backend_event_actions": [
+      "create",
+      "start",
+      "kill",
+      "die",
+      "start",
+      "kill",
+      "stop",
+      "die",
+      "start",
+      "restart",
+      "kill",
+      "stop",
+      "die",
+      "destroy"
+    ],
+    "late_worker_sequence": [
+      14,
+      15,
+      16,
+      17,
+      18
+    ],
+    "post_crash_mutations": 0,
+    "reviewer_directly_viewed_screenshots": [
+      "S1-low-risk-verified.png",
+      "S2-awaiting-exact-hash.png",
+      "S2-approved-verified.png",
+      "S3-rejected-authoritative.png",
+      "S4-uncertain-fault-injected.png",
+      "S4-recovered-no-duplicate.png",
+      "S5-missing-mandatory-evidence.png",
+      "S6-after-sigkill-recovered-pending.png",
+      "S6-durable-ui-reload.png"
+    ],
+    "visual_result": "status/hash/amount/decision/recovery/evidence visible as expected; password fields empty",
+    "unsafe_cleanup_commands": 0
+  },
+  {
+    "label": "replay-2",
+    "backend_container": "5ffb0f5fc253a87b99fa9a746f4900ebecae833d9c5fb916aed2d5d09b3803d8",
+    "real_docker_kill_signal9": true,
+    "real_docker_exit137": true,
+    "backend_event_actions": [
+      "create",
+      "start",
+      "kill",
+      "die",
+      "start",
+      "kill",
+      "stop",
+      "die",
+      "start",
+      "restart",
+      "kill",
+      "stop",
+      "die",
+      "destroy"
+    ],
+    "late_worker_sequence": [
+      14,
+      15,
+      16,
+      17,
+      18
+    ],
+    "post_crash_mutations": 0,
+    "reviewer_directly_viewed_screenshots": [
+      "S1-low-risk-verified.png",
+      "S2-awaiting-exact-hash.png",
+      "S2-approved-verified.png",
+      "S3-rejected-authoritative.png",
+      "S4-uncertain-fault-injected.png",
+      "S4-recovered-no-duplicate.png",
+      "S5-missing-mandatory-evidence.png",
+      "S6-after-sigkill-recovered-pending.png",
+      "S6-durable-ui-reload.png"
+    ],
+    "visual_result": "status/hash/amount/decision/recovery/evidence visible as expected; password fields empty",
+    "unsafe_cleanup_commands": 0
+  }
+]

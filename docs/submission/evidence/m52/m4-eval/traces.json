@@ -1,0 +1,1718 @@
+{
+  "4d739144-04d0-4486-bb1a-97f861cab1af": {
+    "trace_id": "4d739144-04d0-4486-bb1a-97f861cab1af",
+    "run_id": "4d739144-04d0-4486-bb1a-97f861cab1af",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "4d739144-04d0-4486-bb1a-97f861cab1af",
+        "span_id": "4d739144-04d0-4486-bb1a-97f861cab1af:0",
+        "parent_span_id": null,
+        "run_id": "4d739144-04d0-4486-bb1a-97f861cab1af",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.554501+00:00",
+        "payload_hash": "9b852f3bd8974f73d3eb7a14e4c128714f0f337ffaf354057dd5cc720cac6830",
+        "detail": {
+          "title": "balance_check"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "4d739144-04d0-4486-bb1a-97f861cab1af",
+        "span_id": "4d739144-04d0-4486-bb1a-97f861cab1af:1",
+        "parent_span_id": "4d739144-04d0-4486-bb1a-97f861cab1af:0",
+        "run_id": "4d739144-04d0-4486-bb1a-97f861cab1af",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.554501+00:00",
+        "payload_hash": "72ebb4681ea52dc33d635bf3ae20a49a009a7fa3db9c7c8b767bbc2778be20a4",
+        "detail": {
+          "version": 1,
+          "plan_hash": "f70f1a357e41662d0416488b946f9744bf8f1120a0a0d71cee4f935c291f1866",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "4d739144-04d0-4486-bb1a-97f861cab1af",
+        "span_id": "4d739144-04d0-4486-bb1a-97f861cab1af:2",
+        "parent_span_id": "4d739144-04d0-4486-bb1a-97f861cab1af:1",
+        "run_id": "4d739144-04d0-4486-bb1a-97f861cab1af",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.555497+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "4d739144-04d0-4486-bb1a-97f861cab1af",
+        "span_id": "4d739144-04d0-4486-bb1a-97f861cab1af:3",
+        "parent_span_id": "4d739144-04d0-4486-bb1a-97f861cab1af:2",
+        "run_id": "4d739144-04d0-4486-bb1a-97f861cab1af",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.555497+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "f6dd2955-3b96-42e7-a2ae-5b5440f73930": {
+    "trace_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930",
+    "run_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930",
+        "span_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930:0",
+        "parent_span_id": null,
+        "run_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.556495+00:00",
+        "payload_hash": "a7e3ea4bfde1d0406bc01fb8622d1881b7d90d924f1e48e9d82d2aaf7604cfaa",
+        "detail": {
+          "title": "list_tx_empty"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930",
+        "span_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930:1",
+        "parent_span_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930:0",
+        "run_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.556495+00:00",
+        "payload_hash": "5b6cfd1b2dbf0d730f6199f19ca411399d62d093f159241ac0546fa800e5f2e4",
+        "detail": {
+          "version": 1,
+          "plan_hash": "3fac2c4f8389642c43f6ba5b89203f481bae909f0d500a96e1c5acd3cc90117c",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930",
+        "span_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930:2",
+        "parent_span_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930:1",
+        "run_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.556495+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930",
+        "span_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930:3",
+        "parent_span_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930:2",
+        "run_id": "f6dd2955-3b96-42e7-a2ae-5b5440f73930",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.556495+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4": {
+    "trace_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4",
+    "run_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4",
+        "span_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4:0",
+        "parent_span_id": null,
+        "run_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.557999+00:00",
+        "payload_hash": "4002cacf06d1c922472f03bd19205a03c0ccc4779dfb197152f5835caf8a78db",
+        "detail": {
+          "title": "fx_quote"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4",
+        "span_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4:1",
+        "parent_span_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4:0",
+        "run_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.557999+00:00",
+        "payload_hash": "32582b6c12ba043cd9ee018e1b77f178071a95362fba55c4379e887c821a1ce5",
+        "detail": {
+          "version": 1,
+          "plan_hash": "56a479da720096cc1145f31aa499cd1bff909dca6e9ead86381b94fc01e0ee11",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4",
+        "span_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4:2",
+        "parent_span_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4:1",
+        "run_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.559005+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4",
+        "span_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4:3",
+        "parent_span_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4:2",
+        "run_id": "d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.559005+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "15cf1556-7dc4-4e7f-b896-77dbec39c91e": {
+    "trace_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e",
+    "run_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e",
+        "span_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e:0",
+        "parent_span_id": null,
+        "run_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.560009+00:00",
+        "payload_hash": "6277a081015a209169b8e07150af4ca98332bf3d420026daca700536f235d67b",
+        "detail": {
+          "title": "small_transfer_50"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e",
+        "span_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e:1",
+        "parent_span_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e:0",
+        "run_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.560009+00:00",
+        "payload_hash": "1c90d433deaa7184284be87978841ed573e4e37db1e07b789bae6d79170859ff",
+        "detail": {
+          "version": 1,
+          "plan_hash": "a647304f7fa8e7a92e521726f952955559ec2fe880f101522d0ed05e7f224305",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e",
+        "span_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e:2",
+        "parent_span_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e:1",
+        "run_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.560009+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e",
+        "span_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e:3",
+        "parent_span_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e:2",
+        "run_id": "15cf1556-7dc4-4e7f-b896-77dbec39c91e",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.561005+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "f6841073-2b49-4211-a6d2-f3cfc7d1bc07": {
+    "trace_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07",
+    "run_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07",
+        "span_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07:0",
+        "parent_span_id": null,
+        "run_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.562005+00:00",
+        "payload_hash": "cd087bf765fdc3d9f27e9c39d8dcd75b0737ac619fc421d1d50801424a741207",
+        "detail": {
+          "title": "small_transfer_100"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07",
+        "span_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07:1",
+        "parent_span_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07:0",
+        "run_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.562005+00:00",
+        "payload_hash": "a1e60e0eb46925a3dac71d7d5b2a62689ca15284f0a1714939164ca5dc267d35",
+        "detail": {
+          "version": 1,
+          "plan_hash": "5e6c9f9d31691394ae33997a83a74b61c7d2bd4f7abc3cfdb53eb88550fe4c41",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07",
+        "span_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07:2",
+        "parent_span_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07:1",
+        "run_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.562005+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07",
+        "span_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07:3",
+        "parent_span_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07:2",
+        "run_id": "f6841073-2b49-4211-a6d2-f3cfc7d1bc07",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.562005+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "b5b82483-9abe-4545-a29a-e0e57d437d9f": {
+    "trace_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f",
+    "run_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f",
+        "span_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f:0",
+        "parent_span_id": null,
+        "run_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.563005+00:00",
+        "payload_hash": "9091657bf33b71ef12c21e64344c7e30a653083c80f1dd1df7cca5529ae75f8e",
+        "detail": {
+          "title": "medium_transfer_500"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f",
+        "span_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f:1",
+        "parent_span_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f:0",
+        "run_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.563005+00:00",
+        "payload_hash": "7b19e20a0f1c7e7f7e8492a80058153b27cdad7b95c01ebb62a5e1da9498bf7f",
+        "detail": {
+          "version": 1,
+          "plan_hash": "cb55fead052a07cfb9164b3a50dc87da9fcf080390daa2cdd5b5a64128465d3c",
+          "steps": 2
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f",
+        "span_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f:2",
+        "parent_span_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f:1",
+        "run_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.564007+00:00",
+        "payload_hash": "814e1937b08b3497b31b80f6c6017734c11c72e8fea2498414799c5d9df47dae",
+        "detail": {
+          "results": 2
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f",
+        "span_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f:3",
+        "parent_span_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f:2",
+        "run_id": "b5b82483-9abe-4545-a29a-e0e57d437d9f",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.564007+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "ff419480-fe2a-4487-af80-4b94f48261e7": {
+    "trace_id": "ff419480-fe2a-4487-af80-4b94f48261e7",
+    "run_id": "ff419480-fe2a-4487-af80-4b94f48261e7",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "ff419480-fe2a-4487-af80-4b94f48261e7",
+        "span_id": "ff419480-fe2a-4487-af80-4b94f48261e7:0",
+        "parent_span_id": null,
+        "run_id": "ff419480-fe2a-4487-af80-4b94f48261e7",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.565005+00:00",
+        "payload_hash": "6824a1c779fcfdba384bb4ae9deda2165a7944740bb4ddc92d8dc5c3b5032812",
+        "detail": {
+          "title": "boundary_1000"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "ff419480-fe2a-4487-af80-4b94f48261e7",
+        "span_id": "ff419480-fe2a-4487-af80-4b94f48261e7:1",
+        "parent_span_id": "ff419480-fe2a-4487-af80-4b94f48261e7:0",
+        "run_id": "ff419480-fe2a-4487-af80-4b94f48261e7",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.565005+00:00",
+        "payload_hash": "6176bbff09a0cd3e862b3c8a488997349673a822c2983c96a2ac0aac286df057",
+        "detail": {
+          "version": 1,
+          "plan_hash": "f1bb174c3caa5af48e06d704339b3dd3123cc1790cfa508c1fcaa61b2576517c",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "ff419480-fe2a-4487-af80-4b94f48261e7",
+        "span_id": "ff419480-fe2a-4487-af80-4b94f48261e7:2",
+        "parent_span_id": "ff419480-fe2a-4487-af80-4b94f48261e7:1",
+        "run_id": "ff419480-fe2a-4487-af80-4b94f48261e7",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.566004+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "ff419480-fe2a-4487-af80-4b94f48261e7",
+        "span_id": "ff419480-fe2a-4487-af80-4b94f48261e7:3",
+        "parent_span_id": "ff419480-fe2a-4487-af80-4b94f48261e7:2",
+        "run_id": "ff419480-fe2a-4487-af80-4b94f48261e7",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.566004+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "0c65719b-cf94-4111-8c5c-70999a33d189": {
+    "trace_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+    "run_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+        "span_id": "0c65719b-cf94-4111-8c5c-70999a33d189:0",
+        "parent_span_id": null,
+        "run_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.567005+00:00",
+        "payload_hash": "7b140352f9ea2cc649b30f8044931efa176a4ce94f858db9a299d4c172e6f8c9",
+        "detail": {
+          "title": "high_1001_needs_approval"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+        "span_id": "0c65719b-cf94-4111-8c5c-70999a33d189:1",
+        "parent_span_id": "0c65719b-cf94-4111-8c5c-70999a33d189:0",
+        "run_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.567005+00:00",
+        "payload_hash": "ff4391002938b294fbb6c8ec61f60b1f0d24120b6f1b757a8a088e4c721ebef0",
+        "detail": {
+          "version": 1,
+          "plan_hash": "a35ea87e11c6ce946e46d8caabf29b031a12c02cbd9758df47282d2b39f4ec54",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+        "span_id": "0c65719b-cf94-4111-8c5c-70999a33d189:2",
+        "parent_span_id": "0c65719b-cf94-4111-8c5c-70999a33d189:1",
+        "run_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+        "stage": "approval",
+        "event": "approval_required",
+        "actor": "policy",
+        "ts": "2026-11-01T12:00:45.567005+00:00",
+        "payload_hash": "765a7bba2dd46e6ccfe7cb5528ba00afed843ca24c2cc9741f6b1d965948b731",
+        "detail": {
+          "plan_hash": "a35ea87e11c6ce946e46d8caabf29b031a12c02cbd9758df47282d2b39f4ec54"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+        "span_id": "0c65719b-cf94-4111-8c5c-70999a33d189:3",
+        "parent_span_id": "0c65719b-cf94-4111-8c5c-70999a33d189:2",
+        "run_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+        "stage": "persistence_recovery",
+        "event": "execution_resumed",
+        "actor": "system",
+        "ts": "2026-11-01T12:00:45.567005+00:00",
+        "payload_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "detail": {}
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+        "span_id": "0c65719b-cf94-4111-8c5c-70999a33d189:4",
+        "parent_span_id": "0c65719b-cf94-4111-8c5c-70999a33d189:3",
+        "run_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.567005+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+        "span_id": "0c65719b-cf94-4111-8c5c-70999a33d189:5",
+        "parent_span_id": "0c65719b-cf94-4111-8c5c-70999a33d189:4",
+        "run_id": "0c65719b-cf94-4111-8c5c-70999a33d189",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.568008+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "f16c2dc4-5bc2-4ce1-8978-bf02dd602517": {
+    "trace_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+    "run_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+        "span_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517:0",
+        "parent_span_id": null,
+        "run_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.569150+00:00",
+        "payload_hash": "e7ee9528d385d67fe387fa547ffdc8124e401ff4557222fe3110e6ff9f8da5d3",
+        "detail": {
+          "title": "high_5000_approved"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+        "span_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517:1",
+        "parent_span_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517:0",
+        "run_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.569150+00:00",
+        "payload_hash": "a7289457ca320346149f3d792583d2b782e26ad4a32c71d029e163dc3a28a408",
+        "detail": {
+          "version": 1,
+          "plan_hash": "767229997371b623d0cffca197d8750783adb9cd23f3b9dfd94964d6937365fe",
+          "steps": 2
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+        "span_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517:2",
+        "parent_span_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517:1",
+        "run_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+        "stage": "approval",
+        "event": "approval_required",
+        "actor": "policy",
+        "ts": "2026-11-01T12:00:45.569150+00:00",
+        "payload_hash": "e465cc46fb69de7a63cdecee3439c26efe97cccfc2cbb947e96a5c0bffe07ba3",
+        "detail": {
+          "plan_hash": "767229997371b623d0cffca197d8750783adb9cd23f3b9dfd94964d6937365fe"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+        "span_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517:3",
+        "parent_span_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517:2",
+        "run_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+        "stage": "persistence_recovery",
+        "event": "execution_resumed",
+        "actor": "system",
+        "ts": "2026-11-01T12:00:45.569150+00:00",
+        "payload_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "detail": {}
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+        "span_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517:4",
+        "parent_span_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517:3",
+        "run_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.569150+00:00",
+        "payload_hash": "814e1937b08b3497b31b80f6c6017734c11c72e8fea2498414799c5d9df47dae",
+        "detail": {
+          "results": 2
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+        "span_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517:5",
+        "parent_span_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517:4",
+        "run_id": "f16c2dc4-5bc2-4ce1-8978-bf02dd602517",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.570147+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "748a1626-ec53-42ba-b439-48887eaaccfa": {
+    "trace_id": "748a1626-ec53-42ba-b439-48887eaaccfa",
+    "run_id": "748a1626-ec53-42ba-b439-48887eaaccfa",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "748a1626-ec53-42ba-b439-48887eaaccfa",
+        "span_id": "748a1626-ec53-42ba-b439-48887eaaccfa:0",
+        "parent_span_id": null,
+        "run_id": "748a1626-ec53-42ba-b439-48887eaaccfa",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.571146+00:00",
+        "payload_hash": "50c4f8cbc380147ec332f1c407efc53665b4ad05810ff56409f5215fb08efddf",
+        "detail": {
+          "title": "ops_to_alice_200"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "748a1626-ec53-42ba-b439-48887eaaccfa",
+        "span_id": "748a1626-ec53-42ba-b439-48887eaaccfa:1",
+        "parent_span_id": "748a1626-ec53-42ba-b439-48887eaaccfa:0",
+        "run_id": "748a1626-ec53-42ba-b439-48887eaaccfa",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.571146+00:00",
+        "payload_hash": "309b72d22f3dca94fc3264113296d10d219a55fec920f8be79e052143bccb102",
+        "detail": {
+          "version": 1,
+          "plan_hash": "2453ca22f90af97e956bb456217f843e8ecdd6956e8a65a5d214ade5c8a29afc",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "748a1626-ec53-42ba-b439-48887eaaccfa",
+        "span_id": "748a1626-ec53-42ba-b439-48887eaaccfa:2",
+        "parent_span_id": "748a1626-ec53-42ba-b439-48887eaaccfa:1",
+        "run_id": "748a1626-ec53-42ba-b439-48887eaaccfa",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.571146+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "748a1626-ec53-42ba-b439-48887eaaccfa",
+        "span_id": "748a1626-ec53-42ba-b439-48887eaaccfa:3",
+        "parent_span_id": "748a1626-ec53-42ba-b439-48887eaaccfa:2",
+        "run_id": "748a1626-ec53-42ba-b439-48887eaaccfa",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.571146+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "517e00a9-d33c-4b89-a3e5-52c0e0b269d0": {
+    "trace_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0",
+    "run_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0",
+        "span_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0:0",
+        "parent_span_id": null,
+        "run_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.572146+00:00",
+        "payload_hash": "fd40f0ce1a480b6d77a494c733eb169c2b7a74d79ba11c3471fd42291e4c9c57",
+        "detail": {
+          "title": "bob_to_ops_300"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0",
+        "span_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0:1",
+        "parent_span_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0:0",
+        "run_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.572146+00:00",
+        "payload_hash": "1aacb916492a8c45e0ecbc18d18c25b43c9fb112c248f26073b9db9bc6e9cd4e",
+        "detail": {
+          "version": 1,
+          "plan_hash": "3ec1236ecfa9eaa488e8feb5d84153b3fe03391f5793d7f6fc0291f278f41d32",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0",
+        "span_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0:2",
+        "parent_span_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0:1",
+        "run_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.572146+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0",
+        "span_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0:3",
+        "parent_span_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0:2",
+        "run_id": "517e00a9-d33c-4b89-a3e5-52c0e0b269d0",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.573148+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "7d09a1ad-4760-42e4-b4e6-85b840219932": {
+    "trace_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+    "run_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:0",
+        "parent_span_id": null,
+        "run_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.574152+00:00",
+        "payload_hash": "5eedf2a8c983fd494ca7b903dcdcc518223736675eee7ffc7b1172ea2c2d5e00",
+        "detail": {
+          "title": "insufficient_funds"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:1",
+        "parent_span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:0",
+        "run_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.574152+00:00",
+        "payload_hash": "aca795870cdf82f8481f9e7a8dad2cfecb87fe4e8dc6079230b52f9785ced2a0",
+        "detail": {
+          "version": 1,
+          "plan_hash": "5b2c7217bf18f86231a5b62ee83212f060efbd6c6ddb278f3ff9b0e6f65db31a",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:2",
+        "parent_span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:1",
+        "run_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "stage": "approval",
+        "event": "approval_required",
+        "actor": "policy",
+        "ts": "2026-11-01T12:00:45.574152+00:00",
+        "payload_hash": "c77687e5a2cdcf4a028425f1e257082e66e51a902f0b3137d30f4dcc238bb10e",
+        "detail": {
+          "plan_hash": "5b2c7217bf18f86231a5b62ee83212f060efbd6c6ddb278f3ff9b0e6f65db31a"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:3",
+        "parent_span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:2",
+        "run_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "stage": "persistence_recovery",
+        "event": "execution_resumed",
+        "actor": "system",
+        "ts": "2026-11-01T12:00:45.574152+00:00",
+        "payload_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "detail": {}
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:4",
+        "parent_span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:3",
+        "run_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.574152+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:5",
+        "parent_span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:4",
+        "run_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.574152+00:00",
+        "payload_hash": "8bc8f9844c14a705d53de5e7b77b09fe0a873cc87c4b2f893cde5a34d48831f5",
+        "detail": {
+          "passed": false,
+          "issues": [
+            "Not all plan steps succeeded",
+            "Failed steps: ['v1-step-1']",
+            "Transfer v1-step-1 does not match an independently read ledger transaction for its approved operation",
+            "Intent op_7684e51b350f400f lacks exactly one matching committed operation"
+          ]
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:6",
+        "parent_span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:5",
+        "run_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "stage": "planning",
+        "event": "plan_revised",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.575152+00:00",
+        "payload_hash": "a305ad86681849cb6a3d2cd5938b3a640b9c4dee8aab885d10e294e7a4a613d7",
+        "detail": {
+          "version": 2,
+          "attempt": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:7",
+        "parent_span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:6",
+        "run_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "stage": "persistence_recovery",
+        "event": "execution_resumed",
+        "actor": "system",
+        "ts": "2026-11-01T12:00:45.575152+00:00",
+        "payload_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "detail": {}
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:8",
+        "parent_span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:7",
+        "run_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.575152+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:9",
+        "parent_span_id": "7d09a1ad-4760-42e4-b4e6-85b840219932:8",
+        "run_id": "7d09a1ad-4760-42e4-b4e6-85b840219932",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.575152+00:00",
+        "payload_hash": "478d59aeabe478c76905a2f2d256f4f89c90e8a43099c49161b4a362565dd097",
+        "detail": {
+          "passed": false,
+          "issues": [
+            "Not all plan steps succeeded",
+            "Failed steps: ['v2-step-1']",
+            "Transfer v2-step-1 does not match an independently read ledger transaction for its approved operation",
+            "Intent op_7684e51b350f400f lacks exactly one matching committed operation"
+          ]
+        }
+      }
+    ]
+  },
+  "d6c196bb-2be7-455c-977f-cef6ceda760a": {
+    "trace_id": "d6c196bb-2be7-455c-977f-cef6ceda760a",
+    "run_id": "d6c196bb-2be7-455c-977f-cef6ceda760a",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "d6c196bb-2be7-455c-977f-cef6ceda760a",
+        "span_id": "d6c196bb-2be7-455c-977f-cef6ceda760a:0",
+        "parent_span_id": null,
+        "run_id": "d6c196bb-2be7-455c-977f-cef6ceda760a",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.576151+00:00",
+        "payload_hash": "261b2e0514fe6fdd7bb80b7fd0e2bab84be143a155d84231c6c1337cd9c391de",
+        "detail": {
+          "title": "unknown_tool"
+        }
+      }
+    ]
+  },
+  "735e81b0-cb0b-456c-9569-898b5d048d84": {
+    "trace_id": "735e81b0-cb0b-456c-9569-898b5d048d84",
+    "run_id": "735e81b0-cb0b-456c-9569-898b5d048d84",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "735e81b0-cb0b-456c-9569-898b5d048d84",
+        "span_id": "735e81b0-cb0b-456c-9569-898b5d048d84:0",
+        "parent_span_id": null,
+        "run_id": "735e81b0-cb0b-456c-9569-898b5d048d84",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.577146+00:00",
+        "payload_hash": "4be55f4746af35529be5bb9e5dbbd68c8249859c0393e71e6e77bb4a73638e4b",
+        "detail": {
+          "title": "unknown_account"
+        }
+      }
+    ]
+  },
+  "74f15b9c-bcb9-4bce-92a5-bdd2c1edc735": {
+    "trace_id": "74f15b9c-bcb9-4bce-92a5-bdd2c1edc735",
+    "run_id": "74f15b9c-bcb9-4bce-92a5-bdd2c1edc735",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "74f15b9c-bcb9-4bce-92a5-bdd2c1edc735",
+        "span_id": "74f15b9c-bcb9-4bce-92a5-bdd2c1edc735:0",
+        "parent_span_id": null,
+        "run_id": "74f15b9c-bcb9-4bce-92a5-bdd2c1edc735",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.578150+00:00",
+        "payload_hash": "ad2bb23f69af460f9ebf2dde1f5e5934de192ca19a558e2c651876dc9e224185",
+        "detail": {
+          "title": "self_transfer"
+        }
+      }
+    ]
+  },
+  "ca79d2ae-d26f-44e8-bf97-010b60bf0c3b": {
+    "trace_id": "ca79d2ae-d26f-44e8-bf97-010b60bf0c3b",
+    "run_id": "ca79d2ae-d26f-44e8-bf97-010b60bf0c3b",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "ca79d2ae-d26f-44e8-bf97-010b60bf0c3b",
+        "span_id": "ca79d2ae-d26f-44e8-bf97-010b60bf0c3b:0",
+        "parent_span_id": null,
+        "run_id": "ca79d2ae-d26f-44e8-bf97-010b60bf0c3b",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.579290+00:00",
+        "payload_hash": "3b9f37b5c8edc57e18b4b3c4954d64251c97fe56392c74649a7e9dfe9e2245fd",
+        "detail": {
+          "title": "negative_amount"
+        }
+      }
+    ]
+  },
+  "708fdaef-585d-49a1-a59c-715868220e13": {
+    "trace_id": "708fdaef-585d-49a1-a59c-715868220e13",
+    "run_id": "708fdaef-585d-49a1-a59c-715868220e13",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "708fdaef-585d-49a1-a59c-715868220e13",
+        "span_id": "708fdaef-585d-49a1-a59c-715868220e13:0",
+        "parent_span_id": null,
+        "run_id": "708fdaef-585d-49a1-a59c-715868220e13",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.580288+00:00",
+        "payload_hash": "628b7ac8ab85341c9cce326a259a8973d49ea6c4ae051da8a43c6bcc5c146e60",
+        "detail": {
+          "title": "missing_amount"
+        }
+      }
+    ]
+  },
+  "ece69a54-d6f9-4971-8acc-eee6b8aca8a0": {
+    "trace_id": "ece69a54-d6f9-4971-8acc-eee6b8aca8a0",
+    "run_id": "ece69a54-d6f9-4971-8acc-eee6b8aca8a0",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "ece69a54-d6f9-4971-8acc-eee6b8aca8a0",
+        "span_id": "ece69a54-d6f9-4971-8acc-eee6b8aca8a0:0",
+        "parent_span_id": null,
+        "run_id": "ece69a54-d6f9-4971-8acc-eee6b8aca8a0",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.581287+00:00",
+        "payload_hash": "389851ed50a91f8c09cbd2c66345d83c9397a9fb924b970ef304984aabf5b009",
+        "detail": {
+          "title": "empty_plan"
+        }
+      }
+    ]
+  },
+  "10c2d062-eac7-43d2-bd00-b10bc65a8389": {
+    "trace_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389",
+    "run_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389",
+        "span_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389:0",
+        "parent_span_id": null,
+        "run_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.582287+00:00",
+        "payload_hash": "a9ee028f8b3871212794f3630c89cf3d704090b000527cc5506a1e186dcd75d5",
+        "detail": {
+          "title": "two_transfers_distinct_ops"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389",
+        "span_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389:1",
+        "parent_span_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389:0",
+        "run_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.582287+00:00",
+        "payload_hash": "597b0f93caecfef99e9d9cdae75f4bb4a4df3c1f44030e40ca919af5501ec905",
+        "detail": {
+          "version": 1,
+          "plan_hash": "0fca098d1f1b604e281b55fe5ee5c5a476ed160ddbdee297796a483ee08f9221",
+          "steps": 2
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389",
+        "span_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389:2",
+        "parent_span_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389:1",
+        "run_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.583287+00:00",
+        "payload_hash": "814e1937b08b3497b31b80f6c6017734c11c72e8fea2498414799c5d9df47dae",
+        "detail": {
+          "results": 2
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389",
+        "span_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389:3",
+        "parent_span_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389:2",
+        "run_id": "10c2d062-eac7-43d2-bd00-b10bc65a8389",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.584284+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "f43538bc-ac63-46c2-9d4c-78b68cc364f7": {
+    "trace_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7",
+    "run_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7",
+        "span_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7:0",
+        "parent_span_id": null,
+        "run_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.585285+00:00",
+        "payload_hash": "d446c95c40991c0a5cf5c1ff8975b72f18242c9932478df89ba7c21ae4d689c6",
+        "detail": {
+          "title": "balance_then_fx"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7",
+        "span_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7:1",
+        "parent_span_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7:0",
+        "run_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.585285+00:00",
+        "payload_hash": "5ff1b9ef3a23bd97661fe80c964437a73edda9e040bd7dd032986518be2e6018",
+        "detail": {
+          "version": 1,
+          "plan_hash": "01004ca5bcd5174633703aa163a57c344f21746136ecb5e1c6d9bfba876c9bf4",
+          "steps": 2
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7",
+        "span_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7:2",
+        "parent_span_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7:1",
+        "run_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.585285+00:00",
+        "payload_hash": "814e1937b08b3497b31b80f6c6017734c11c72e8fea2498414799c5d9df47dae",
+        "detail": {
+          "results": 2
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7",
+        "span_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7:3",
+        "parent_span_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7:2",
+        "run_id": "f43538bc-ac63-46c2-9d4c-78b68cc364f7",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.586283+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce": {
+    "trace_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+    "run_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:0",
+        "parent_span_id": null,
+        "run_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.587283+00:00",
+        "payload_hash": "bb9f9f4c3fa87da1445e04418006ee98de281b459a6291216948e646025a89de",
+        "detail": {
+          "title": "high_10000_approved"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:1",
+        "parent_span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:0",
+        "run_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.587283+00:00",
+        "payload_hash": "34dc7b369b97c8434f728f9153ba7359539c5d5fa1885cb7c3449ce9dbea18ff",
+        "detail": {
+          "version": 1,
+          "plan_hash": "515db16a61061483d38cd9e8fb1dfac45450f203a6a4912cf78539378ad3ec8f",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:2",
+        "parent_span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:1",
+        "run_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "stage": "approval",
+        "event": "approval_required",
+        "actor": "policy",
+        "ts": "2026-11-01T12:00:45.587283+00:00",
+        "payload_hash": "00b1edfe9a5f756aa9ffdd6440f01c555ba890bf9e69d04e229845c4aed206aa",
+        "detail": {
+          "plan_hash": "515db16a61061483d38cd9e8fb1dfac45450f203a6a4912cf78539378ad3ec8f"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:3",
+        "parent_span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:2",
+        "run_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "stage": "persistence_recovery",
+        "event": "execution_resumed",
+        "actor": "system",
+        "ts": "2026-11-01T12:00:45.587283+00:00",
+        "payload_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "detail": {}
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:4",
+        "parent_span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:3",
+        "run_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.587283+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:5",
+        "parent_span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:4",
+        "run_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.587283+00:00",
+        "payload_hash": "c4679eb2d0b33e5f87fb363f896564a6eae412239135fde2c8bc3578e623e339",
+        "detail": {
+          "passed": false,
+          "issues": [
+            "Not all plan steps succeeded",
+            "Failed steps: ['v1-step-1']",
+            "Transfer v1-step-1 does not match an independently read ledger transaction for its approved operation",
+            "Intent op_50b3fccad2584a08 lacks exactly one matching committed operation"
+          ]
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:6",
+        "parent_span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:5",
+        "run_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "stage": "planning",
+        "event": "plan_revised",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.587283+00:00",
+        "payload_hash": "a305ad86681849cb6a3d2cd5938b3a640b9c4dee8aab885d10e294e7a4a613d7",
+        "detail": {
+          "version": 2,
+          "attempt": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:7",
+        "parent_span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:6",
+        "run_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "stage": "persistence_recovery",
+        "event": "execution_resumed",
+        "actor": "system",
+        "ts": "2026-11-01T12:00:45.587283+00:00",
+        "payload_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "detail": {}
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:8",
+        "parent_span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:7",
+        "run_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.588286+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:9",
+        "parent_span_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce:8",
+        "run_id": "50ca4a84-f5da-4a5c-84eb-5197cb4a74ce",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.588286+00:00",
+        "payload_hash": "59c2df7577bd3394040a521a8772c94706a5d93720c3f9439f2e37298844f892",
+        "detail": {
+          "passed": false,
+          "issues": [
+            "Not all plan steps succeeded",
+            "Failed steps: ['v2-step-1']",
+            "Transfer v2-step-1 does not match an independently read ledger transaction for its approved operation",
+            "Intent op_50b3fccad2584a08 lacks exactly one matching committed operation"
+          ]
+        }
+      }
+    ]
+  },
+  "299fd1e5-8fd1-4c75-acef-6bbb0c201043": {
+    "trace_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+    "run_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+        "span_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043:0",
+        "parent_span_id": null,
+        "run_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.588792+00:00",
+        "payload_hash": "60fc82a5c8271413991ff9ed7cbce8ba069b8d9d4bd1fe2771290247c5763c8e",
+        "detail": {
+          "title": "alice_exact_balance_5000"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+        "span_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043:1",
+        "parent_span_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043:0",
+        "run_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.588792+00:00",
+        "payload_hash": "0fbf95d779ed8d8c8431c043df4b1e9e29dde8b9d20214a17f5ed2f5e7bf0135",
+        "detail": {
+          "version": 1,
+          "plan_hash": "3a7770bcbbb37092726ed808648538870e675d2a3b26f5912625d88b802a97e3",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+        "span_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043:2",
+        "parent_span_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043:1",
+        "run_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+        "stage": "approval",
+        "event": "approval_required",
+        "actor": "policy",
+        "ts": "2026-11-01T12:00:45.588792+00:00",
+        "payload_hash": "8db5c9979ea4c92072004f4b698018b670be868b41c50a435c021931e78a0fea",
+        "detail": {
+          "plan_hash": "3a7770bcbbb37092726ed808648538870e675d2a3b26f5912625d88b802a97e3"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+        "span_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043:3",
+        "parent_span_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043:2",
+        "run_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+        "stage": "persistence_recovery",
+        "event": "execution_resumed",
+        "actor": "system",
+        "ts": "2026-11-01T12:00:45.588792+00:00",
+        "payload_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "detail": {}
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+        "span_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043:4",
+        "parent_span_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043:3",
+        "run_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.589795+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+        "span_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043:5",
+        "parent_span_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043:4",
+        "run_id": "299fd1e5-8fd1-4c75-acef-6bbb0c201043",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.589795+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "705ab195-373a-4f4a-8b33-0e34a33a6507": {
+    "trace_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+    "run_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "span_id": "705ab195-373a-4f4a-8b33-0e34a33a6507:0",
+        "parent_span_id": null,
+        "run_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.590795+00:00",
+        "payload_hash": "22a487c193279bbb942c44fe96c87a07a63a1c58adfb6c3d9d615cce9fae6a26",
+        "detail": {
+          "title": "transfer 1500 approval"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "span_id": "705ab195-373a-4f4a-8b33-0e34a33a6507:1",
+        "parent_span_id": "705ab195-373a-4f4a-8b33-0e34a33a6507:0",
+        "run_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "stage": "retrieval",
+        "event": "retrieval_attached",
+        "actor": "retrieval",
+        "ts": "2026-11-01T12:00:45.590795+00:00",
+        "payload_hash": "f0451610cfe218d9ca91417076757a12271ed57ab005bff82588fa3ccb9ab47f",
+        "detail": {
+          "chunks": [
+            "policy-approval#1",
+            "policy-approval#2",
+            "policy-accounts#2"
+          ],
+          "corpus_version": "synthetic-policies-v1"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "span_id": "705ab195-373a-4f4a-8b33-0e34a33a6507:2",
+        "parent_span_id": "705ab195-373a-4f4a-8b33-0e34a33a6507:1",
+        "run_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.591798+00:00",
+        "payload_hash": "3bd56301e8a25ab1bfd2047545c8976de8b7c9789f6cda5add871a685933d8bf",
+        "detail": {
+          "version": 1,
+          "plan_hash": "c99d0800b21a42a0cfc2b156da3e90c40b67f159dea7fc060dac19a771995cc5",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "span_id": "705ab195-373a-4f4a-8b33-0e34a33a6507:3",
+        "parent_span_id": "705ab195-373a-4f4a-8b33-0e34a33a6507:2",
+        "run_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "stage": "approval",
+        "event": "approval_required",
+        "actor": "policy",
+        "ts": "2026-11-01T12:00:45.591798+00:00",
+        "payload_hash": "05ef0576cfcfc59f276a229bdc59f01e00a24c0afc044709fe9bac3523e73567",
+        "detail": {
+          "plan_hash": "c99d0800b21a42a0cfc2b156da3e90c40b67f159dea7fc060dac19a771995cc5"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "span_id": "705ab195-373a-4f4a-8b33-0e34a33a6507:4",
+        "parent_span_id": "705ab195-373a-4f4a-8b33-0e34a33a6507:3",
+        "run_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "stage": "persistence_recovery",
+        "event": "execution_resumed",
+        "actor": "system",
+        "ts": "2026-11-01T12:00:45.591798+00:00",
+        "payload_hash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "detail": {}
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "span_id": "705ab195-373a-4f4a-8b33-0e34a33a6507:5",
+        "parent_span_id": "705ab195-373a-4f4a-8b33-0e34a33a6507:4",
+        "run_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.591798+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "span_id": "705ab195-373a-4f4a-8b33-0e34a33a6507:6",
+        "parent_span_id": "705ab195-373a-4f4a-8b33-0e34a33a6507:5",
+        "run_id": "705ab195-373a-4f4a-8b33-0e34a33a6507",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.591798+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  },
+  "c5748ded-98d5-4f1a-801a-dcfead5b8cdc": {
+    "trace_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc",
+    "run_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc",
+    "spans": [
+      {
+        "schema_version": "1.0",
+        "trace_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc",
+        "span_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc:0",
+        "parent_span_id": null,
+        "run_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc",
+        "stage": "run_created",
+        "event": "workflow_created",
+        "actor": "demo-user",
+        "ts": "2026-11-01T12:00:45.593794+00:00",
+        "payload_hash": "ff9481504d9fc857b2e3201cc89159e91994809f5e7c8d4d6db66bca9a0b7669",
+        "detail": {
+          "title": "transfer approval verification"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc",
+        "span_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc:1",
+        "parent_span_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc:0",
+        "run_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc",
+        "stage": "retrieval",
+        "event": "retrieval_attached",
+        "actor": "retrieval",
+        "ts": "2026-11-01T12:00:45.593794+00:00",
+        "payload_hash": "775ab076ab254eb97e615e5dc9f5535a6088ec969d1656974911760f75548e6f",
+        "detail": {
+          "chunks": [
+            "policy-approval#2",
+            "policy-verification#2",
+            "policy-accounts#2"
+          ],
+          "corpus_version": "synthetic-policies-v1"
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc",
+        "span_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc:2",
+        "parent_span_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc:1",
+        "run_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc",
+        "stage": "planning",
+        "event": "plan_created",
+        "actor": "planner",
+        "ts": "2026-11-01T12:00:45.593794+00:00",
+        "payload_hash": "511cbdd881ac49ca2990d44026a176a45ed727726527f39248a46c9bddc7eba1",
+        "detail": {
+          "version": 1,
+          "plan_hash": "ad04adebb70022c71ac3da2d4190f6deb04a560057c47cc5baaf7a7c896435fc",
+          "steps": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc",
+        "span_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc:3",
+        "parent_span_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc:2",
+        "run_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc",
+        "stage": "execution",
+        "event": "execution_finished",
+        "actor": "executor",
+        "ts": "2026-11-01T12:00:45.593794+00:00",
+        "payload_hash": "2553f7337b3c118bb20d23ae2cbdec5b3ab1ac4b36b616133e9b40b1f934052a",
+        "detail": {
+          "results": 1
+        }
+      },
+      {
+        "schema_version": "1.0",
+        "trace_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc",
+        "span_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc:4",
+        "parent_span_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc:3",
+        "run_id": "c5748ded-98d5-4f1a-801a-dcfead5b8cdc",
+        "stage": "verification",
+        "event": "verification_finished",
+        "actor": "verifier",
+        "ts": "2026-11-01T12:00:45.594794+00:00",
+        "payload_hash": "b536d7542675f784ac79623df0ee8486852e235d488e2e669ac891a69261c91f",
+        "detail": {
+          "passed": true,
+          "issues": []
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "accounts": [
+    {
+      "account_id": "acc_alice",
+      "balance": 25000.0,
+      "currency": "USD",
+      "owner": "Alice (synthetic)"
+    },
+    {
+      "account_id": "acc_bob",
+      "balance": 1200.0,
+      "currency": "USD",
+      "owner": "Bob (synthetic)"
+    },
+    {
+      "account_id": "acc_ops",
+      "balance": 10000.0,
+      "currency": "USD",
+      "owner": "Ops (synthetic)"
+    }
+  ],
+  "audit": [],
+  "balances": {
+    "acc_alice": 25000.0,
+    "acc_bob": 1200.0,
+    "acc_ops": 10000.0
+  },
+  "runs": {},
+  "total": 36200.0,
+  "transactions": []
+}

@@ -1,101 +1,182 @@
 # TrustFlow
 
-Self-verifying multi-agent workflows for the **Meta Global AI Developer Hackathon 2026**.
+**Agent workflows with approvals you can bind and outcomes you can verify.**
 
-The scripted real-browser replay is documented in [M5.2 demo quickstart](docs/m52-demo.md):
-after installing its prerequisites, run
-`python scripts/run_m52_demo.py --out artifacts/m5.2/latest`.
-It uses fresh synthetic SQLite storage, isolated loopback Docker services and
-headless Chromium, and reports an explicit PASS or FAIL with evidence artifacts.
+TrustFlow turns a natural-language task into a typed plan, applies deterministic
+risk policy, pauses for human approval where required, executes synthetic tools,
+and checks the result against an independently read ledger. The difficult case is
+a payment that commits just before the worker times out or the process dies:
+TrustFlow preserves the operation's identity and recovers through verification.
 
-TrustFlow runs a `Planner -> Human Approval -> Executor -> Verifier` loop over
-**synthetic financial data only**. No real money, no real banking APIs, no secrets
-in code or logs ONLY FOR HACKATHON USING :D
+Prepared for the **Meta Global AI Developer Hackathon 2026**. This is a local
+research prototype using synthetic accounts and funds. The independently accepted
+demonstration uses `FakeLLMProvider`; **live Meta inference results are pending**.
+There is no real banking integration or public deployment.
 
-## Quickstart (Windows PowerShell)
+[Project pitch](docs/submission/pitch.md) ·
+[Two-minute demo](docs/submission/demo-script.md) ·
+[Storyboard](docs/submission/storyboard.md) ·
+[Presentation PDF](docs/submission/presentation.pdf) ·
+[Submission checklist](docs/submission/checklist.md)
 
-```powershell
-python -m venv --without-pip .venv
-pip --python .venv\Scripts\python.exe install -e ".[dev]"
-.\.venv\Scripts\python.exe -m uvicorn trustflow.api.app:app --app-dir src --port 8000
-```
+The final [120-second MP4](docs/submission/video/trustflow-demo.mp4) reuses the
+accepted screenshots and existing deck, with readable detail crops, local
+English synthetic narration and captions. It is explicitly a static-capture
+montage, not recorded UI footage. [Player and re-export](docs/submission/video/README.md) ·
+[Copy-ready submission text](docs/submission/submission-text.md) ·
+[Public repository](https://github.com/IvanRomanteev/TrustFlow).
 
-On macOS/Linux:
+## See the accepted demonstration
 
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-uvicorn trustflow.api.app:app --app-dir src --port 8000
-```
+![Real M5.2 Chromium capture: execution waits for the exact plan hash](docs/submission/evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S2-awaiting-exact-hash.png)
 
-Open http://127.0.0.1:8000/docs for the interactive API.
+This unedited Chromium capture comes from the independent M5.2 acceptance replay,
+not a mockup or live-model session. The [evidence guide](docs/submission/evidence-status.md)
+identifies the accepted SHA, scenario results, raw evidence and limitations.
 
-## Demo flow
+## Setup
 
-1. `POST /workflows` with `{"title": "Transfer 5000", "description": "transfer 5000 to bob"}`
-   returns `AWAITING_APPROVAL` plus a workflow ID and `plan.plan_hash`.
-2. `POST /workflows/{id}/approve` with `{"actor": "mgr", "plan_hash": "<hash>"}` resumes
-   execution; the Verifier then confirms or triggers a bounded re-plan.
-3. `POST /workflows/{id}/reject` terminates the run safely with no transfer.
-4. `GET /workflows/{id}/audit` shows the full hashed audit trail.
+Requirements: Python **3.12+**, Git, a running Linux-container Docker Engine
+(Docker Desktop on Windows), Docker Compose **2.24.4+** with `!override` support,
+and Playwright Chromium. Host Node.js is unnecessary for the canonical replay:
+the frontend builds in a Node 22 container.
 
-Low-risk goals (e.g. a balance check) execute and verify immediately.
-
-## M3 demo (durable state + UI)
-
-One command (Docker daemon required):
+From the repository root in Windows PowerShell:
 
 ```powershell
-docker compose up --build
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev,demo]"
+python -m playwright install chromium
+docker info
+docker compose version
 ```
 
-Then open http://127.0.0.1:3000 in a browser. Approval token for
-panel 3: `demo-approval-token`. Without Docker, run the backend with
-`TRUSTFLOW_DB_PATH=data/trustflow.db` and
-`TRUSTFLOW_APPROVAL_TOKEN=demo-approval-token` set, plus
-`npm run start` in `frontend/` after `npm install` and
-`npm run build`. Workflow, ledger, approval and audit state lives in
-SQLite and survives restarts; see [docs/m3.md](docs/m3.md).
+On macOS/Linux, activate with `source .venv/bin/activate`. On Linux, install
+missing browser system libraries with `python -m playwright install --with-deps chromium`.
+Dependency installation and initial Docker builds can use the network. The
+demonstrated workflow uses fake inference, needs no model key and makes no paid
+model calls. Do not put credentials in demo output directories.
 
-## Safety
+## One-command reproducible demo
 
-- Risk is decided by the deterministic backend `PolicyEngine`, never by the LLM alone.
-- Approvals are bound to an immutable plan version + SHA-256 hash; repeats are rejected.
-- Mutating tools are idempotent; succeeded steps are never re-executed on retry/resume.
-- Retries, steps, and step timeouts are bounded in `Settings`.
-- API keys come only from `TRUSTFLOW_LLM_API_KEY`; logs redact secret-looking values.
-
-## M4 offline evaluation
-
-One command runs the maintained 33-case offline evaluation (fake
-provider, no network, no paid calls) and writes JSON/CSV/Markdown
-reports, per-run traces and a reproducibility manifest:
+After setup, with the virtual environment active:
 
 ```powershell
-.\.venv\Scripts\python.exe -m trustflow.evaluation --out artifacts/m4-eval --repeat 2 --ablations
+python scripts/run_m52_demo.py --out artifacts/m5.2/latest
 ```
 
-Exit codes, in precedence order (all findings are preserved in the
-published `repeats.json`/`COMPLETE.json` regardless of which code
-wins): 2 = critical safety violation in any repeat, 3 = harness or
-infrastructure failure, 4 = verdicts not reproducible across repeats,
-1 = case assertion failures, 0 = valid successful gate. Invalid
-command-line arguments exit 64 (usage error, distinct from evaluation
-outcomes). Artifacts are staged and published atomically; a failed
-run never overwrites a previously published successful report, and
-`COMPLETE.json` exists only for a fully published run. If a later
-repeat or stage fails, completed-repeat findings are retained in a
-separate `<name>.failed-<attempt>/FAILED_ATTEMPT.json` and in the
-sanitized stdout summary; no completion marker is created. These are
-offline workflow safety regression results, not live-model
-performance. See [docs/m4.md](docs/m4.md).
+The runner starts isolated FastAPI and Next.js services on dynamic loopback
+ports, seeds fresh synthetic SQLite storage, drives real headless Chromium and
+checks six scenarios. No manual clicks are needed. It performs controlled fault
+injection, including a timeout and SIGKILL of its own backend, and removes its
+positively identified resources when finished. This command starts Docker
+workloads; it is not a read-only viewer. No Docker workload was run to assemble
+this documentation package.
 
-## Tests
+Success requires exit code `0`, `M5.2 PASS` and a `COMPLETE.json` inside the printed
+invocation directory. Missing Docker/Chromium is a failure, not a passing skip.
+Each invocation has a unique child directory; `latest` is only its parent.
+
+Compare a fresh run with the included accepted replay:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest -q
-.\.venv\Scripts\python.exe -m ruff check src tests
-.\.venv\Scripts\python.exe -m mypy src
+python scripts/run_m52_demo.py --out artifacts/m5.2/compare --compare docs/submission/evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f
 ```
 
-See [docs/architecture.md](docs/architecture.md) for the design.
+Comparison covers normalized outcomes and transaction payloads, not identical
+pixels or volatile UUIDs. Raw snapshot and approval hashes are checked within
+each run. A run on this documentation branch records its own current SHA; the
+archived acceptance applies to `38cc3942dbd715681d59bfd893e47643210294a9`.
+
+For Windows path-length failures, use a short output parent, for example
+`python scripts/run_m52_demo.py --out "$env:TEMP\tfm52-demo"`. See the
+[accepted runner guide](docs/m52-demo.md) for scenarios, troubleshooting,
+resource ownership checks and failure artifacts. Preserve failed attempts and
+inspect `FAILED_ATTEMPT.json`; do not use global Docker cleanup commands.
+
+## Architecture
+
+![TrustFlow: model proposals pass through policy and approval; verification reads SQLite evidence](docs/submission/architecture.svg)
+
+The `WorkflowEngine` coordinates Planner → PolicyEngine → Human Approval when
+required → Executor → Verifier. SQLite stores runs, approvals, synthetic ledger
+transactions and audit events. Deterministic verification has priority over the
+semantic reviewer. Audit events, evidence spans, usage records and replay
+manifests make the decision and outcome inspectable.
+
+The provider boundary supports deterministic fake output and the existing
+`MetaResponsesProvider`. The latter sends schema-constrained requests to
+`POST /responses`; planning and review default to `muse-wonder-1.0` in the accepted
+source. Its presence is an implementation fact, not proof of live compatibility
+or model performance. [Architecture and source map](docs/submission/architecture.md).
+
+## Safety guarantees and tested scope
+
+| Contract | What the accepted local experiment demonstrates |
+|---|---|
+| Backend authorization | `PolicyEngine` decides risk; HIGH-risk execution waits for an authenticated, single-use decision matching the plan version and SHA-256 hash. |
+| Exact approved snapshot | Approval deep-copies the plan and authorizes its payment intents. Execution checks operation identity and authorized payload at the mutation boundary. |
+| Idempotency | Stable intent/operation keys identify a logical transfer. SQLite atomically checks the key, changes balances and inserts a transaction; duplicate keys cannot create another matching transfer. |
+| Evidence grounding | Deterministic checks read the ledger independently of tool success claims, match payloads and intent coverage, and check conservation. A semantic PASS cannot override deterministic FAIL. |
+| Uncertain outcomes | A timed-out thread can still commit. Recovery observes the original operation and uses verification-only retry instead of issuing another transfer. |
+| Bounded work | Step/re-plan/retry and semantic-attempt limits constrain the workflow; usage is tracked per workflow. Fake runs do not establish live costs or latency. |
+
+These contracts were exercised at controlled checkpoints in a trusted local,
+single-instance SQLite environment. They do not establish universal crash/race
+freedom, container recreation durability, multi-host guarantees, production
+banking readiness or tenant isolation. The shared local approval token is not
+production authentication/RBAC. [Safety and recovery](docs/submission/safety.md).
+
+## Evidence, not inferred model scores
+
+The [independent M5.2 report](docs/submission/evidence/m52/REVIEW.original.txt)
+accepts exact commit `38cc3942dbd715681d59bfd893e47643210294a9`:
+
+- S1–S6 passed in four complete fake-mode executions, including two canonical
+  replays with independent read-only SQLite observations and two maintained
+  opt-in replays. Each has 60 browser assertions and 14 screenshots.
+- Per canonical replay, four unique transfers retain their original operation
+  keys and `tx_id` values. No duplicate or unauthorized transfer was observed;
+  the synthetic total stayed at 36,200 USD.
+- The separate 33-case offline M4 regression evaluation passed all cases in
+  two reproducible repeats, with zero reported safety violations. This is a
+  workflow regression result, not a live-model benchmark.
+
+The default suite in that report was **502 passed, 19 skipped**; skipped tests
+are not executed passes. See [accepted results and boundaries](docs/submission/evidence-status.md).
+These are historical independent results, not tests rerun during M5.4 packaging.
+
+## Meta Muse integration
+
+Muse is relevant to two language tasks: proposing a structured plan and reviewing
+goal/plan/evidence alignment. Meta documents Muse Wonder and Muse Spark for
+agentic work, including tool calling and structured output.
+[Meta model documentation](https://dev.meta.ai/docs/models).
+
+TrustFlow keeps authorization, operation identity and ledger checks in
+deterministic code so a model proposal cannot grant itself permission. Live
+schema acceptance, model quality, failed-attempt accounting and budget behavior
+still require an explicitly authorized, independently supported M5.3 experiment.
+[M5.3 evidence template — pending](docs/submission/m53-live-results.md).
+
+## Development and offline checks
+
+With dependencies installed, from the repository root:
+
+```powershell
+python -m pytest -q
+python -m ruff check src tests scripts
+python -m mypy src
+python -m trustflow.evaluation --out artifacts/m4-eval --repeat 2 --ablations
+```
+
+The default pytest suite leaves expensive Docker gates opt-in. For a manual UI,
+`docker compose up --build` starts the local sandbox at
+`http://127.0.0.1:3000` with API docs at `http://127.0.0.1:8000/docs`; it uses
+persistent demo storage and is distinct from the fresh, scripted replay. See
+[M3](docs/m3.md) and [M5](docs/m5.md) before using existing local storage.
+
+[Package index](docs/submission/README.md) ·
+[Provenance manifest](docs/submission/evidence/provenance.json) ·
+[Original accepted README](docs/submission/evidence/m52/README.m52-original.txt)

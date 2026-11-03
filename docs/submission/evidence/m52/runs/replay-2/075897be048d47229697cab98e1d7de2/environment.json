@@ -1,0 +1,17 @@
+{
+  "chromium": "145.0.7632.6",
+  "packages": {
+    "fastapi": "0.162.0",
+    "httpx": "0.28.1",
+    "playwright": "1.58.0",
+    "pydantic": "2.14.2",
+    "pytest": "9.2.0"
+  },
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "tools": {
+    "compose": "5.6.1",
+    "docker_engine": "29.9.2",
+    "git": "git version 2.45.1.windows.1"
+  }
+}

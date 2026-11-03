@@ -1,0 +1,3287 @@
+[
+  {
+    "label": "first",
+    "path": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\runs\\optin\\first\\fa2265c3d5f243489307f1695a310dad",
+    "checks": [
+      {
+        "name": "exact clean candidate",
+        "passed": true
+      },
+      {
+        "name": "complete manifest SHA",
+        "passed": true
+      },
+      {
+        "name": "artifact hash Dockerfile.m52",
+        "passed": true
+      },
+      {
+        "name": "artifact hash README.md",
+        "passed": true
+      },
+      {
+        "name": "artifact hash api-log.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash audit-summary.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash browser-log.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash commands.jsonl",
+        "passed": true
+      },
+      {
+        "name": "artifact hash demo-backend-fa2265c3d5f243489307f1695a310dad.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash environment.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash fault-journal.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s1-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s1-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-approved.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-concurrent.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-invalid.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-replay.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s3-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s3-late-approve.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s3-rejected.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-held.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-late-commit.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s5-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s5-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-at-crash-checkpoint.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-graceful-restart.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash normalization-rules.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash normalized-results.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash override-fa2265c3d5f243489307f1695a310dad.yml",
+        "passed": true
+      },
+      {
+        "name": "artifact hash preservation-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash preservation-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash runtime-bindings.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash runtime-logs.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash scenario-results.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S1-low-risk-verified.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-approved-verified.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-authoritative-refresh.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-awaiting-exact-hash.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-concurrent-one-winner.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S3-rejected-authoritative.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S4-recovered-no-duplicate.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S4-uncertain-fault-injected.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S4-verification-pending.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S5-missing-mandatory-evidence.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-after-graceful-restart.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-after-sigkill-recovered-pending.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-before-crash-approval.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-durable-ui-reload.png",
+        "passed": true
+      },
+      {
+        "name": "six mandatory real scenarios",
+        "passed": true
+      },
+      {
+        "name": "38 scenario assertions",
+        "passed": true
+      },
+      {
+        "name": "60 browser assertions",
+        "passed": true
+      },
+      {
+        "name": "14 real PNG screenshots",
+        "passed": true
+      },
+      {
+        "name": "no pageerror",
+        "passed": true
+      },
+      {
+        "name": "network failures explicitly expected",
+        "passed": true
+      },
+      {
+        "name": "real browser POST workflows",
+        "passed": true
+      },
+      {
+        "name": "real browser POST approve",
+        "passed": true
+      },
+      {
+        "name": "real browser POST reject",
+        "passed": true
+      },
+      {
+        "name": "real browser POST reconcile",
+        "passed": true
+      },
+      {
+        "name": "real browser POST verify-retry",
+        "passed": true
+      },
+      {
+        "name": "four stable transaction IDs",
+        "passed": true
+      },
+      {
+        "name": "four unique operation keys",
+        "passed": true
+      },
+      {
+        "name": "exact amounts/direction",
+        "passed": true
+      },
+      {
+        "name": "final conserved balances",
+        "passed": true
+      },
+      {
+        "name": "independent ledger replay",
+        "passed": true
+      },
+      {
+        "name": "S1 zero associated transfers",
+        "passed": true
+      },
+      {
+        "name": "S3 zero associated transfers",
+        "passed": true
+      },
+      {
+        "name": "S5 zero associated transfers",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 approval immutable full hash",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 one persisted decision/grant",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 approval immutable full hash",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 one persisted decision/grant",
+        "passed": true
+      },
+      {
+        "name": "tx_0003 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0003 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 approval immutable full hash",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 one persisted decision/grant",
+        "passed": true
+      },
+      {
+        "name": "audit payload 1",
+        "passed": true
+      },
+      {
+        "name": "audit payload 2",
+        "passed": true
+      },
+      {
+        "name": "audit payload 3",
+        "passed": true
+      },
+      {
+        "name": "audit payload 4",
+        "passed": true
+      },
+      {
+        "name": "audit payload 5",
+        "passed": true
+      },
+      {
+        "name": "audit payload 6",
+        "passed": true
+      },
+      {
+        "name": "audit payload 7",
+        "passed": true
+      },
+      {
+        "name": "audit payload 8",
+        "passed": true
+      },
+      {
+        "name": "audit payload 9",
+        "passed": true
+      },
+      {
+        "name": "audit payload 10",
+        "passed": true
+      },
+      {
+        "name": "audit payload 11",
+        "passed": true
+      },
+      {
+        "name": "audit payload 12",
+        "passed": true
+      },
+      {
+        "name": "audit payload 13",
+        "passed": true
+      },
+      {
+        "name": "audit payload 14",
+        "passed": true
+      },
+      {
+        "name": "audit payload 15",
+        "passed": true
+      },
+      {
+        "name": "audit payload 16",
+        "passed": true
+      },
+      {
+        "name": "audit payload 17",
+        "passed": true
+      },
+      {
+        "name": "audit payload 18",
+        "passed": true
+      },
+      {
+        "name": "audit payload 19",
+        "passed": true
+      },
+      {
+        "name": "audit payload 20",
+        "passed": true
+      },
+      {
+        "name": "audit payload 21",
+        "passed": true
+      },
+      {
+        "name": "audit payload 22",
+        "passed": true
+      },
+      {
+        "name": "audit payload 23",
+        "passed": true
+      },
+      {
+        "name": "audit payload 24",
+        "passed": true
+      },
+      {
+        "name": "audit payload 25",
+        "passed": true
+      },
+      {
+        "name": "audit payload 26",
+        "passed": true
+      },
+      {
+        "name": "audit payload 27",
+        "passed": true
+      },
+      {
+        "name": "audit payload 28",
+        "passed": true
+      },
+      {
+        "name": "audit payload 29",
+        "passed": true
+      },
+      {
+        "name": "audit payload 30",
+        "passed": true
+      },
+      {
+        "name": "audit payload 31",
+        "passed": true
+      },
+      {
+        "name": "audit payload 32",
+        "passed": true
+      },
+      {
+        "name": "audit payload 33",
+        "passed": true
+      },
+      {
+        "name": "audit payload 34",
+        "passed": true
+      },
+      {
+        "name": "audit payload 35",
+        "passed": true
+      },
+      {
+        "name": "audit payload 36",
+        "passed": true
+      },
+      {
+        "name": "audit payload 37",
+        "passed": true
+      },
+      {
+        "name": "audit payload 38",
+        "passed": true
+      },
+      {
+        "name": "audit payload 39",
+        "passed": true
+      },
+      {
+        "name": "audit payload 40",
+        "passed": true
+      },
+      {
+        "name": "audit payload 41",
+        "passed": true
+      },
+      {
+        "name": "audit payload 42",
+        "passed": true
+      },
+      {
+        "name": "audit payload 43",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 5000 at a crash checkpoint",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 5000 at a crash checkpoint",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 5000 at a crash checkpoint",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 5000",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 5000",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 5000",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Check balance",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Check balance",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 25 with a held worker",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 25 with a held worker",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 25 with a held worker",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 1500 concurrently",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 1500 concurrently",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 1500 concurrently",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 3000 rejected",
+        "passed": true
+      },
+      {
+        "name": "race responses [200,409]",
+        "passed": true
+      },
+      {
+        "name": "only four mutating worker invocations",
+        "passed": true
+      },
+      {
+        "name": "three genuine process starts",
+        "passed": true
+      },
+      {
+        "name": "S6 durable claim before succeeded result",
+        "passed": true
+      },
+      {
+        "name": "S6 original tx/hash/snapshot preserved",
+        "passed": true
+      },
+      {
+        "name": "S4 actual uncertain/pending/completed order",
+        "passed": true
+      },
+      {
+        "name": "same full-ID real kill/start/graceful restart",
+        "passed": true
+      },
+      {
+        "name": "resource inventories identical",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent api-log.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent audit-summary.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent browser-log.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent commands.jsonl",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent COMPLETE.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent demo-backend-fa2265c3d5f243489307f1695a310dad.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent environment.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent fault-journal.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s1-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s1-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-approved.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-concurrent.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-invalid.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-replay.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s3-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s3-late-approve.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s3-rejected.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-held.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-late-commit.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s5-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s5-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-at-crash-checkpoint.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-graceful-restart.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent manifest.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent normalization-rules.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent normalized-results.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent override-fa2265c3d5f243489307f1695a310dad.yml",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent preservation-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent preservation-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent README.md",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent runtime-bindings.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent runtime-logs.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent scenario-results.json",
+        "passed": true
+      },
+      {
+        "name": "digest recomputed",
+        "passed": true
+      }
+    ],
+    "normalized_digest": "a17849b150ae8207b5efa629ef4384176ce334666590bfcd3165e59de8e3a370",
+    "browser_assertions": 60,
+    "screenshots": 14,
+    "expected_network_failures": [
+      {
+        "expected": true,
+        "failure": "net::ERR_EMPTY_RESPONSE",
+        "kind": "requestfailed",
+        "method": "GET",
+        "url": "http://127.0.0.1:54387/workflows"
+      },
+      {
+        "expected": true,
+        "failure": "net::ERR_EMPTY_RESPONSE",
+        "kind": "requestfailed",
+        "method": "GET",
+        "url": "http://127.0.0.1:54387/health"
+      }
+    ],
+    "sqlite_independently_captured": false,
+    "workflow_statuses": {
+      "S1": "COMPLETED",
+      "S2": "COMPLETED",
+      "S2-concurrent": "COMPLETED",
+      "S3": "REJECTED",
+      "S4": "COMPLETED",
+      "S5": "FAILED",
+      "S6": "COMPLETED"
+    }
+  },
+  {
+    "label": "second",
+    "path": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\runs\\optin\\second\\5bc6c982106e4127bd95ed741f68a68b",
+    "checks": [
+      {
+        "name": "exact clean candidate",
+        "passed": true
+      },
+      {
+        "name": "complete manifest SHA",
+        "passed": true
+      },
+      {
+        "name": "artifact hash Dockerfile.m52",
+        "passed": true
+      },
+      {
+        "name": "artifact hash README.md",
+        "passed": true
+      },
+      {
+        "name": "artifact hash api-log.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash audit-summary.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash browser-log.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash commands.jsonl",
+        "passed": true
+      },
+      {
+        "name": "artifact hash comparison.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash demo-backend-5bc6c982106e4127bd95ed741f68a68b.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash environment.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash fault-journal.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s1-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s1-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-approved.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-concurrent.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-invalid.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-replay.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s3-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s3-late-approve.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s3-rejected.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-held.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-late-commit.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s5-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s5-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-at-crash-checkpoint.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-graceful-restart.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash normalization-rules.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash normalized-results.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash override-5bc6c982106e4127bd95ed741f68a68b.yml",
+        "passed": true
+      },
+      {
+        "name": "artifact hash preservation-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash preservation-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash runtime-bindings.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash runtime-logs.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash scenario-results.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S1-low-risk-verified.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-approved-verified.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-authoritative-refresh.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-awaiting-exact-hash.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-concurrent-one-winner.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S3-rejected-authoritative.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S4-recovered-no-duplicate.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S4-uncertain-fault-injected.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S4-verification-pending.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S5-missing-mandatory-evidence.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-after-graceful-restart.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-after-sigkill-recovered-pending.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-before-crash-approval.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-durable-ui-reload.png",
+        "passed": true
+      },
+      {
+        "name": "six mandatory real scenarios",
+        "passed": true
+      },
+      {
+        "name": "38 scenario assertions",
+        "passed": true
+      },
+      {
+        "name": "60 browser assertions",
+        "passed": true
+      },
+      {
+        "name": "14 real PNG screenshots",
+        "passed": true
+      },
+      {
+        "name": "no pageerror",
+        "passed": true
+      },
+      {
+        "name": "network failures explicitly expected",
+        "passed": true
+      },
+      {
+        "name": "real browser POST workflows",
+        "passed": true
+      },
+      {
+        "name": "real browser POST approve",
+        "passed": true
+      },
+      {
+        "name": "real browser POST reject",
+        "passed": true
+      },
+      {
+        "name": "real browser POST reconcile",
+        "passed": true
+      },
+      {
+        "name": "real browser POST verify-retry",
+        "passed": true
+      },
+      {
+        "name": "four stable transaction IDs",
+        "passed": true
+      },
+      {
+        "name": "four unique operation keys",
+        "passed": true
+      },
+      {
+        "name": "exact amounts/direction",
+        "passed": true
+      },
+      {
+        "name": "final conserved balances",
+        "passed": true
+      },
+      {
+        "name": "independent ledger replay",
+        "passed": true
+      },
+      {
+        "name": "S1 zero associated transfers",
+        "passed": true
+      },
+      {
+        "name": "S3 zero associated transfers",
+        "passed": true
+      },
+      {
+        "name": "S5 zero associated transfers",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 approval immutable full hash",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 one persisted decision/grant",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 approval immutable full hash",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 one persisted decision/grant",
+        "passed": true
+      },
+      {
+        "name": "tx_0003 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0003 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 approval immutable full hash",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 one persisted decision/grant",
+        "passed": true
+      },
+      {
+        "name": "audit payload 1",
+        "passed": true
+      },
+      {
+        "name": "audit payload 2",
+        "passed": true
+      },
+      {
+        "name": "audit payload 3",
+        "passed": true
+      },
+      {
+        "name": "audit payload 4",
+        "passed": true
+      },
+      {
+        "name": "audit payload 5",
+        "passed": true
+      },
+      {
+        "name": "audit payload 6",
+        "passed": true
+      },
+      {
+        "name": "audit payload 7",
+        "passed": true
+      },
+      {
+        "name": "audit payload 8",
+        "passed": true
+      },
+      {
+        "name": "audit payload 9",
+        "passed": true
+      },
+      {
+        "name": "audit payload 10",
+        "passed": true
+      },
+      {
+        "name": "audit payload 11",
+        "passed": true
+      },
+      {
+        "name": "audit payload 12",
+        "passed": true
+      },
+      {
+        "name": "audit payload 13",
+        "passed": true
+      },
+      {
+        "name": "audit payload 14",
+        "passed": true
+      },
+      {
+        "name": "audit payload 15",
+        "passed": true
+      },
+      {
+        "name": "audit payload 16",
+        "passed": true
+      },
+      {
+        "name": "audit payload 17",
+        "passed": true
+      },
+      {
+        "name": "audit payload 18",
+        "passed": true
+      },
+      {
+        "name": "audit payload 19",
+        "passed": true
+      },
+      {
+        "name": "audit payload 20",
+        "passed": true
+      },
+      {
+        "name": "audit payload 21",
+        "passed": true
+      },
+      {
+        "name": "audit payload 22",
+        "passed": true
+      },
+      {
+        "name": "audit payload 23",
+        "passed": true
+      },
+      {
+        "name": "audit payload 24",
+        "passed": true
+      },
+      {
+        "name": "audit payload 25",
+        "passed": true
+      },
+      {
+        "name": "audit payload 26",
+        "passed": true
+      },
+      {
+        "name": "audit payload 27",
+        "passed": true
+      },
+      {
+        "name": "audit payload 28",
+        "passed": true
+      },
+      {
+        "name": "audit payload 29",
+        "passed": true
+      },
+      {
+        "name": "audit payload 30",
+        "passed": true
+      },
+      {
+        "name": "audit payload 31",
+        "passed": true
+      },
+      {
+        "name": "audit payload 32",
+        "passed": true
+      },
+      {
+        "name": "audit payload 33",
+        "passed": true
+      },
+      {
+        "name": "audit payload 34",
+        "passed": true
+      },
+      {
+        "name": "audit payload 35",
+        "passed": true
+      },
+      {
+        "name": "audit payload 36",
+        "passed": true
+      },
+      {
+        "name": "audit payload 37",
+        "passed": true
+      },
+      {
+        "name": "audit payload 38",
+        "passed": true
+      },
+      {
+        "name": "audit payload 39",
+        "passed": true
+      },
+      {
+        "name": "audit payload 40",
+        "passed": true
+      },
+      {
+        "name": "audit payload 41",
+        "passed": true
+      },
+      {
+        "name": "audit payload 42",
+        "passed": true
+      },
+      {
+        "name": "audit payload 43",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 1500 concurrently",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 1500 concurrently",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 1500 concurrently",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Check balance",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Check balance",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 5000 at a crash checkpoint",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 5000 at a crash checkpoint",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 5000 at a crash checkpoint",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 3000 rejected",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 5000",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 5000",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 5000",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 25 with a held worker",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 25 with a held worker",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 25 with a held worker",
+        "passed": true
+      },
+      {
+        "name": "race responses [200,409]",
+        "passed": true
+      },
+      {
+        "name": "only four mutating worker invocations",
+        "passed": true
+      },
+      {
+        "name": "three genuine process starts",
+        "passed": true
+      },
+      {
+        "name": "S6 durable claim before succeeded result",
+        "passed": true
+      },
+      {
+        "name": "S6 original tx/hash/snapshot preserved",
+        "passed": true
+      },
+      {
+        "name": "S4 actual uncertain/pending/completed order",
+        "passed": true
+      },
+      {
+        "name": "same full-ID real kill/start/graceful restart",
+        "passed": true
+      },
+      {
+        "name": "resource inventories identical",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent api-log.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent audit-summary.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent browser-log.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent commands.jsonl",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent comparison.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent COMPLETE.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent demo-backend-5bc6c982106e4127bd95ed741f68a68b.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent environment.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent fault-journal.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s1-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s1-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-approved.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-concurrent.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-invalid.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-replay.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s3-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s3-late-approve.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s3-rejected.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-held.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-late-commit.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s5-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s5-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-at-crash-checkpoint.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-graceful-restart.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent manifest.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent normalization-rules.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent normalized-results.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent override-5bc6c982106e4127bd95ed741f68a68b.yml",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent preservation-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent preservation-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent README.md",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent runtime-bindings.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent runtime-logs.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent scenario-results.json",
+        "passed": true
+      },
+      {
+        "name": "digest recomputed",
+        "passed": true
+      }
+    ],
+    "normalized_digest": "a17849b150ae8207b5efa629ef4384176ce334666590bfcd3165e59de8e3a370",
+    "browser_assertions": 60,
+    "screenshots": 14,
+    "expected_network_failures": [
+      {
+        "expected": true,
+        "failure": "net::ERR_EMPTY_RESPONSE",
+        "kind": "requestfailed",
+        "method": "GET",
+        "url": "http://127.0.0.1:55281/workflows"
+      },
+      {
+        "expected": true,
+        "failure": "net::ERR_EMPTY_RESPONSE",
+        "kind": "requestfailed",
+        "method": "GET",
+        "url": "http://127.0.0.1:55281/health"
+      }
+    ],
+    "sqlite_independently_captured": false,
+    "workflow_statuses": {
+      "S1": "COMPLETED",
+      "S2": "COMPLETED",
+      "S2-concurrent": "COMPLETED",
+      "S3": "REJECTED",
+      "S4": "COMPLETED",
+      "S5": "FAILED",
+      "S6": "COMPLETED"
+    }
+  },
+  {
+    "label": "replay-1",
+    "path": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\runs\\replay-1\\3cf94d5897b843e0bf751242513e2b1f",
+    "checks": [
+      {
+        "name": "exact clean candidate",
+        "passed": true
+      },
+      {
+        "name": "complete manifest SHA",
+        "passed": true
+      },
+      {
+        "name": "artifact hash Dockerfile.m52",
+        "passed": true
+      },
+      {
+        "name": "artifact hash README.md",
+        "passed": true
+      },
+      {
+        "name": "artifact hash api-log.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash audit-summary.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash browser-log.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash commands.jsonl",
+        "passed": true
+      },
+      {
+        "name": "artifact hash demo-backend-3cf94d5897b843e0bf751242513e2b1f.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash environment.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash fault-journal.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s1-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s1-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-approved.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-concurrent.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-invalid.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-replay.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s3-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s3-late-approve.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s3-rejected.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-held.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-late-commit.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s5-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s5-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-at-crash-checkpoint.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-graceful-restart.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash normalization-rules.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash normalized-results.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash override-3cf94d5897b843e0bf751242513e2b1f.yml",
+        "passed": true
+      },
+      {
+        "name": "artifact hash preservation-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash preservation-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash runtime-bindings.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash runtime-logs.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash scenario-results.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S1-low-risk-verified.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-approved-verified.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-authoritative-refresh.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-awaiting-exact-hash.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-concurrent-one-winner.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S3-rejected-authoritative.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S4-recovered-no-duplicate.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S4-uncertain-fault-injected.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S4-verification-pending.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S5-missing-mandatory-evidence.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-after-graceful-restart.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-after-sigkill-recovered-pending.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-before-crash-approval.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-durable-ui-reload.png",
+        "passed": true
+      },
+      {
+        "name": "six mandatory real scenarios",
+        "passed": true
+      },
+      {
+        "name": "38 scenario assertions",
+        "passed": true
+      },
+      {
+        "name": "60 browser assertions",
+        "passed": true
+      },
+      {
+        "name": "14 real PNG screenshots",
+        "passed": true
+      },
+      {
+        "name": "no pageerror",
+        "passed": true
+      },
+      {
+        "name": "network failures explicitly expected",
+        "passed": true
+      },
+      {
+        "name": "real browser POST workflows",
+        "passed": true
+      },
+      {
+        "name": "real browser POST approve",
+        "passed": true
+      },
+      {
+        "name": "real browser POST reject",
+        "passed": true
+      },
+      {
+        "name": "real browser POST reconcile",
+        "passed": true
+      },
+      {
+        "name": "real browser POST verify-retry",
+        "passed": true
+      },
+      {
+        "name": "independent SQLite integrity",
+        "passed": true
+      },
+      {
+        "name": "independent DB agrees with published snapshot",
+        "passed": true
+      },
+      {
+        "name": "four stable transaction IDs",
+        "passed": true
+      },
+      {
+        "name": "four unique operation keys",
+        "passed": true
+      },
+      {
+        "name": "exact amounts/direction",
+        "passed": true
+      },
+      {
+        "name": "final conserved balances",
+        "passed": true
+      },
+      {
+        "name": "independent ledger replay",
+        "passed": true
+      },
+      {
+        "name": "S1 zero associated transfers",
+        "passed": true
+      },
+      {
+        "name": "S3 zero associated transfers",
+        "passed": true
+      },
+      {
+        "name": "S5 zero associated transfers",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 approval immutable full hash",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 one persisted decision/grant",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 approval immutable full hash",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 one persisted decision/grant",
+        "passed": true
+      },
+      {
+        "name": "tx_0003 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0003 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 approval immutable full hash",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 one persisted decision/grant",
+        "passed": true
+      },
+      {
+        "name": "audit payload 1",
+        "passed": true
+      },
+      {
+        "name": "audit payload 2",
+        "passed": true
+      },
+      {
+        "name": "audit payload 3",
+        "passed": true
+      },
+      {
+        "name": "audit payload 4",
+        "passed": true
+      },
+      {
+        "name": "audit payload 5",
+        "passed": true
+      },
+      {
+        "name": "audit payload 6",
+        "passed": true
+      },
+      {
+        "name": "audit payload 7",
+        "passed": true
+      },
+      {
+        "name": "audit payload 8",
+        "passed": true
+      },
+      {
+        "name": "audit payload 9",
+        "passed": true
+      },
+      {
+        "name": "audit payload 10",
+        "passed": true
+      },
+      {
+        "name": "audit payload 11",
+        "passed": true
+      },
+      {
+        "name": "audit payload 12",
+        "passed": true
+      },
+      {
+        "name": "audit payload 13",
+        "passed": true
+      },
+      {
+        "name": "audit payload 14",
+        "passed": true
+      },
+      {
+        "name": "audit payload 15",
+        "passed": true
+      },
+      {
+        "name": "audit payload 16",
+        "passed": true
+      },
+      {
+        "name": "audit payload 17",
+        "passed": true
+      },
+      {
+        "name": "audit payload 18",
+        "passed": true
+      },
+      {
+        "name": "audit payload 19",
+        "passed": true
+      },
+      {
+        "name": "audit payload 20",
+        "passed": true
+      },
+      {
+        "name": "audit payload 21",
+        "passed": true
+      },
+      {
+        "name": "audit payload 22",
+        "passed": true
+      },
+      {
+        "name": "audit payload 23",
+        "passed": true
+      },
+      {
+        "name": "audit payload 24",
+        "passed": true
+      },
+      {
+        "name": "audit payload 25",
+        "passed": true
+      },
+      {
+        "name": "audit payload 26",
+        "passed": true
+      },
+      {
+        "name": "audit payload 27",
+        "passed": true
+      },
+      {
+        "name": "audit payload 28",
+        "passed": true
+      },
+      {
+        "name": "audit payload 29",
+        "passed": true
+      },
+      {
+        "name": "audit payload 30",
+        "passed": true
+      },
+      {
+        "name": "audit payload 31",
+        "passed": true
+      },
+      {
+        "name": "audit payload 32",
+        "passed": true
+      },
+      {
+        "name": "audit payload 33",
+        "passed": true
+      },
+      {
+        "name": "audit payload 34",
+        "passed": true
+      },
+      {
+        "name": "audit payload 35",
+        "passed": true
+      },
+      {
+        "name": "audit payload 36",
+        "passed": true
+      },
+      {
+        "name": "audit payload 37",
+        "passed": true
+      },
+      {
+        "name": "audit payload 38",
+        "passed": true
+      },
+      {
+        "name": "audit payload 39",
+        "passed": true
+      },
+      {
+        "name": "audit payload 40",
+        "passed": true
+      },
+      {
+        "name": "audit payload 41",
+        "passed": true
+      },
+      {
+        "name": "audit payload 42",
+        "passed": true
+      },
+      {
+        "name": "audit payload 43",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Check balance",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Check balance",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 5000",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 5000",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 5000",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 1500 concurrently",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 1500 concurrently",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 1500 concurrently",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 3000 rejected",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 25 with a held worker",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 25 with a held worker",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 25 with a held worker",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 5000 at a crash checkpoint",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 5000 at a crash checkpoint",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 5000 at a crash checkpoint",
+        "passed": true
+      },
+      {
+        "name": "race responses [200,409]",
+        "passed": true
+      },
+      {
+        "name": "only four mutating worker invocations",
+        "passed": true
+      },
+      {
+        "name": "three genuine process starts",
+        "passed": true
+      },
+      {
+        "name": "S6 durable claim before succeeded result",
+        "passed": true
+      },
+      {
+        "name": "S6 original tx/hash/snapshot preserved",
+        "passed": true
+      },
+      {
+        "name": "S4 actual uncertain/pending/completed order",
+        "passed": true
+      },
+      {
+        "name": "same full-ID real kill/start/graceful restart",
+        "passed": true
+      },
+      {
+        "name": "resource inventories identical",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent api-log.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent audit-summary.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent browser-log.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent commands.jsonl",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent COMPLETE.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent demo-backend-3cf94d5897b843e0bf751242513e2b1f.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent environment.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent fault-journal.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s1-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s1-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-approved.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-concurrent.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-invalid.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-replay.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s3-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s3-late-approve.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s3-rejected.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-held.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-late-commit.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s5-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s5-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-at-crash-checkpoint.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-graceful-restart.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent manifest.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent normalization-rules.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent normalized-results.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent override-3cf94d5897b843e0bf751242513e2b1f.yml",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent preservation-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent preservation-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent README.md",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent runtime-bindings.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent runtime-logs.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent scenario-results.json",
+        "passed": true
+      },
+      {
+        "name": "digest recomputed",
+        "passed": true
+      }
+    ],
+    "normalized_digest": "a17849b150ae8207b5efa629ef4384176ce334666590bfcd3165e59de8e3a370",
+    "browser_assertions": 60,
+    "screenshots": 14,
+    "expected_network_failures": [
+      {
+        "expected": true,
+        "failure": "net::ERR_EMPTY_RESPONSE",
+        "kind": "requestfailed",
+        "method": "GET",
+        "url": "http://127.0.0.1:52547/workflows"
+      }
+    ],
+    "sqlite_independently_captured": true,
+    "workflow_statuses": {
+      "S1": "COMPLETED",
+      "S2": "COMPLETED",
+      "S2-concurrent": "COMPLETED",
+      "S3": "REJECTED",
+      "S4": "COMPLETED",
+      "S5": "FAILED",
+      "S6": "COMPLETED"
+    }
+  },
+  {
+    "label": "replay-2",
+    "path": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\runs\\replay-2\\075897be048d47229697cab98e1d7de2",
+    "checks": [
+      {
+        "name": "exact clean candidate",
+        "passed": true
+      },
+      {
+        "name": "complete manifest SHA",
+        "passed": true
+      },
+      {
+        "name": "artifact hash Dockerfile.m52",
+        "passed": true
+      },
+      {
+        "name": "artifact hash README.md",
+        "passed": true
+      },
+      {
+        "name": "artifact hash api-log.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash audit-summary.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash browser-log.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash commands.jsonl",
+        "passed": true
+      },
+      {
+        "name": "artifact hash comparison.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash demo-backend-075897be048d47229697cab98e1d7de2.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash environment.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash fault-journal.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s1-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s1-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-approved.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-concurrent.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-invalid.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s2-replay.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s3-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s3-late-approve.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s3-rejected.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-held.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s4-late-commit.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s5-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s5-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-at-crash-checkpoint.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash ledger-s6-graceful-restart.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash normalization-rules.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash normalized-results.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash override-075897be048d47229697cab98e1d7de2.yml",
+        "passed": true
+      },
+      {
+        "name": "artifact hash preservation-after.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash preservation-before.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash runtime-bindings.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash runtime-logs.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash scenario-results.json",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S1-low-risk-verified.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-approved-verified.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-authoritative-refresh.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-awaiting-exact-hash.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S2-concurrent-one-winner.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S3-rejected-authoritative.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S4-recovered-no-duplicate.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S4-uncertain-fault-injected.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S4-verification-pending.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S5-missing-mandatory-evidence.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-after-graceful-restart.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-after-sigkill-recovered-pending.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-before-crash-approval.png",
+        "passed": true
+      },
+      {
+        "name": "artifact hash screenshots/S6-durable-ui-reload.png",
+        "passed": true
+      },
+      {
+        "name": "six mandatory real scenarios",
+        "passed": true
+      },
+      {
+        "name": "38 scenario assertions",
+        "passed": true
+      },
+      {
+        "name": "60 browser assertions",
+        "passed": true
+      },
+      {
+        "name": "14 real PNG screenshots",
+        "passed": true
+      },
+      {
+        "name": "no pageerror",
+        "passed": true
+      },
+      {
+        "name": "network failures explicitly expected",
+        "passed": true
+      },
+      {
+        "name": "real browser POST workflows",
+        "passed": true
+      },
+      {
+        "name": "real browser POST approve",
+        "passed": true
+      },
+      {
+        "name": "real browser POST reject",
+        "passed": true
+      },
+      {
+        "name": "real browser POST reconcile",
+        "passed": true
+      },
+      {
+        "name": "real browser POST verify-retry",
+        "passed": true
+      },
+      {
+        "name": "independent SQLite integrity",
+        "passed": true
+      },
+      {
+        "name": "independent DB agrees with published snapshot",
+        "passed": true
+      },
+      {
+        "name": "four stable transaction IDs",
+        "passed": true
+      },
+      {
+        "name": "four unique operation keys",
+        "passed": true
+      },
+      {
+        "name": "exact amounts/direction",
+        "passed": true
+      },
+      {
+        "name": "final conserved balances",
+        "passed": true
+      },
+      {
+        "name": "independent ledger replay",
+        "passed": true
+      },
+      {
+        "name": "S1 zero associated transfers",
+        "passed": true
+      },
+      {
+        "name": "S3 zero associated transfers",
+        "passed": true
+      },
+      {
+        "name": "S5 zero associated transfers",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 approval immutable full hash",
+        "passed": true
+      },
+      {
+        "name": "tx_0001 one persisted decision/grant",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 approval immutable full hash",
+        "passed": true
+      },
+      {
+        "name": "tx_0002 one persisted decision/grant",
+        "passed": true
+      },
+      {
+        "name": "tx_0003 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0003 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 unique workflow owner",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 authorized exact payload",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 approval immutable full hash",
+        "passed": true
+      },
+      {
+        "name": "tx_0004 one persisted decision/grant",
+        "passed": true
+      },
+      {
+        "name": "audit payload 1",
+        "passed": true
+      },
+      {
+        "name": "audit payload 2",
+        "passed": true
+      },
+      {
+        "name": "audit payload 3",
+        "passed": true
+      },
+      {
+        "name": "audit payload 4",
+        "passed": true
+      },
+      {
+        "name": "audit payload 5",
+        "passed": true
+      },
+      {
+        "name": "audit payload 6",
+        "passed": true
+      },
+      {
+        "name": "audit payload 7",
+        "passed": true
+      },
+      {
+        "name": "audit payload 8",
+        "passed": true
+      },
+      {
+        "name": "audit payload 9",
+        "passed": true
+      },
+      {
+        "name": "audit payload 10",
+        "passed": true
+      },
+      {
+        "name": "audit payload 11",
+        "passed": true
+      },
+      {
+        "name": "audit payload 12",
+        "passed": true
+      },
+      {
+        "name": "audit payload 13",
+        "passed": true
+      },
+      {
+        "name": "audit payload 14",
+        "passed": true
+      },
+      {
+        "name": "audit payload 15",
+        "passed": true
+      },
+      {
+        "name": "audit payload 16",
+        "passed": true
+      },
+      {
+        "name": "audit payload 17",
+        "passed": true
+      },
+      {
+        "name": "audit payload 18",
+        "passed": true
+      },
+      {
+        "name": "audit payload 19",
+        "passed": true
+      },
+      {
+        "name": "audit payload 20",
+        "passed": true
+      },
+      {
+        "name": "audit payload 21",
+        "passed": true
+      },
+      {
+        "name": "audit payload 22",
+        "passed": true
+      },
+      {
+        "name": "audit payload 23",
+        "passed": true
+      },
+      {
+        "name": "audit payload 24",
+        "passed": true
+      },
+      {
+        "name": "audit payload 25",
+        "passed": true
+      },
+      {
+        "name": "audit payload 26",
+        "passed": true
+      },
+      {
+        "name": "audit payload 27",
+        "passed": true
+      },
+      {
+        "name": "audit payload 28",
+        "passed": true
+      },
+      {
+        "name": "audit payload 29",
+        "passed": true
+      },
+      {
+        "name": "audit payload 30",
+        "passed": true
+      },
+      {
+        "name": "audit payload 31",
+        "passed": true
+      },
+      {
+        "name": "audit payload 32",
+        "passed": true
+      },
+      {
+        "name": "audit payload 33",
+        "passed": true
+      },
+      {
+        "name": "audit payload 34",
+        "passed": true
+      },
+      {
+        "name": "audit payload 35",
+        "passed": true
+      },
+      {
+        "name": "audit payload 36",
+        "passed": true
+      },
+      {
+        "name": "audit payload 37",
+        "passed": true
+      },
+      {
+        "name": "audit payload 38",
+        "passed": true
+      },
+      {
+        "name": "audit payload 39",
+        "passed": true
+      },
+      {
+        "name": "audit payload 40",
+        "passed": true
+      },
+      {
+        "name": "audit payload 41",
+        "passed": true
+      },
+      {
+        "name": "audit payload 42",
+        "passed": true
+      },
+      {
+        "name": "audit payload 43",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Check balance",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Check balance",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 5000",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 5000",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 5000",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 1500 concurrently",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 1500 concurrently",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 1500 concurrently",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 3000 rejected",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 25 with a held worker",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 25 with a held worker",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 25 with a held worker",
+        "passed": true
+      },
+      {
+        "name": "raw plan hash Transfer 5000 at a crash checkpoint",
+        "passed": true
+      },
+      {
+        "name": "evidence snapshot identity Transfer 5000 at a crash checkpoint",
+        "passed": true
+      },
+      {
+        "name": "exact ledger citation Transfer 5000 at a crash checkpoint",
+        "passed": true
+      },
+      {
+        "name": "race responses [200,409]",
+        "passed": true
+      },
+      {
+        "name": "only four mutating worker invocations",
+        "passed": true
+      },
+      {
+        "name": "three genuine process starts",
+        "passed": true
+      },
+      {
+        "name": "S6 durable claim before succeeded result",
+        "passed": true
+      },
+      {
+        "name": "S6 original tx/hash/snapshot preserved",
+        "passed": true
+      },
+      {
+        "name": "S4 actual uncertain/pending/completed order",
+        "passed": true
+      },
+      {
+        "name": "same full-ID real kill/start/graceful restart",
+        "passed": true
+      },
+      {
+        "name": "resource inventories identical",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent api-log.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent audit-summary.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent browser-log.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent commands.jsonl",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent comparison.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent COMPLETE.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent demo-backend-075897be048d47229697cab98e1d7de2.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent environment.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent fault-journal.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s1-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s1-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-approved.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-concurrent.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-invalid.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s2-replay.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s3-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s3-late-approve.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s3-rejected.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-held.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s4-late-commit.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s5-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s5-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-at-crash-checkpoint.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent ledger-s6-graceful-restart.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent manifest.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent normalization-rules.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent normalized-results.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent override-075897be048d47229697cab98e1d7de2.yml",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent preservation-after.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent preservation-before.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent README.md",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent runtime-bindings.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent runtime-logs.json",
+        "passed": true
+      },
+      {
+        "name": "approval literal absent scenario-results.json",
+        "passed": true
+      },
+      {
+        "name": "digest recomputed",
+        "passed": true
+      }
+    ],
+    "normalized_digest": "a17849b150ae8207b5efa629ef4384176ce334666590bfcd3165e59de8e3a370",
+    "browser_assertions": 60,
+    "screenshots": 14,
+    "expected_network_failures": [
+      {
+        "expected": true,
+        "failure": "net::ERR_EMPTY_RESPONSE",
+        "kind": "requestfailed",
+        "method": "GET",
+        "url": "http://127.0.0.1:65314/workflows"
+      },
+      {
+        "expected": true,
+        "failure": "net::ERR_EMPTY_RESPONSE",
+        "kind": "requestfailed",
+        "method": "GET",
+        "url": "http://127.0.0.1:65314/health"
+      }
+    ],
+    "sqlite_independently_captured": true,
+    "workflow_statuses": {
+      "S1": "COMPLETED",
+      "S2": "COMPLETED",
+      "S2-concurrent": "COMPLETED",
+      "S3": "REJECTED",
+      "S4": "COMPLETED",
+      "S5": "FAILED",
+      "S6": "COMPLETED"
+    }
+  }
+]

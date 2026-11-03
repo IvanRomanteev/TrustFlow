@@ -1,0 +1,487 @@
+{
+  "schema_version": "1.0",
+  "provider_mode": "fake",
+  "dataset_cases": 33,
+  "experiments": [
+    {
+      "experiment_id": "ablation-a-verifier-diagnostics",
+      "baseline": "deterministic verifier checks only (diagnostic read)",
+      "treatment": "full pipeline verdict (deterministic + semantic, as executed)",
+      "safety_note": "diagnostic comparison over normally executed runs; no verification disabled on any mutating path",
+      "n": 24,
+      "compared": 18,
+      "agreements": 18,
+      "semantic_reviews_observed": 16,
+      "rows": [
+        {
+          "case_id": "balance_check",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 1.27,
+          "agreement": true
+        },
+        {
+          "case_id": "list_tx_empty",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 0.62,
+          "agreement": true
+        },
+        {
+          "case_id": "fx_quote",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 0.7,
+          "agreement": true
+        },
+        {
+          "case_id": "small_transfer_50",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 0.9,
+          "agreement": true
+        },
+        {
+          "case_id": "small_transfer_100",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 1.24,
+          "agreement": true
+        },
+        {
+          "case_id": "medium_transfer_500",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 1.57,
+          "agreement": true
+        },
+        {
+          "case_id": "boundary_1000",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 1.03,
+          "agreement": true
+        },
+        {
+          "case_id": "high_1001_needs_approval",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 1.22,
+          "agreement": true
+        },
+        {
+          "case_id": "high_5000_approved",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 1.44,
+          "agreement": true
+        },
+        {
+          "case_id": "ops_to_alice_200",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 1.39,
+          "agreement": true
+        },
+        {
+          "case_id": "bob_to_ops_300",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 1.51,
+          "agreement": true
+        },
+        {
+          "case_id": "insufficient_funds",
+          "status": "FAILED",
+          "deterministic": false,
+          "overall": false,
+          "semantic": null,
+          "duration_ms": 1.55,
+          "agreement": true
+        },
+        {
+          "case_id": "unknown_tool",
+          "status": "FAILED",
+          "deterministic": null,
+          "overall": null,
+          "semantic": null,
+          "agreement": null
+        },
+        {
+          "case_id": "unknown_account",
+          "status": "FAILED",
+          "deterministic": null,
+          "overall": null,
+          "semantic": null,
+          "agreement": null
+        },
+        {
+          "case_id": "self_transfer",
+          "status": "FAILED",
+          "deterministic": null,
+          "overall": null,
+          "semantic": null,
+          "agreement": null
+        },
+        {
+          "case_id": "negative_amount",
+          "status": "FAILED",
+          "deterministic": null,
+          "overall": null,
+          "semantic": null,
+          "agreement": null
+        },
+        {
+          "case_id": "missing_amount",
+          "status": "FAILED",
+          "deterministic": null,
+          "overall": null,
+          "semantic": null,
+          "agreement": null
+        },
+        {
+          "case_id": "empty_plan",
+          "status": "FAILED",
+          "deterministic": null,
+          "overall": null,
+          "semantic": null,
+          "agreement": null
+        },
+        {
+          "case_id": "two_transfers_distinct_ops",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 1.79,
+          "agreement": true
+        },
+        {
+          "case_id": "balance_then_fx",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 1.12,
+          "agreement": true
+        },
+        {
+          "case_id": "high_10000_approved",
+          "status": "FAILED",
+          "deterministic": false,
+          "overall": false,
+          "semantic": null,
+          "duration_ms": 1.54,
+          "agreement": true
+        },
+        {
+          "case_id": "alice_exact_balance_5000",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 1.12,
+          "agreement": true
+        },
+        {
+          "case_id": "retrieved_policy_attached_but_deterministic_gate_decides",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 1.42,
+          "agreement": true
+        },
+        {
+          "case_id": "mandatory_evidence_workflow_completes_with_citations",
+          "status": "COMPLETED",
+          "deterministic": true,
+          "overall": true,
+          "semantic": "PASS",
+          "duration_ms": 1.42,
+          "agreement": true
+        }
+      ],
+      "limitations": "fake/scripted semantic reviewer; agreement is a pipeline-consistency diagnostic, not model accuracy"
+    },
+    {
+      "experiment_id": "ablation-b-retrieval-context",
+      "baseline": "retriever wired (advisory policy/ledger evidence attached)",
+      "treatment": "retriever omitted (M1 wiring); policy/approval/verification unchanged",
+      "safety_note": "mandatory policy and canonical-evidence gates remain enforced in both variants; nothing is bypassed",
+      "n": 24,
+      "status_consistent": 23,
+      "expected_fail_closed_without_retriever": [
+        "mandatory_evidence_workflow_completes_with_citations"
+      ],
+      "fail_closed_note": "require_evidence cases correctly FAIL without a retriever (no canonical evidence can be attached); that inconsistency is the mandatory gate working, not a regression",
+      "mean_evidence_spans_with": 2.29,
+      "mean_evidence_spans_without": 0.5,
+      "rows": [
+        {
+          "case_id": "balance_check",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 0,
+          "evidence_spans_without": 0,
+          "duration_ms_with": 0.82,
+          "duration_ms_without": 0.7
+        },
+        {
+          "case_id": "list_tx_empty",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 0,
+          "evidence_spans_without": 0,
+          "duration_ms_with": 0.7,
+          "duration_ms_without": 0.74
+        },
+        {
+          "case_id": "fx_quote",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 2,
+          "evidence_spans_without": 0,
+          "duration_ms_with": 1.01,
+          "duration_ms_without": 1.01
+        },
+        {
+          "case_id": "small_transfer_50",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 4,
+          "evidence_spans_without": 1,
+          "duration_ms_with": 1.13,
+          "duration_ms_without": 1.07
+        },
+        {
+          "case_id": "small_transfer_100",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 4,
+          "evidence_spans_without": 1,
+          "duration_ms_with": 1.41,
+          "duration_ms_without": 0.95
+        },
+        {
+          "case_id": "medium_transfer_500",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 4,
+          "evidence_spans_without": 1,
+          "duration_ms_with": 1.55,
+          "duration_ms_without": 1.2
+        },
+        {
+          "case_id": "boundary_1000",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 2,
+          "evidence_spans_without": 1,
+          "duration_ms_with": 1.45,
+          "duration_ms_without": 1.16
+        },
+        {
+          "case_id": "high_1001_needs_approval",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 4,
+          "evidence_spans_without": 1,
+          "duration_ms_with": 1.5,
+          "duration_ms_without": 1.17
+        },
+        {
+          "case_id": "high_5000_approved",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 2,
+          "evidence_spans_without": 1,
+          "duration_ms_with": 1.55,
+          "duration_ms_without": 1.35
+        },
+        {
+          "case_id": "ops_to_alice_200",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 4,
+          "evidence_spans_without": 1,
+          "duration_ms_with": 1.29,
+          "duration_ms_without": 1.01
+        },
+        {
+          "case_id": "bob_to_ops_300",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 4,
+          "evidence_spans_without": 1,
+          "duration_ms_with": 1.24,
+          "duration_ms_without": 0.81
+        },
+        {
+          "case_id": "insufficient_funds",
+          "status_with": "FAILED",
+          "status_without": "FAILED",
+          "status_consistent": true,
+          "evidence_spans_with": 0,
+          "evidence_spans_without": 0,
+          "duration_ms_with": 1.69,
+          "duration_ms_without": 1.38
+        },
+        {
+          "case_id": "unknown_tool",
+          "status_with": "FAILED",
+          "status_without": "FAILED",
+          "status_consistent": true,
+          "evidence_spans_with": 1,
+          "evidence_spans_without": 0,
+          "duration_ms_with": 0.38,
+          "duration_ms_without": 0.15
+        },
+        {
+          "case_id": "unknown_account",
+          "status_with": "FAILED",
+          "status_without": "FAILED",
+          "status_consistent": true,
+          "evidence_spans_with": 1,
+          "evidence_spans_without": 0,
+          "duration_ms_with": 0.37,
+          "duration_ms_without": 0.14
+        },
+        {
+          "case_id": "self_transfer",
+          "status_with": "FAILED",
+          "status_without": "FAILED",
+          "status_consistent": true,
+          "evidence_spans_with": 3,
+          "evidence_spans_without": 0,
+          "duration_ms_with": 0.43,
+          "duration_ms_without": 0.18
+        },
+        {
+          "case_id": "negative_amount",
+          "status_with": "FAILED",
+          "status_without": "FAILED",
+          "status_consistent": true,
+          "evidence_spans_with": 0,
+          "evidence_spans_without": 0,
+          "duration_ms_with": 0.33,
+          "duration_ms_without": 0.29
+        },
+        {
+          "case_id": "missing_amount",
+          "status_with": "FAILED",
+          "status_without": "FAILED",
+          "status_consistent": true,
+          "evidence_spans_with": 0,
+          "evidence_spans_without": 0,
+          "duration_ms_with": 0.3,
+          "duration_ms_without": 0.22
+        },
+        {
+          "case_id": "empty_plan",
+          "status_with": "FAILED",
+          "status_without": "FAILED",
+          "status_consistent": true,
+          "evidence_spans_with": 1,
+          "evidence_spans_without": 0,
+          "duration_ms_with": 0.33,
+          "duration_ms_without": 0.12
+        },
+        {
+          "case_id": "two_transfers_distinct_ops",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 5,
+          "evidence_spans_without": 2,
+          "duration_ms_with": 1.82,
+          "duration_ms_without": 1.25
+        },
+        {
+          "case_id": "balance_then_fx",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 2,
+          "evidence_spans_without": 0,
+          "duration_ms_with": 1.19,
+          "duration_ms_without": 1.2
+        },
+        {
+          "case_id": "high_10000_approved",
+          "status_with": "FAILED",
+          "status_without": "FAILED",
+          "status_consistent": true,
+          "evidence_spans_with": 1,
+          "evidence_spans_without": 0,
+          "duration_ms_with": 2.12,
+          "duration_ms_without": 1.49
+        },
+        {
+          "case_id": "alice_exact_balance_5000",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 3,
+          "evidence_spans_without": 1,
+          "duration_ms_with": 1.35,
+          "duration_ms_without": 1.25
+        },
+        {
+          "case_id": "retrieved_policy_attached_but_deterministic_gate_decides",
+          "status_with": "COMPLETED",
+          "status_without": "COMPLETED",
+          "status_consistent": true,
+          "evidence_spans_with": 4,
+          "evidence_spans_without": 1,
+          "duration_ms_with": 1.83,
+          "duration_ms_without": 1.52
+        },
+        {
+          "case_id": "mandatory_evidence_workflow_completes_with_citations",
+          "status_with": "COMPLETED",
+          "status_without": "FAILED",
+          "status_consistent": false,
+          "evidence_spans_with": 4,
+          "evidence_spans_without": 0,
+          "duration_ms_with": 1.59,
+          "duration_ms_without": 0.12
+        }
+      ],
+      "limitations": "fake provider ignores retrieved text; this measures evidence attachment and verdict consistency, not live model sensitivity to context"
+    }
+  ]
+}

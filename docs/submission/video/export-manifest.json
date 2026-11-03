@@ -1,0 +1,399 @@
+{
+  "status": "VERIFIED_LOCAL_MP4",
+  "media_kind": "narrated montage of accepted static Chromium screenshots; no recorded UI footage",
+  "accepted_sha": "38cc3942dbd715681d59bfd893e47643210294a9",
+  "presentation_sha256": "5880386ccfbacd671efd452e798d275f75bea06f4de21a3df368d5aa9bee47b9",
+  "timeline_sha256": "272ca9c11f3d26ec4e5eb8aa708b26c61a8a4a3f114fe686d39a3d21d08d210c",
+  "video_sha256": "e7c6330aa0483e7758dcfca8c60f60c08788b6afca593a0db216f997b12985f4",
+  "narration_sha256": "a43cef56740a9b1ad5d034a0fa1226b14268b7b1728d0eb46b70ec09111512ca",
+  "render": {
+    "chromium": "145.0.7632.6",
+    "page_errors": 0,
+    "external_requests": 0
+  },
+  "video": {
+    "duration_seconds": 120.0,
+    "bytes": 4971334,
+    "tracks": [
+      {
+        "handler": "vide",
+        "codec": "avc1",
+        "samples": 2880,
+        "duration_seconds": 120.0,
+        "width": 1920,
+        "height": 1080,
+        "fps": 24.0
+      },
+      {
+        "handler": "soun",
+        "codec": "mp4a",
+        "samples": 5626,
+        "duration_seconds": 120.02133333333333
+      },
+      {
+        "handler": "sbtl",
+        "codec": "tx3g",
+        "samples": 40,
+        "duration_seconds": 119.489
+      }
+    ],
+    "faststart": true,
+    "full_av_decode": true,
+    "decoded_video_frames": 2880,
+    "embedded_caption_cues": 30
+  },
+  "sources": [
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S1-low-risk-verified.png",
+      "sha256": "b81a29ed6a4d81edef9d67637ceb35f726ef35bee0113fdc312af9d71e3159ad"
+    },
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S2-approved-verified.png",
+      "sha256": "7f378f19ca4fe80d73e914a41b6fbd60a7eef3770f52942ca91560779b553e53"
+    },
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S2-authoritative-refresh.png",
+      "sha256": "6ce762c96d7a96327d3c0c7b71044699bde57630eccfa2c68d930cb136cc23de"
+    },
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S2-awaiting-exact-hash.png",
+      "sha256": "1626c01a902a58c5d80191e09e23302f16ee5556dbd89b2acabb7a91b9b594e1"
+    },
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S2-concurrent-one-winner.png",
+      "sha256": "9188108419ed04a67cf9b6865c1fda2fe0edbc6adc4cdd53830829cdcb8601f2"
+    },
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S3-rejected-authoritative.png",
+      "sha256": "fa2032bc27ae29c7c66a92f619102ffbd4131a4ec274dcd7d24b8650abc71234"
+    },
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S4-recovered-no-duplicate.png",
+      "sha256": "a4edee7941bed968b5a9469a05e3e176ec2edcb97b605cb7531b2382fb198067"
+    },
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S4-uncertain-fault-injected.png",
+      "sha256": "a79afdc2bdd0a61c66446a7141f09c04ee8784f9749c66fcb147ffb0aa01c620"
+    },
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S4-verification-pending.png",
+      "sha256": "b383a48bcec8ae37b47126a75eeef3dac4b5e26670578b265a37eef237cf8e31"
+    },
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S5-missing-mandatory-evidence.png",
+      "sha256": "366ea480796ae52a76204c7800d40a3f7f3e3ca54aa204470a1a333ba145bfd5"
+    },
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S6-after-graceful-restart.png",
+      "sha256": "34d5fa5b691d2573f67220dac7aeeede9d93df4f8d7400fd319323d63f802ed2"
+    },
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S6-after-sigkill-recovered-pending.png",
+      "sha256": "30e7b95e8fe40d42d08a06e6fff8972084e6178f3b644d2104b2a5c0c63d1ebc"
+    },
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S6-before-crash-approval.png",
+      "sha256": "ce7fa0cb85792e432467cd19cc9302ab90cb1226882087a99afa8886d959837e"
+    },
+    {
+      "path": "evidence/m52/runs/replay-1/3cf94d5897b843e0bf751242513e2b1f/screenshots/S6-durable-ui-reload.png",
+      "sha256": "34d5fa5b691d2573f67220dac7aeeede9d93df4f8d7400fd319323d63f802ed2"
+    }
+  ],
+  "shots": [
+    {
+      "start": 0,
+      "end": 12,
+      "scene": 1,
+      "view": "overview",
+      "frame": "shot-01.png",
+      "frame_sha256": "965b37fc55b675a2c0bda67b231fc1b668221944f0befb3de9b1b81bd9b31bc5"
+    },
+    {
+      "start": 12,
+      "end": 25,
+      "scene": 2,
+      "view": "overview",
+      "frame": "shot-02.png",
+      "frame_sha256": "4f5e7ecc7eb685f69964e3968e10f8cfaf62cb26fcd4dfb864870813eac4aa22"
+    },
+    {
+      "start": 25,
+      "end": 29,
+      "scene": 3,
+      "view": "overview",
+      "frame": "shot-03.png",
+      "frame_sha256": "3fc6c10986ce79ce4cce9dba7661e3d1725552d536a949cce8c442d0584bbca6"
+    },
+    {
+      "start": 29,
+      "end": 37,
+      "scene": 3,
+      "view": "detail",
+      "source": "S2-awaiting-exact-hash.png",
+      "rect": [
+        1040,
+        548,
+        385,
+        340
+      ],
+      "label": "Exact plan version, full SHA-256 hash and operation payload",
+      "frame": "shot-04.png",
+      "frame_sha256": "efb892db89e3712f6d704acae4a47d17c3136f714ab87544dac6c97fc555f5bd"
+    },
+    {
+      "start": 37,
+      "end": 43,
+      "scene": 3,
+      "view": "detail",
+      "source": "S2-awaiting-exact-hash.png",
+      "rect": [
+        1040,
+        695,
+        385,
+        310
+      ],
+      "label": "Approval gates the exact synthetic transfer",
+      "frame": "shot-05.png",
+      "frame_sha256": "984d83c6ef1419354c0eb481c775ab39cbc01d813f8b7be2235b06217c4a4228"
+    },
+    {
+      "start": 43,
+      "end": 46,
+      "scene": 4,
+      "view": "overview",
+      "frame": "shot-06.png",
+      "frame_sha256": "a2c50384fb78322024c9166340e215e59041cae171b731b07399a138acc31b3a"
+    },
+    {
+      "start": 46,
+      "end": 49,
+      "scene": 4,
+      "view": "detail",
+      "source": "S2-approved-verified.png",
+      "rect": [
+        540,
+        485,
+        485,
+        145
+      ],
+      "label": "Original committed transaction ID: tx_0001",
+      "frame": "shot-07.png",
+      "frame_sha256": "04118544d2b72b53b5efabba2331c7fc08a40fce44ff666f2a53b29852133ee1"
+    },
+    {
+      "start": 49,
+      "end": 55,
+      "scene": 4,
+      "view": "detail",
+      "source": "S2-approved-verified.png",
+      "rect": [
+        540,
+        640,
+        485,
+        320
+      ],
+      "label": "Ledger conservation, transaction match and intent coverage",
+      "frame": "shot-08.png",
+      "frame_sha256": "4e356ea63858a839031af0a1ebd770860e00b0be7f29ba066818fec3948fc5b3"
+    },
+    {
+      "start": 55,
+      "end": 66,
+      "scene": 5,
+      "view": "overview",
+      "frame": "shot-09.png",
+      "frame_sha256": "b78161a21c472c1e56068b6ef539adb8b7c7220efb6199a6a5b62b0bf2e37eb3"
+    },
+    {
+      "start": 66,
+      "end": 70,
+      "scene": 6,
+      "view": "overview",
+      "frame": "shot-10.png",
+      "frame_sha256": "a929a200a11d9f5008860310a9bc5d1e7eb124370259c52398086efb8cb31dfb"
+    },
+    {
+      "start": 70,
+      "end": 75,
+      "scene": 6,
+      "view": "detail",
+      "source": "S4-uncertain-fault-injected.png",
+      "rect": [
+        540,
+        350,
+        485,
+        370
+      ],
+      "label": "Controlled timeout: EXECUTION_UNCERTAIN; reconcile before retry",
+      "frame": "shot-11.png",
+      "frame_sha256": "99fbdada147857410a5b5e2a49ad9c4e620291cfbbf2608d992c082839ca0f94"
+    },
+    {
+      "start": 75,
+      "end": 82,
+      "scene": 6,
+      "view": "detail",
+      "source": "S4-recovered-no-duplicate.png",
+      "rect": [
+        540,
+        480,
+        485,
+        415
+      ],
+      "label": "Recovered evidence retains tx_0003; no new transfer",
+      "frame": "shot-12.png",
+      "frame_sha256": "04c76446bd7f9bc030da8f6a964e30c05fbc42f8e93ee166ce92744547786cec"
+    },
+    {
+      "start": 82,
+      "end": 85,
+      "scene": 7,
+      "view": "overview",
+      "frame": "shot-13.png",
+      "frame_sha256": "93c18c7839023f439dba50abc704db89d7bd4ea2e86910db786e8d76de8e98e3"
+    },
+    {
+      "start": 85,
+      "end": 91,
+      "scene": 7,
+      "view": "detail",
+      "source": "S6-after-sigkill-recovered-pending.png",
+      "rect": [
+        540,
+        350,
+        485,
+        315
+      ],
+      "label": "After controlled SIGKILL: VERIFICATION_PENDING; verify only",
+      "frame": "shot-14.png",
+      "frame_sha256": "3e0c1be75d791735c4ad4cfd914527a1df8f763914bcf687dd0278030e57454d"
+    },
+    {
+      "start": 91,
+      "end": 96,
+      "scene": 7,
+      "view": "detail",
+      "source": "S6-after-sigkill-recovered-pending.png",
+      "rect": [
+        1040,
+        500,
+        385,
+        205
+      ],
+      "label": "Exact approval hash survives the same-container restart",
+      "frame": "shot-15.png",
+      "frame_sha256": "152b22283c782dd89f3b39a87b0424b274533d5840dde4eacf3acd651e1cecd3"
+    },
+    {
+      "start": 96,
+      "end": 101,
+      "scene": 7,
+      "view": "detail",
+      "source": "S6-durable-ui-reload.png",
+      "rect": [
+        540,
+        480,
+        485,
+        420
+      ],
+      "label": "Original tx_0004 and ledger checks after verification-only recovery",
+      "frame": "shot-16.png",
+      "frame_sha256": "2220b2b503a6bea956ae12d31d80cd7bad74e3ee604c5f1ec62eda58d020e78d"
+    },
+    {
+      "start": 101,
+      "end": 105,
+      "scene": 8,
+      "view": "overview",
+      "frame": "shot-17.png",
+      "frame_sha256": "e586efb1adca911e00c5c4151faa18027ccaa0cbadba7b107471c75961469106"
+    },
+    {
+      "start": 105,
+      "end": 111,
+      "scene": 8,
+      "view": "detail",
+      "source": "S5-missing-mandatory-evidence.png",
+      "rect": [
+        540,
+        350,
+        485,
+        245
+      ],
+      "label": "Required retrieval evidence absent: execution fails closed",
+      "frame": "shot-18.png",
+      "frame_sha256": "492bd04ab5def702effc5ce584428ea90c96948033168e751563af1b8576a026"
+    },
+    {
+      "start": 111,
+      "end": 120,
+      "scene": 9,
+      "view": "overview",
+      "frame": "shot-19.png",
+      "frame_sha256": "f0026f37f4272c338a749b3cf95d172b2d37db85e5a8f975bad261bb62237b59"
+    }
+  ],
+  "encoder": "ffmpeg version 7.1-essentials_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "command": [
+    "<local-ffmpeg>",
+    "-hide_banner",
+    "-nostdin",
+    "-n",
+    "-f",
+    "concat",
+    "-safe",
+    "0",
+    "-i",
+    "frames.ffconcat",
+    "-i",
+    "narration.wav",
+    "-i",
+    "captions.srt",
+    "-map",
+    "0:v:0",
+    "-map",
+    "1:a:0",
+    "-map",
+    "2:s:0",
+    "-vf",
+    "fps=24,ass=captions.ass",
+    "-af",
+    "loudnorm=I=-16:TP=-1.5:LRA=11",
+    "-t",
+    "120",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "medium",
+    "-crf",
+    "20",
+    "-threads",
+    "4",
+    "-pix_fmt",
+    "yuv420p",
+    "-c:a",
+    "aac",
+    "-b:a",
+    "128k",
+    "-ar",
+    "48000",
+    "-c:s",
+    "mov_text",
+    "-metadata:s:s:0",
+    "language=eng",
+    "-metadata:s:s:0",
+    "title=English captions",
+    "-map_metadata",
+    "-1",
+    "-metadata",
+    "title=TrustFlow: accepted M5.2 static evidence demonstration",
+    "-metadata",
+    "comment=Static Chromium screenshots with editorial zooms; synthetic funds; fake inference; no live UI footage.",
+    "-movflags",
+    "+faststart",
+    "trustflow-demo.mp4"
+  ],
+  "paid_model_calls": 0,
+  "publishing": false
+}

@@ -1,0 +1,91 @@
+[
+  {
+    "argv": [
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\m52-reproducible-demo\\worktree\\.venv\\Scripts\\python.exe",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\probes\\offline.py",
+      "-q",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate\\tests\\unit\\test_m52_browser.py",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate\\tests\\unit\\test_m52_evidence.py",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate\\tests\\unit\\test_m52_goals.py",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate\\tests\\unit\\test_m52_infrastructure.py",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate\\tests\\unit\\test_m52_recovery.py",
+      "--junitxml",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\logs\\targeted.xml"
+    ],
+    "cwd": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate",
+    "start": 1793534409.1864398,
+    "end": 1793534412.9739246,
+    "returncode": 0
+  },
+  {
+    "argv": [
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\m52-reproducible-demo\\worktree\\.venv\\Scripts\\python.exe",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\probes\\offline.py",
+      "-q",
+      "--junitxml",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\logs\\pytest-full.xml"
+    ],
+    "cwd": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate",
+    "start": 1793534412.9749248,
+    "end": 1793534440.6097343,
+    "returncode": 0
+  },
+  {
+    "argv": [
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\m52-reproducible-demo\\worktree\\.venv\\Scripts\\python.exe",
+      "-m",
+      "ruff",
+      "check",
+      "src",
+      "tests",
+      "scripts"
+    ],
+    "cwd": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate",
+    "start": 1793534440.6107352,
+    "end": 1793534440.7319477,
+    "returncode": 0
+  },
+  {
+    "argv": [
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\m52-reproducible-demo\\worktree\\.venv\\Scripts\\python.exe",
+      "-m",
+      "mypy",
+      "src"
+    ],
+    "cwd": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate",
+    "start": 1793534440.732948,
+    "end": 1793534443.9617991,
+    "returncode": 0
+  },
+  {
+    "argv": [
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\m52-reproducible-demo\\worktree\\.venv\\Scripts\\python.exe",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\probes\\offline.py",
+      "-q",
+      "tests/api/test_m5_deployment.py::test_cors_allows_demo_origin_only",
+      "tests/api/test_m5_deployment.py::test_cors_preflight_permits_approval_token_header",
+      "--junitxml",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\logs\\cors.xml"
+    ],
+    "cwd": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate",
+    "start": 1793534443.9617991,
+    "end": 1793534445.0496414,
+    "returncode": 0
+  },
+  {
+    "argv": [
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\m52-reproducible-demo\\worktree\\.venv\\Scripts\\python.exe",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\probes\\offline.py",
+      "--eval",
+      "--out",
+      "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\m4-eval",
+      "--repeat",
+      "2",
+      "--ablations"
+    ],
+    "cwd": "C:\\Users\\vanya\\Projects\\TrustFlow-context\\review-m52-38cc394-acceptance\\candidate",
+    "start": 1793534445.0496414,
+    "end": 1793534445.9154015,
+    "returncode": 0
+  }
+]

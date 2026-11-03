@@ -1,0 +1,126 @@
+WEBVTT
+
+1
+00:00:00.350 --> 00:00:04.376
+This video uses accepted Chromium screenshots, not live footage.
+
+2
+00:00:04.376 --> 00:00:07.094
+Everything is synthetic; inference is fake.
+
+3
+00:00:07.094 --> 00:00:11.489
+TrustFlow asks: was the action authorized, and did it happen once?
+
+4
+00:00:12.350 --> 00:00:16.071
+The Planner proposes. Deterministic policy decides risk.
+
+5
+00:00:16.071 --> 00:00:20.526
+Humans approve high-risk actions. Execution preserves operation identity.
+
+6
+00:00:20.526 --> 00:00:24.496
+Verification reads ledger evidence. Muse inference remains pending.
+
+7
+00:00:25.350 --> 00:00:28.498
+This synthetic five-thousand-dollar transfer pauses.
+
+8
+00:00:28.498 --> 00:00:32.177
+The screen shows the plan version, payload and full hash.
+
+9
+00:00:32.177 --> 00:00:35.044
+Approval authorizes that exact snapshot.
+
+10
+00:00:35.044 --> 00:00:39.880
+Accepted checks reject missing credentials, wrong hashes and replayed
+decisions.
+
+11
+00:00:39.880 --> 00:00:42.436
+The model cannot grant itself permission.
+
+12
+00:00:43.350 --> 00:00:46.310
+After approval, one transaction commits.
+
+13
+00:00:46.310 --> 00:00:51.057
+Independent SQLite observations match the authorized operation and conserved
+total.
+
+14
+00:00:51.057 --> 00:00:54.485
+A separate concurrent approval test produces one transfer.
+
+15
+00:00:55.350 --> 00:00:59.021
+A rejected three-thousand-dollar request creates no transfer.
+
+16
+00:00:59.021 --> 00:01:02.783
+Reload preserves rejection; late approval cannot revive it.
+
+17
+00:01:02.783 --> 00:01:05.483
+The ledger independently supports the result.
+
+18
+00:01:06.350 --> 00:01:09.905
+Controlled fault injection holds a real worker past timeout.
+
+19
+00:01:09.905 --> 00:01:14.366
+After that worker commits, reconciliation finds the original transaction.
+
+20
+00:01:14.366 --> 00:01:17.858
+An injected fake review failure leaves verification pending.
+
+21
+00:01:17.858 --> 00:01:21.461
+Verification-only retry completes without another transfer.
+
+22
+00:01:22.350 --> 00:01:26.552
+Now the backend is killed after SQLite commit, before saving success.
+
+23
+00:01:26.552 --> 00:01:31.723
+Signal nine interrupts the process. The same container restarts into
+verification pending.
+
+24
+00:01:31.723 --> 00:01:36.618
+Verification-only retry preserves the original transaction, approval hash
+and snapshot.
+
+25
+00:01:36.618 --> 00:01:40.474
+This demonstrates a controlled checkpoint, not every storage failure.
+
+26
+00:01:41.350 --> 00:01:46.105
+Missing mandatory policy evidence fails closed before tools run.
+
+27
+00:01:46.105 --> 00:01:50.491
+This is a local retrieval check, with no ledger mutation.
+
+28
+00:01:51.350 --> 00:01:54.616
+One command repeats six scenarios and publishes evidence.
+
+29
+00:01:54.616 --> 00:01:57.043
+Accepted results are fake-mode checks.
+
+30
+00:01:57.043 --> 00:01:59.489
+Live Muse evaluation remains pending.
+

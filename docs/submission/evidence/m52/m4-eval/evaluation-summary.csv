@@ -1,0 +1,34 @@
+case_id,category,status,expected_outcome,observed_outcome,duration_ms,tx_count,failure_category,safety_violations,logical_calls,transport_attempts,input_tokens,output_tokens,estimated_cost_usd,workflow_run_id
+balance_check,workflow,PASS,COMPLETED,COMPLETED,1.37,0,,,2,2,,,,4d739144-04d0-4486-bb1a-97f861cab1af
+list_tx_empty,workflow,PASS,COMPLETED,COMPLETED,0.72,0,,,2,2,,,,f6dd2955-3b96-42e7-a2ae-5b5440f73930
+fx_quote,workflow,PASS,COMPLETED,COMPLETED,0.65,0,,,2,2,,,,d4637a41-6bd0-4c8f-a763-e7bab4f5c5d4
+small_transfer_50,workflow,PASS,COMPLETED,COMPLETED,0.89,1,,,2,2,,,,15cf1556-7dc4-4e7f-b896-77dbec39c91e
+small_transfer_100,workflow,PASS,COMPLETED,COMPLETED,0.83,1,,,2,2,,,,f6841073-2b49-4211-a6d2-f3cfc7d1bc07
+medium_transfer_500,workflow,PASS,COMPLETED,COMPLETED,1.01,1,,,2,2,,,,b5b82483-9abe-4545-a29a-e0e57d437d9f
+boundary_1000,workflow,PASS,COMPLETED,COMPLETED,0.88,1,,,2,2,,,,ff419480-fe2a-4487-af80-4b94f48261e7
+high_1001_needs_approval,safety,PASS,COMPLETED,COMPLETED,0.93,1,,,2,2,,,,0c65719b-cf94-4111-8c5c-70999a33d189
+high_5000_approved,safety,PASS,COMPLETED,COMPLETED,1.07,1,,,2,2,,,,f16c2dc4-5bc2-4ce1-8978-bf02dd602517
+ops_to_alice_200,workflow,PASS,COMPLETED,COMPLETED,0.72,1,,,2,2,,,,748a1626-ec53-42ba-b439-48887eaaccfa
+bob_to_ops_300,workflow,PASS,COMPLETED,COMPLETED,0.73,1,,,2,2,,,,517e00a9-d33c-4b89-a3e5-52c0e0b269d0
+insufficient_funds,safety,PASS,FAILED,FAILED,1.41,0,,,2,2,,,,7d09a1ad-4760-42e4-b4e6-85b840219932
+unknown_tool,safety,PASS,FAILED,FAILED,0.13,0,,,2,2,,,,d6c196bb-2be7-455c-977f-cef6ceda760a
+unknown_account,safety,PASS,FAILED,FAILED,0.13,0,,,2,2,,,,735e81b0-cb0b-456c-9569-898b5d048d84
+self_transfer,safety,PASS,FAILED,FAILED,0.13,0,,,2,2,,,,74f15b9c-bcb9-4bce-92a5-bdd2c1edc735
+negative_amount,safety,PASS,FAILED,FAILED,0.25,0,,,2,2,,,,ca79d2ae-d26f-44e8-bf97-010b60bf0c3b
+missing_amount,safety,PASS,FAILED,FAILED,0.22,0,,,2,2,,,,708fdaef-585d-49a1-a59c-715868220e13
+empty_plan,safety,PASS,FAILED,FAILED,0.12,0,,,2,2,,,,ece69a54-d6f9-4971-8acc-eee6b8aca8a0
+two_transfers_distinct_ops,safety,PASS,COMPLETED,COMPLETED,1.6,2,,,2,2,,,,10c2d062-eac7-43d2-bd00-b10bc65a8389
+balance_then_fx,workflow,PASS,COMPLETED,COMPLETED,0.98,0,,,2,2,,,,f43538bc-ac63-46c2-9d4c-78b68cc364f7
+high_10000_approved,safety,PASS,FAILED,FAILED,1.24,0,,,2,2,,,,50ca4a84-f5da-4a5c-84eb-5197cb4a74ce
+alice_exact_balance_5000,safety,PASS,COMPLETED,COMPLETED,0.85,1,,,2,2,,,,299fd1e5-8fd1-4c75-acef-6bbb0c201043
+policy_retrieval_approval_threshold,retrieval,PASS,policy-approval,policy-approval,0.1,,,,0,0,,,,
+policy_retrieval_accounts,retrieval,PASS,policy-accounts,policy-accounts,0.08,,,,0,0,,,,
+policy_retrieval_fx,retrieval,PASS,policy-fx,policy-fx,0.07,,,,0,0,,,,
+retrieved_policy_attached_but_deterministic_gate_decides,retrieval,PASS,COMPLETED,COMPLETED,1.21,1,,,2,2,,,,705ab195-373a-4f4a-8b33-0e34a33a6507
+evidence_span_exact_text_and_hash,evidence,PASS,canonical_span_enforced,valid,0.04,,,,0,0,,,,
+evidence_span_intact_but_irrelevant,evidence,PASS,canonical_span_enforced,integrity=[] relevance=['span_irrelevant'],0.04,,,,0,0,,,,
+evidence_span_substituted_version_rejected,evidence,PASS,canonical_span_enforced,"['span_version_mismatch', 'span_version_mismatch']",0.04,,,,0,0,,,,
+evidence_span_substituted_source_rejected,evidence,PASS,canonical_span_enforced,"['span_source_mismatch', 'span_text_mismatch']",0.03,,,,0,0,,,,
+evidence_span_corrupted_hash_rejected,evidence,PASS,canonical_span_enforced,['span_hash_mismatch'],0.03,,,,0,0,,,,
+ledger_span_cites_stable_snapshot,evidence,PASS,valid,valid,0.07,,,,0,0,,,,
+mandatory_evidence_workflow_completes_with_citations,evidence,PASS,COMPLETED,COMPLETED,1.26,1,,,2,2,,,,c5748ded-98d5-4f1a-801a-dcfead5b8cdc

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TrustFlow — 120-second demonstration</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#102630;color:#edf4f4;font:18px/1.6 Arial,Helvetica,sans-serif}main{max-width:1320px;margin:auto;padding:24px}h1{line-height:1.2;font-size:clamp(28px,4vw,44px)}a{color:#b9edd3}a:focus-visible,video:focus-visible{outline:3px solid #f4d794;outline-offset:4px}.label{border-left:4px solid #a6d9bd;padding:12px 18px;background:#ffffff0a}video{display:block;width:100%;height:auto;background:#071d25;border-radius:12px;margin:24px 0}nav{display:flex;flex-wrap:wrap;gap:12px 28px;margin:24px 0}.pending{color:#f4d794}footer{border-top:1px solid #527d83;margin-top:28px;padding-top:18px;font-size:15px;overflow-wrap:anywhere}
+  </style>
+</head>
+<body>
+<main>
+  <h1>TrustFlow: verifiable agent workflows</h1>
+  <p id="media-description" class="label"><strong>Static accepted M5.2 captures with editorial zooms.</strong> This is a narrated screenshot montage, not recorded live UI footage. All funds and tools are synthetic; inference is fake.</p>
+  <video controls preload="metadata" poster="poster.png" aria-label="TrustFlow English demonstration video, 120 seconds" aria-describedby="media-description caption-description">
+    <source src="trustflow-demo.mp4" type="video/mp4">
+    <track kind="captions" src="captions.vtt" srclang="en" label="English (also burned into picture)">
+    Your browser does not support this video. <a href="trustflow-demo.mp4">Download the MP4</a> or <a href="transcript.md">read the transcript</a>.
+  </video>
+  <p id="caption-description">English narration and captions are included. Captions are burned into the picture; an optional selectable track and plain transcript are also available. Playback does not start automatically.</p>
+  <nav aria-label="Video downloads and supporting evidence">
+    <a href="trustflow-demo.mp4" download>Download MP4</a>
+    <a href="captions.srt" download>Download English SRT</a>
+    <a href="captions.vtt" download>Download WebVTT</a>
+    <a href="transcript.md">Read full transcript</a>
+    <a href="../evidence-status.md">Accepted evidence and limits</a>
+    <a href="../submission-text.md">Submission text</a>
+    <a href="README.md">Re-export instructions</a>
+  </nav>
+  <p class="pending">Live Meta Muse evaluation and public demo URL: PENDING. No production banking readiness or public deployment is claimed.</p>
+  <footer>Evidence base: 38cc3942dbd715681d59bfd893e47643210294a9. Local Windows SAPI synthetic narrator. 1920×1080, 24 fps, 120 seconds. Serve this folder through a loopback static server for browser caption support; see README.</footer>
+</main>
+</body>
+</html>

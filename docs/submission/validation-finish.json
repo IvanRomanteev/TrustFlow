@@ -1,0 +1,68 @@
+{
+  "checked_on": "2026-11-03",
+  "start_sha": "cc39725e77ce12e9bba971709bc065c35d27fe42",
+  "runtime_base": "38cc3942dbd715681d59bfd893e47643210294a9",
+  "protected_code_presentation_evidence_m53_unchanged": true,
+  "evidence_files": 158,
+  "accepted_manifest_hashes": 107,
+  "summary_characters": 365,
+  "full_description_characters": 2246,
+  "authored_local_links": 237,
+  "video": {
+    "duration_seconds": 120.0,
+    "bytes": 4971334,
+    "tracks": [
+      {
+        "handler": "vide",
+        "codec": "avc1",
+        "samples": 2880,
+        "duration_seconds": 120.0,
+        "width": 1920,
+        "height": 1080,
+        "fps": 24.0
+      },
+      {
+        "handler": "soun",
+        "codec": "mp4a",
+        "samples": 5626,
+        "duration_seconds": 120.02133333333333
+      },
+      {
+        "handler": "sbtl",
+        "codec": "tx3g",
+        "samples": 40,
+        "duration_seconds": 119.489
+      }
+    ],
+    "faststart": true,
+    "full_av_decode": true,
+    "decoded_video_frames": 2880,
+    "embedded_caption_cues": 30
+  },
+  "video_sha256": "e7c6330aa0483e7758dcfca8c60f60c08788b6afca593a0db216f997b12985f4",
+  "media_assets_hashed": 18,
+  "audio": {
+    "peak_dbfs": -1.14,
+    "rms_dbfs": -18.65,
+    "clipped_samples": 0
+  },
+  "existing_output_refused_and_preserved": true,
+  "chromium": "145.0.7632.6",
+  "player": {
+    "duration_seconds": 120,
+    "actual_playback": true,
+    "seeking": true,
+    "http_byte_ranges": true,
+    "webvtt_cues": 30,
+    "keyboard_focus": true,
+    "responsive_widths": [
+      375,
+      1280,
+      1920
+    ],
+    "page_errors": 0,
+    "external_requests": 0
+  },
+  "other_worktree_user_files_and_tags_preserved": true,
+  "status": "PASS"
+}
