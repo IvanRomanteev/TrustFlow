@@ -41,7 +41,7 @@ CASES = [("read", "Read Alice balance", "Inspect only the current USD balance of
 CALL_FIELDS = ("purpose", "attempt", "transport_attempt", "model", "workflow_id", "request_id",
                "response_id", "http_status", "input_tokens", "output_tokens", "latency_ms",
                "estimated_cost_usd", "usage_unknown", "budget_charge_usd", "validation_outcome",
-               "failure_reason", "over_budget")
+               "failure_reason", "over_budget", "response_metadata")
 
 
 def write_json(path: Path, data: Any) -> None:

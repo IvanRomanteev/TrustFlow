@@ -1,5 +1,77 @@
 # M5.3: Meta Muse live readiness
 
+## First Spark failure: diagnostic procedure (2026-11-04)
+
+The first live report `artifacts/m53-live/d248e486874d40e1b065452c6c2652ca/report.json`
+records two HTTP 200 planning failures, each using exactly the 1200 output-token
+cap. It retains no response status, incomplete reason, reasoning-token breakdown
+or output item metadata. Output-budget exhaustion is the leading hypothesis,
+**not a proven diagnosis**; malformed JSON or an unsupported response shape cannot
+be excluded retrospectively. Do not recreate a supposed original server response.
+
+Official references checked 2026-11-04:
+
+- [Responses](https://dev.meta.ai/docs/protocols/responses): `text.format` configures
+  structured output. `output_text` is an SDK helper; raw HTTP uses output items.
+- [Reasoning](https://dev.meta.ai/docs/reasoning): reasoning counts within
+  `max_output_tokens`; Responses uses `reasoning: {effort: "low"}` (or `minimal`).
+  Omitting effort leaves model-controlled reasoning; `none` is unsupported.
+- [Schemas](https://dev.meta.ai/docs/api-reference/responses/schemas): inspect
+  response status, `incomplete_details`, `usage.output_tokens_details.reasoning_tokens`
+  and message/reasoning item types and statuses.
+- [Strict output](https://dev.meta.ai/docs/structured-output): retain
+  `text.format.strict=true`, required properties and `additionalProperties=false`.
+
+The provider now records bounded, allowlisted `response_metadata` on its incurred
+call record, before parsing/validation: status/reason labels, reasoning-token count
+(a subset of billed output, never added twice), output-item types/status/role/phase,
+content types and output-text character counts. Unknown strings become `other`.
+No raw prompts, generated text, private reasoning, summaries, encrypted reasoning,
+error messages or unredacted bodies are retained. `output_token_cap_reached` is
+only an observed count comparison; it does not by itself prove truncation.
+
+`TRUSTFLOW_LLM_REASONING_EFFORT=low|minimal` is optional; unset preserves existing
+application behavior. The matrix's output cap and default request format stay
+unchanged. Do not silently retry an incomplete or invalid HTTP 200 response.
+
+Use a separate single-request diagnostic before any further live matrix. It
+calls the same provider/planning schema once, validates the returned steps with
+the application's actual typed allowlist/preconditions and deterministic policy,
+then checks the fixed read-only goal. It performs no repair, semantic inference,
+approval or tool execution. Each invocation creates a fresh UUID directory and
+synthetic SQLite ledger, ignoring ambient application/SQLite settings and .env.
+A successful diagnostic is **not live integration PASS**.
+
+Offline (no paid request):
+
+```powershell
+python -m trustflow.evaluation.diagnose --offline --profile spark --max-requests 1 --retries 0 --max-cost-usd 0.03 --max-output-tokens 4096 --reasoning-effort low --out artifacts/m53-diagnostic-offline
+```
+
+**Only after separate explicit owner authorization**, with the credential already
+provided by the environment, the proposed ONE-REQUEST paid command is:
+
+```powershell
+python -m trustflow.evaluation.diagnose --live --authorize-paid --profile spark --max-requests 1 --retries 0 --max-cost-usd 0.03 --max-output-tokens 4096 --reasoning-effort low --out artifacts/m53-diagnostic-live
+```
+
+The CLI rejects non-Spark profiles, retries, more than one HTTP attempt, effort
+outside `low|minimal`, output caps above 4096 and estimated budgets above $0.05.
+The recommended budget is $0.03; reservation uses serialized request/schema input
+estimate plus the full 4096-token output allowance. It is an advisory estimate,
+not a provider billing ceiling. No API key is placed in the command or report.
+Default invocation (neither `--live` nor `--offline`) prints a zero-request plan.
+The diagnostic does not run the five-case matrix or use foreign resources.
+
+Interpret the new evidence before selecting another request: explicit
+`incomplete/max_output_tokens` establishes output-limit exhaustion for **that**
+request; the reasoning count identifies its share. A completed response with
+`json_syntax` instead points to malformed text; output item metadata distinguishes
+missing/unsupported/ambiguous messages. Do not relax the parser or schema based on
+the original generic error. Once an actual server shape is observed, add a
+sanitized offline fixture preserving that shape; current fixtures represent the
+documented protocol and hypothetical limit exhaustion only.
+
 База: принятый M5.2 `38cc3942dbd715681d59bfd893e47643210294a9`.
 Ветка: `m5.3/meta-live-ready`. Это developer implementation/evidence,
 а не независимое acceptance. Платных запросов при реализации не выполнялось.

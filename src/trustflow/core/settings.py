@@ -1,6 +1,7 @@
 """Application settings. Secrets come only from the environment."""
 
 import os
+from typing import Literal
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -42,6 +43,8 @@ class Settings(BaseSettings):
     llm_max_requests: int = Field(default=24, ge=1, le=1000)
     llm_max_cost_usd: float = Field(default=0.50, gt=0, le=100, allow_inf_nan=False)
     max_output_tokens: int = 1200
+    # Opt-in only; None preserves the existing request/default model effort.
+    llm_reasoning_effort: Literal["minimal", "low"] | None = None
     token_budget_per_workflow: int = 20000
     # Total semantic-review attempts per workflow, INCLUDING the initial call.
     semantic_max_attempts: int = 3

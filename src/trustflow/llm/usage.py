@@ -15,6 +15,7 @@ from decimal import Decimal, InvalidOperation
 from pydantic import BaseModel
 
 from trustflow.core.errors import LiveBudgetExceededError, TokenBudgetExceededError
+from trustflow.llm.diagnostics import ResponseMetadata
 
 PRICING_PER_MILLION: dict[str, tuple[float, float]] = {
     "muse-wonder-1.0": (4.0, 20.0),
@@ -59,6 +60,7 @@ class LLMCallRecord(BaseModel):
     request_id: str | None = None
     response_id: str | None = None
     http_status: int | None = None
+    response_metadata: ResponseMetadata | None = None
     validation_outcome: str = "not_validated"
     failure_reason: str | None = None
     # Unknown usage retains the pre-call estimate in the session limiter.

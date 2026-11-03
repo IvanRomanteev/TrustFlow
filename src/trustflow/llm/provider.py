@@ -25,6 +25,7 @@ from trustflow.core.errors import (
 )
 from trustflow.core.logging import redact
 from trustflow.core.settings import Settings
+from trustflow.llm.diagnostics import OutputItemMetadata, ResponseMetadata
 from trustflow.llm.usage import MAX_TOKEN_COUNT, LiveCallBudget, LLMCallRecord, UsageTracker
 
 PLAN_SCHEMA: dict[str, Any] = {
@@ -284,6 +285,70 @@ def _attempt_error(message: str, records: list[LLMCallRecord]) -> LLMResponseErr
     return LLMResponseError(message)
 
 
+def _response_metadata(data: Any, body_is_json: bool,
+                       output_tokens: int | None, output_cap: int) -> ResponseMetadata:
+    """Project untrusted data onto fixed labels/counts, never arbitrary strings.
+
+    Do not retain item IDs, text, summary, encrypted_content, error messages,
+    prompt echoes or unknown keys. Work is bounded even for oversized arrays.
+    """
+    def label(value, allowed):
+        if value is None:
+            return None
+        return value if isinstance(value, str) and value in allowed else "other"
+
+    meta = ResponseMetadata(json_envelope_valid=body_is_json and isinstance(data, dict),
+                            output_token_cap_reached=(
+                                output_tokens is not None and output_tokens >= output_cap))
+    if not isinstance(data, dict):
+        return meta
+    statuses = {"completed", "incomplete", "failed", "in_progress", "queued", "cancelled"}
+    meta.response_status = label(data.get("status"), statuses)
+    details = data.get("incomplete_details")
+    if isinstance(details, dict):
+        meta.incomplete_reason = label(details.get("reason"),
+                                       {"max_output_tokens", "content_filter"})
+    usage = data.get("usage")
+    tokens = usage.get("output_tokens_details") if isinstance(usage, dict) else None
+    if isinstance(tokens, dict):
+        meta.reasoning_tokens = _token_count(tokens.get("reasoning_tokens"))
+    meta.has_error = bool(data.get("error"))
+    meta.has_choices = "choices" in data
+    output = data.get("output")
+    meta.output_kind = "list" if isinstance(output, list) else (
+        "missing" if "output" not in data else "other")
+    if not isinstance(output, list):
+        return meta
+    meta.output_items_count = len(output)
+    meta.output_items_truncated = len(output) > 16
+    for item in output[:16]:
+        item = item if isinstance(item, dict) else {}
+        row = OutputItemMetadata(
+            type=label(item.get("type"), {"message", "reasoning", "function_call"}) or "other",
+            status=label(item.get("status"), statuses),
+            role=label(item.get("role"), {"assistant", "user", "system", "developer"}),
+            phase=label(item.get("phase"), {"commentary", "final_answer"}))
+        content = item.get("content")
+        if isinstance(content, list):
+            for part in content[:16]:
+                part = part if isinstance(part, dict) else {}
+                kind = label(part.get("type"), {"output_text", "refusal", "reasoning_text"})
+                row.content_types.append(kind or "other")
+                if row.type == "message" and kind == "output_text" \
+                        and isinstance(part.get("text"), str):
+                    row.output_text_chars += len(part["text"])
+        meta.output_items.append(row)
+    return meta
+
+
+def _mark_parse_failure(record: LLMCallRecord, exc: Exception) -> None:
+    if record.response_metadata is not None:
+        record.response_metadata.parse_failure = (
+            "json_syntax" if isinstance(exc, json.JSONDecodeError) else
+            "json_recursion" if isinstance(exc, RecursionError) else
+            "json_value" if isinstance(exc, ValueError) else "envelope_or_output")
+
+
 class MetaResponsesProvider:
     """Meta Model API via Responses API. Raises on any failure (fail closed)."""
 
@@ -325,6 +390,8 @@ class MetaResponsesProvider:
                                 "schema": schema, "strict": True}},
             "store": False,
         }
+        if self._settings.llm_reasoning_effort is not None:
+            payload["reasoning"] = {"effort": self._settings.llm_reasoning_effort}
         url = f"{self._settings.llm_base_url.rstrip('/')}/responses"
         attempts = 1 + self._settings.llm_max_retries
         # One record per HTTP attempt, built before any retry/raise so
@@ -490,6 +557,8 @@ class MetaResponsesProvider:
                 input_tokens=_token_count(usage.get("input_tokens")),
                 output_tokens=_token_count(usage.get("output_tokens")),
             )
+            record.response_metadata = _response_metadata(
+                data, body_is_json, record.output_tokens, self._settings.max_output_tokens)
             self.budget.settle(reserved, record)
             if resp.is_error:
                 record.failure_reason = f"http_{resp.status_code}"
@@ -527,6 +596,7 @@ class MetaResponsesProvider:
                 try:
                     parsed = _decode_object(data, str(payload["model"]))
                 except (ValueError, RecursionError, LLMResponseError) as exc:
+                    _mark_parse_failure(record, exc)
                     fail(record, "Malformed live response: invalid or incomplete JSON", exc)
                 if not isinstance(parsed, dict):
                     fail(record, "Live response JSON was not an object")
@@ -551,7 +621,8 @@ class MetaResponsesProvider:
                 )
             try:
                 parsed = _decode_object(data, str(payload["model"]))
-            except (ValueError, RecursionError, LLMResponseError):
+            except (ValueError, RecursionError, LLMResponseError) as exc:
+                _mark_parse_failure(record, exc)
                 record.failure_reason = "invalid_response"
                 record.validation_outcome = "failed"
                 raise _attempt_error(
