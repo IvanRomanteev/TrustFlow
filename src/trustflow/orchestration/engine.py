@@ -803,12 +803,15 @@ class WorkflowEngine:
                                 {"codes": ["retrieval_unavailable"]})
                             snapshot = None
                             spans = self._parse_spans(run, mandatory=False)
+                    from trustflow.agents.semantic_evidence import review_context_kwargs
+
                     review = self.semantic.review(
                         run.goal, plan, tracker=self._tracker(run),
                         evidence_spans=spans,
                         mandatory_citations=run.goal.require_evidence,
                         ledger_snapshot=snapshot,
-                        step_results=run.step_results)
+                        step_results=run.step_results,
+                        **review_context_kwargs(self.semantic, run, report, semantic_only_retry))
                     if self.semantic.last_advisory_findings:
                         self.audit.log(
                             run.run_id, "retrieval", "span_advisory_findings",
@@ -853,7 +856,10 @@ class WorkflowEngine:
                 self._persist_usage(run)
                 run.verification = report
             self.audit.log(run.run_id, "verifier", "verification_finished",
-                           {"passed": report.passed, "issues": report.issues})
+                           {"passed": report.passed, "issues": report.issues,
+                            "deterministic_passed": all(c.passed for c in report.checks),
+                            "semantic_verdict": (
+                                report.semantic.verdict if report.semantic else None)})
             if report.passed:
                 run.error = None  # resolved; history stays in the audit trail
                 transition(run, RunStatus.COMPLETED)

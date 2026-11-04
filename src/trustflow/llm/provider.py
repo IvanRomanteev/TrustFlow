@@ -357,6 +357,7 @@ class MetaResponsesProvider:
     # re-reserved in the originating workflow before the next request.
     supports_attempt_tracker = True
     supports_retrieval_context = True
+    supports_execution_evidence = True
 
     def __init__(self, settings: Settings | None = None, model: str | None = None,
                  transport: httpx.BaseTransport | None = None,
@@ -854,8 +855,17 @@ class MetaResponsesProvider:
     def semantic_review(self, payload, tracker=None, retry_reserve_tokens=0):
         prompt = (
             "Independently review whether the executed synthetic workflow satisfies "
-            "the user goal. Judge only from the supplied goal, approved plan and "
-            "independently obtained ledger evidence. Return the review JSON.\n"
+            "the original user goal. This is a synthetic ledger, not real funds. "
+            "Here simulate_transfer is state-changing: success atomically commits "
+            "a synthetic ledger transaction and returns tx_id; it is not a dry-run. "
+            "Use execution_evidence to link plan/approval hashes and operation/intent IDs "
+            "to independently read ledger transactions and worker results. Null means "
+            "unavailable evidence, never an invented commit or approval. Deterministic "
+            "PASS proves execution checks, not semantic goal correctness. Compare goal "
+            "amount/accounts/currency to the plan and actual ledger: even a correctly "
+            "approved commit can deserve FAIL for a goal mismatch. Preserve valid "
+            "disagreement; do not claim an ID/hash is missing when supplied, and do not "
+            "treat unrelated ledger rows as this operation. Return the review JSON.\n"
             + self._semantic_payload_text(payload)
         )
         return self._call("semantic_review", REVIEW_SCHEMA, prompt,

@@ -20,6 +20,7 @@ from typing import Any
 import httpx
 
 from trustflow.agents.semantic import SemanticReviewer
+from trustflow.agents.semantic_evidence import review_context_kwargs
 from trustflow.api.factory import Container, create_app
 from trustflow.core.errors import TrustFlowError
 from trustflow.core.logging import redact
@@ -263,6 +264,7 @@ async def evaluate_profile(directory: Path, profile: str, provider, mode: str) -
                 break
         if approved_run is not None:
             assert approved_run.approved_plan_snapshot is not None
+            assert approved_run.verification is not None
             tracker = UsageTracker(30000, "semantic-negative-" + profile)
             before = sql_evidence(db)
             try:
@@ -270,7 +272,10 @@ async def evaluate_profile(directory: Path, profile: str, provider, mode: str) -
                 result = reviewer.review(
                     WorkflowGoal(title="Transfer 1700 USD",
                                  description="Send exactly 1700 USD from acc_alice to acc_bob."),
-                    approved_run.approved_plan_snapshot, tracker=tracker)
+                    approved_run.approved_plan_snapshot, tracker=tracker,
+                    step_results=approved_run.step_results,
+                    **review_context_kwargs(
+                        reviewer, approved_run, approved_run.verification, False))
                 verdict, failure = result.verdict, None
             except TrustFlowError:
                 verdict, failure = None, "semantic_review_unavailable"

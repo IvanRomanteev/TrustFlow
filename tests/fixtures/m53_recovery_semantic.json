@@ -1,0 +1,14 @@
+{
+  "provenance": "Sanitized fixture derived from the public domain-state issues in Spark run aaea23d34cbc44569d66e116d2c61662. No raw server body or private reasoning; test-generated IDs and JSON text.",
+  "goal": {"title": "Transfer 1200 USD", "description": "Send exactly 1200 USD from acc_alice to acc_bob."},
+  "steps": [
+    {"tool_name": "get_balance", "account_id": "acc_alice"},
+    {"tool_name": "list_transactions", "account_id": "acc_alice", "limit": 20},
+    {"tool_name": "simulate_transfer", "from_account": "acc_alice", "to_account": "acc_bob", "amount": 1200, "currency": "USD"}
+  ],
+  "observed_semantic_rejection": {
+    "verdict": "FAIL", "confidence": 0.9,
+    "issues": ["simulate_transfer interpreted as a hypothetical simulation", "Transaction attribution to the authorized workflow was not established"],
+    "summary": "Sanitized representation of observed semantic concerns, not an original server response"
+  }
+}
