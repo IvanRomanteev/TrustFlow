@@ -43,6 +43,23 @@ export interface AuditEvent {
   detail: Record<string, unknown>;
 }
 
+function errorDetail(body: unknown, fallback: string): string {
+  if (!body || typeof body !== "object" || !("detail" in body)) return fallback;
+  const detail = body.detail;
+  if (typeof detail === "string") return detail.trim() || fallback;
+  if (!Array.isArray(detail)) return fallback;
+  const messages = detail.flatMap((item: unknown) => {
+    if (!item || typeof item !== "object" || !("msg" in item)
+        || typeof item.msg !== "string" || !item.msg.trim()) return [];
+    const loc = "loc" in item && Array.isArray(item.loc)
+      ? item.loc.filter((part: unknown) => typeof part === "string" || typeof part === "number")
+      : [];
+    if (loc[0] === "body") loc.shift();
+    return [loc.length ? `${loc.join(".")}: ${item.msg}` : item.msg];
+  });
+  return messages.join("; ") || fallback;
+}
+
 async function request<T>(path: string, init?: RequestInit, token?: string): Promise<T> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers["X-Approval-Token"] = token;
@@ -50,8 +67,7 @@ async function request<T>(path: string, init?: RequestInit, token?: string): Pro
   if (!res.ok) {
     let detail = `HTTP ${res.status}`;
     try {
-      const body = (await res.json()) as { detail?: string };
-      if (body.detail) detail = body.detail;
+      detail = errorDetail(await res.json(), detail);
     } catch { /* keep status text */ }
     throw new Error(detail);
   }

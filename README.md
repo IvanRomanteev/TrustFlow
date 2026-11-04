@@ -52,7 +52,7 @@ A separately authorized, bounded local run used the exact application source [`a
 
 The local M5.5 package contains sanitized call-level records, model identity checks, independent SQLite observations and plan-hash → operation → transaction bindings. In the Spark matrix, the approved synthetic transfer was **$1,500** and the recovered synthetic transfer **$1,200**, with original operation identities preserved. The Spark recovery case deliberately replaced the first real review result with `INVALID`, then counted a separate verification-only retry; it does not demonstrate a naturally occurring provider outage. The live harness used **automated fixture approvals**; an interactive human approval is demonstrated separately in **OFFLINE / FAKE MODE**.
 
-**Evidence status:** the results above are supported by the locally produced M5.5 reports, but the full M5.5 evidence bundle has **not been published in this repository** and is **not an independently accepted full milestone**. One Wonder review is *not* proof of a Wonder-planned end-to-end workflow. A prior live recovery failure is retained in the local historical evidence; the later bounded success does not erase it. The older, [public M5.3 Spark read-only diagnostic](docs/submission/m53-live-results.md) is **historical**, not the current limit of live integration.
+**Evidence status:** a [minimal sanitized M5.5 evidence package](docs/submission/evidence/m55/README.md) now accompanies this checkout: call accounting, model witnesses, synthetic SQL projections, source/runner hashes and an offline verifier. Original reports and SQLite remain retained privately and unchanged; this projection is **not an independently accepted full milestone** or provider-signed proof. One Wonder review is *not* proof of a Wonder-planned end-to-end workflow. A prior live recovery failure remains in the local historical evidence; the later bounded success does not erase it. The older, [public M5.3 Spark read-only diagnostic](docs/submission/m53-live-results.md) is **historical**, not the current limit of live integration.
 
 ## AI-assisted development usage
 
@@ -157,13 +157,27 @@ The cinematic video retains the original real UI captures and technical claims. 
 ```powershell
 # From the repository root (Windows PowerShell)
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev,demo]"
-python -m playwright install chromium
+.\.venv\Scripts\python.exe -m pip install -e ".[dev,demo]"
+.\.venv\Scripts\python.exe -m playwright install chromium
 
 docker info
 docker compose version
-python scripts/run_m52_demo.py --out "$env:TEMP\tfm52-demo"
+.\.venv\Scripts\python.exe scripts/run_m52_demo.py --out "$env:TEMP\tfm52-demo"
+```
+
+No activation or ExecutionPolicy change is required, including under `Restricted`.
+For optional local frontend commands on Windows use `npm.cmd`, since `npm` can
+resolve to the blocked `npm.ps1` script.
+
+```bash
+# Linux/macOS, from the repository root (Python 3.12+)
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[dev,demo]'
+python -m playwright install chromium
+docker info
+docker compose version
+python scripts/run_m52_demo.py --out "${TMPDIR:-/tmp}/tfm52-demo"
 ```
 
 A successful offline replay reports `M5.2 PASS` and writes `COMPLETE.json` in its invocation directory. It seeds a fresh synthetic SQLite database, runs six Chromium scenarios, checks outcomes/evidence and cleans up only resources positively identified as owned by the invocation. It uses `FakeLLMProvider`, requires **no Meta API key**, and makes **no paid model requests**.
@@ -178,18 +192,23 @@ The source defaults use `muse-wonder-1.0` for planning and review; the separate 
 
 ```powershell
 # Read-only request-free inspection and deterministic MockTransport exercise
-python -m trustflow.evaluation.live --profile all
-python -m trustflow.evaluation.live --offline --profile all --max-requests 27 --max-cost-usd 1 --out artifacts/m53-mock
+.\.venv\Scripts\python.exe -m trustflow.evaluation.live --profile all
+.\.venv\Scripts\python.exe -m trustflow.evaluation.live --offline --profile all --max-requests 27 --max-cost-usd 1 --out artifacts/m53-mock
 ```
 
 ## Technology
 
 - **Backend / agents:** Python 3.12+, FastAPI, Pydantic, httpx, structured tool calls, workflow orchestration, risk policy, SQLite persistence.
-- **UI:** Next.js 15.3.4, React 19.1.0, TypeScript, Playwright Chromium.
+- **UI:** Next.js 15.5.29, React/React DOM 19.1.10, TypeScript, Playwright Chromium.
 - **Quality:** pytest, Ruff, mypy, controlled Docker Compose tests, offline evaluation and evidence manifests.
 - **Demo production (outside application runtime):** Remotion/React, FFmpeg, Runway-generated English voiceover and background video inserts.
 
-The pinned Next.js/React frontend versions have known security advisories in the release documentation. This local prototype has **not** been hardened or deployed as a public banking application.
+The frontend security remediation pins patched dependencies, including Next-scoped
+`postcss=8.5.32` and `sharp=0.35.5` overrides for its older transitive pins. These
+replace vulnerable code; they do not suppress audit findings. Run `npm.cmd ci`
+and `npm.cmd audit` in `frontend` to check the lockfile against current advisories
+(`npm` on Linux/macOS). See the [remediation record](docs/release/final-audit-remediation.md).
+This local prototype has **not** been hardened or deployed as a public banking application.
 
 ## Security and limitations
 
@@ -212,7 +231,7 @@ A model's semantic PASS cannot overturn a deterministic failure, and a successfu
 - [Historical 120-second offline demo and source captures](docs/submission/video/README.md)
 - [Earlier pitch](docs/submission/pitch.md), [archived presentation PDF](docs/submission/presentation.pdf), [archived submission fields](docs/submission/submission-text.md), and [development worklog](docs/worklog.md)
 
-**Historical-document note:** some linked submission documents were produced before M5.5 and retain accurate *historical* `PENDING` labels. They should not be interpreted as the current end-to-end live status of this README. The current M5.5 evidence bundle and Meta usage screenshot are not committed to this repository as part of this README rewrite. The final demo is linked above on YouTube.
+**Historical-document note:** some linked submission documents were produced before M5.5 and retain accurate *historical* `PENDING` labels. They should not be interpreted as the current end-to-end live status of this README. The full raw M5.5 bundle and Meta usage screenshot remain outside the repository; the [sanitized M5.5 projection](docs/submission/evidence/m55/README.md) supports the bounded runtime claims only. The final demo is linked above on YouTube.
 
 ---
 

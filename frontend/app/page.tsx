@@ -166,6 +166,7 @@ export default function Home() {
             </label>
             <button className="primary" onClick={() => void act("Create workflow",
               async () => {
+                if (!title.trim()) throw new Error("Title is required.");
                 const created = await api.create(title, description, requireEvidence);
                 return created;
               }, true)}>

@@ -1,0 +1,895 @@
+{
+  "schema_version": 1,
+  "source_sha": "aacfed074a4116dbded98ee88f783226a910e55c",
+  "source_tree": "89eb3dbb4c79ad11e01490e1404614a573734703",
+  "session": "0bb6cdb63c03418a85f873755ed86200",
+  "mode": "retained-live-records",
+  "historical_rates_usd_per_million": {
+    "muse-spark-1.3": [
+      "1.25",
+      "4.25"
+    ],
+    "muse-wonder-1.0": [
+      "4",
+      "20"
+    ]
+  },
+  "configuration": {
+    "max_http_attempts": 11,
+    "advisory_limit_usd": 0.33,
+    "transport_retries": 0,
+    "planning_repairs": 0,
+    "max_output_tokens": 4096,
+    "reasoning_effort": "low"
+  },
+  "sources_sha256": {
+    "live-sessions/0bb6cdb63c03418a85f873755ed86200/session.json": "9bde464723ba858d7ff3419366f0d98a226ebedb30e3713ebb01abb0607df086",
+    "runners-seal.json": "4d8a1d199e4821ffd3e49e14736f6b8d2b3ec19626e0a83b708f60e70f9bee20",
+    "runner-provenance.json": "301b207d8a02e22a52cd7689fcea446255240810e6b80d03024ae841bb2a3ee3",
+    "bounded_matrix.py": "362e6e1e36c95deba84a7696b01f4795bd739a294f3c4f83748761bac724e085",
+    "recovery_probe.py": "d3b6e38d2c118d90a799569c6dbbe58a3ad327af4268e8cd55b5b510cb70b6da",
+    "run_bounded_session.py": "bd7596f558735f851d2914efb5ffb052d398e2e6482e46e3c7626fe6f8927e7b",
+    "wire_witness.py": "cbfd546398cbd6aa196f1d2bb028320bc8c02cf09f617e2aa14ddf76e54c8ded",
+    "live-sessions/0bb6cdb63c03418a85f873755ed86200/spark-matrix/5eb00f17df614dceb1e408a2889ccfef/report.json": "b1d4f8e565707eaa8613955875968bb302cd8f5c4492568d84b56e4661015c86",
+    "live-sessions/0bb6cdb63c03418a85f873755ed86200/spark-matrix/5eb00f17df614dceb1e408a2889ccfef/attempts.json": "ec0d155a47cb756f5f9be4c46e6f34f2297df351e92f8d4e7166840d78d5e955",
+    "live-sessions/0bb6cdb63c03418a85f873755ed86200/spark-matrix/5eb00f17df614dceb1e408a2889ccfef/wire-models.json": "a9fc1e8f9426b616accbb55a459d4b5e86fbb1f15fe619226b3c705f35ef6126",
+    "live-sessions/0bb6cdb63c03418a85f873755ed86200/spark-matrix/5eb00f17df614dceb1e408a2889ccfef/profile/synthetic.db": "d53a9a336c9de69666ed2bc02c3e8ef975d7c94bf4cfa45fe28f63b9d3a58b54",
+    "live-sessions/0bb6cdb63c03418a85f873755ed86200/spark-recovery/1dd324ad6c9d46bb88f5b088de0324d9/report.json": "95a193cf414ac63d096b4f9d8256b5e501ad77b7486bd5dabc59c872518aca2a",
+    "live-sessions/0bb6cdb63c03418a85f873755ed86200/spark-recovery/1dd324ad6c9d46bb88f5b088de0324d9/synthetic.db": "637e5a0e4f1a32e0cda42e41fe650f737b65d01704c50ba2ededd75a7a5907bd",
+    "live-sessions/0bb6cdb63c03418a85f873755ed86200/wonder-recovery/1585582f8b29418f9e1aece6cb92d693/report.json": "336e9e32b732798e920b7990c6575731fbb1fb8b7aa2935157d6b9a9c6066d80",
+    "live-sessions/0bb6cdb63c03418a85f873755ed86200/wonder-recovery/1585582f8b29418f9e1aece6cb92d693/synthetic.db": "acda374b23146752fb17e95e7bab3a377287121922b04d73f6e0dcdd85e2f5d0"
+  },
+  "stages": [
+    {
+      "stage": "spark-matrix",
+      "calls": [
+        {
+          "model": "muse-spark-1.3",
+          "purpose": "plan",
+          "workflow_id": "d5e09e89-0cd1-4c1a-9f30-4ccdd0eea556",
+          "attempt": 1,
+          "transport_attempt": 1,
+          "http_status": 200,
+          "input_tokens": 282,
+          "output_tokens": 1256,
+          "estimated_cost_usd": 0.0056905,
+          "budget_charge_usd": 0.0056905,
+          "usage_unknown": false,
+          "over_budget": false,
+          "validation_outcome": "typed_plan_valid",
+          "failure_reason": null,
+          "response_status": "completed",
+          "request_id_sha256": "680d3640e78d2e25cb6878e17c556cae9625e1facf91f26986d79a5bd1b7bcb6",
+          "response_id_sha256": "6142bfbb2e870eb8788f4a621896d5aebb19a510ca2475e55bdb61bf454d8590",
+          "wire": {
+            "requested_model": "muse-spark-1.3",
+            "response_model": "muse-spark-1.3",
+            "response_model_matches": true,
+            "http_status": 200,
+            "transport": "HTTPTransport",
+            "started_utc": "2026-11-04T02:24:17.048978+00:00",
+            "finished_utc": "2026-11-04T02:24:28.820592+00:00"
+          }
+        },
+        {
+          "model": "muse-spark-1.3",
+          "purpose": "semantic_review",
+          "workflow_id": "d5e09e89-0cd1-4c1a-9f30-4ccdd0eea556",
+          "attempt": 1,
+          "transport_attempt": 1,
+          "http_status": 200,
+          "input_tokens": 729,
+          "output_tokens": 579,
+          "estimated_cost_usd": 0.003372,
+          "budget_charge_usd": 0.003372,
+          "usage_unknown": false,
+          "over_budget": false,
+          "validation_outcome": "typed_review_valid",
+          "failure_reason": null,
+          "response_status": "completed",
+          "request_id_sha256": "f00906760f9c3f9fb019013b2bb7834a8ffbeaf4a71386cea5b2ad47b8a5a6cf",
+          "response_id_sha256": "aed1f7f6fa4151208411b802d979fe32d55bce89271c29b54010ad1922db611f",
+          "wire": {
+            "requested_model": "muse-spark-1.3",
+            "response_model": "muse-spark-1.3",
+            "response_model_matches": true,
+            "http_status": 200,
+            "transport": "HTTPTransport",
+            "started_utc": "2026-11-04T02:24:28.834773+00:00",
+            "finished_utc": "2026-11-04T02:24:36.593249+00:00"
+          }
+        },
+        {
+          "model": "muse-spark-1.3",
+          "purpose": "plan",
+          "workflow_id": "f3ebdc5d-3783-48d3-bfc5-dc0e3eee9856",
+          "attempt": 1,
+          "transport_attempt": 1,
+          "http_status": 200,
+          "input_tokens": 312,
+          "output_tokens": 2074,
+          "estimated_cost_usd": 0.0092045,
+          "budget_charge_usd": 0.0092045,
+          "usage_unknown": false,
+          "over_budget": false,
+          "validation_outcome": "typed_plan_valid",
+          "failure_reason": null,
+          "response_status": "completed",
+          "request_id_sha256": "521e45004e88b6dfafbaae8473ad9877b6bdb4ee38a0ecd8c89ff163fe558cf5",
+          "response_id_sha256": "26a5bd5dccf7f4f5cdf45b6c38056204eb6eeb1d2df63def9a53d6c569ea2f4d",
+          "wire": {
+            "requested_model": "muse-spark-1.3",
+            "response_model": "muse-spark-1.3",
+            "response_model_matches": true,
+            "http_status": 200,
+            "transport": "HTTPTransport",
+            "started_utc": "2026-11-04T02:24:36.611011+00:00",
+            "finished_utc": "2026-11-04T02:24:55.086229+00:00"
+          }
+        },
+        {
+          "model": "muse-spark-1.3",
+          "purpose": "semantic_review",
+          "workflow_id": "f3ebdc5d-3783-48d3-bfc5-dc0e3eee9856",
+          "attempt": 1,
+          "transport_attempt": 1,
+          "http_status": 200,
+          "input_tokens": 1569,
+          "output_tokens": 520,
+          "estimated_cost_usd": 0.00417125,
+          "budget_charge_usd": 0.00417125,
+          "usage_unknown": false,
+          "over_budget": false,
+          "validation_outcome": "typed_review_valid",
+          "failure_reason": null,
+          "response_status": "completed",
+          "request_id_sha256": "f3093518db00211fb4e588dbb9281b926fd01bbb50e663750d1f6b685779da20",
+          "response_id_sha256": "ed205690a970300b6d28553737e2cbbc33a236e93bde3579d1ac4c2719e35edc",
+          "wire": {
+            "requested_model": "muse-spark-1.3",
+            "response_model": "muse-spark-1.3",
+            "response_model_matches": true,
+            "http_status": 200,
+            "transport": "HTTPTransport",
+            "started_utc": "2026-11-04T02:24:55.114664+00:00",
+            "finished_utc": "2026-11-04T02:25:01.480264+00:00"
+          }
+        },
+        {
+          "model": "muse-spark-1.3",
+          "purpose": "plan",
+          "workflow_id": "fef70052-9c7e-46a4-b6e7-ade87b6b84fe",
+          "attempt": 1,
+          "transport_attempt": 1,
+          "http_status": 200,
+          "input_tokens": 312,
+          "output_tokens": 2125,
+          "estimated_cost_usd": 0.00942125,
+          "budget_charge_usd": 0.00942125,
+          "usage_unknown": false,
+          "over_budget": false,
+          "validation_outcome": "typed_plan_valid",
+          "failure_reason": null,
+          "response_status": "completed",
+          "request_id_sha256": "d38ffe2fe51df2bc89315cb8c696484a479ea9762b619dcd8ae6e54e917d0846",
+          "response_id_sha256": "b5c64ae9a3e8b696ed0cc97ea6cf59c4cd1bf07cc720ba0013a8699e7d822dab",
+          "wire": {
+            "requested_model": "muse-spark-1.3",
+            "response_model": "muse-spark-1.3",
+            "response_model_matches": true,
+            "http_status": 200,
+            "transport": "HTTPTransport",
+            "started_utc": "2026-11-04T02:25:01.508796+00:00",
+            "finished_utc": "2026-11-04T02:25:19.513327+00:00"
+          }
+        },
+        {
+          "model": "muse-spark-1.3",
+          "purpose": "plan",
+          "workflow_id": "9a1dc4d7-1771-4fa1-8553-f98701104075",
+          "attempt": 1,
+          "transport_attempt": 1,
+          "http_status": 200,
+          "input_tokens": 312,
+          "output_tokens": 2101,
+          "estimated_cost_usd": 0.00931925,
+          "budget_charge_usd": 0.00931925,
+          "usage_unknown": false,
+          "over_budget": false,
+          "validation_outcome": "typed_plan_valid",
+          "failure_reason": null,
+          "response_status": "completed",
+          "request_id_sha256": "9a0d7daa7e29b6906794b5b6df1b88120313e268fc3a27329238a70bf26089de",
+          "response_id_sha256": "e009c7165e9907a4acbafc410f250b0ff54cb862bac2ceb3c829add7debafe89",
+          "wire": {
+            "requested_model": "muse-spark-1.3",
+            "response_model": "muse-spark-1.3",
+            "response_model_matches": true,
+            "http_status": 200,
+            "transport": "HTTPTransport",
+            "started_utc": "2026-11-04T02:25:19.534633+00:00",
+            "finished_utc": "2026-11-04T02:25:37.954427+00:00"
+          }
+        },
+        {
+          "model": "muse-spark-1.3",
+          "purpose": "semantic_review",
+          "workflow_id": "9a1dc4d7-1771-4fa1-8553-f98701104075",
+          "attempt": 1,
+          "transport_attempt": 1,
+          "http_status": 200,
+          "input_tokens": 1674,
+          "output_tokens": 448,
+          "estimated_cost_usd": 0.0039965,
+          "budget_charge_usd": 0.0039965,
+          "usage_unknown": false,
+          "over_budget": false,
+          "validation_outcome": "typed_review_invalid",
+          "failure_reason": "injected_invalid_review",
+          "response_status": "completed",
+          "request_id_sha256": "58e6417a30d09e2892ec780599acbffea6b2ee75243b6528381b6ff3e467f336",
+          "response_id_sha256": "89a910b6e96b40175b6433ee45989b6eff7196e71976afe1473ca37bb7be61e9",
+          "wire": {
+            "requested_model": "muse-spark-1.3",
+            "response_model": "muse-spark-1.3",
+            "response_model_matches": true,
+            "http_status": 200,
+            "transport": "HTTPTransport",
+            "started_utc": "2026-11-04T02:25:37.984388+00:00",
+            "finished_utc": "2026-11-04T02:25:42.854127+00:00"
+          }
+        },
+        {
+          "model": "muse-spark-1.3",
+          "purpose": "semantic_review",
+          "workflow_id": "9a1dc4d7-1771-4fa1-8553-f98701104075",
+          "attempt": 2,
+          "transport_attempt": 1,
+          "http_status": 200,
+          "input_tokens": 1674,
+          "output_tokens": 737,
+          "estimated_cost_usd": 0.00522475,
+          "budget_charge_usd": 0.00522475,
+          "usage_unknown": false,
+          "over_budget": false,
+          "validation_outcome": "typed_review_valid",
+          "failure_reason": null,
+          "response_status": "completed",
+          "request_id_sha256": "c8f5db98ebbbe0b0b8d06d91243cbcfbfbfd1a628402146998cd822cfa79aa98",
+          "response_id_sha256": "82edd9fc3e74c9f3a8346cd4f94b37c94426fa8658e8c7b4c52e50f1f75a5d68",
+          "wire": {
+            "requested_model": "muse-spark-1.3",
+            "response_model": "muse-spark-1.3",
+            "response_model_matches": true,
+            "http_status": 200,
+            "transport": "HTTPTransport",
+            "started_utc": "2026-11-04T02:25:42.874251+00:00",
+            "finished_utc": "2026-11-04T02:25:51.294900+00:00"
+          }
+        },
+        {
+          "model": "muse-spark-1.3",
+          "purpose": "semantic_review",
+          "workflow_id": "semantic-negative-spark",
+          "attempt": 1,
+          "transport_attempt": 1,
+          "http_status": 200,
+          "input_tokens": 995,
+          "output_tokens": 683,
+          "estimated_cost_usd": 0.0041465,
+          "budget_charge_usd": 0.0041465,
+          "usage_unknown": false,
+          "over_budget": false,
+          "validation_outcome": "typed_review_valid",
+          "failure_reason": null,
+          "response_status": "completed",
+          "request_id_sha256": "eaad066edc1e976449c3aeeb77d1ef708f3b21cf40d28a818fcb56766935b4c4",
+          "response_id_sha256": "486c0535b9ebc54e6bf53fd47e606e63c15d0cbcdc1747ed324b6df5db14f1eb",
+          "wire": {
+            "requested_model": "muse-spark-1.3",
+            "response_model": "muse-spark-1.3",
+            "response_model_matches": true,
+            "http_status": 200,
+            "transport": "HTTPTransport",
+            "started_utc": "2026-11-04T02:25:51.323346+00:00",
+            "finished_utc": "2026-11-04T02:25:57.522124+00:00"
+          }
+        }
+      ],
+      "sqlite": {
+        "integrity": "ok",
+        "accounts": [
+          {
+            "account_id": "acc_alice",
+            "balance": 2300.0,
+            "currency": "USD"
+          },
+          {
+            "account_id": "acc_bob",
+            "balance": 3900.0,
+            "currency": "USD"
+          },
+          {
+            "account_id": "acc_ops",
+            "balance": 10000.0,
+            "currency": "USD"
+          }
+        ],
+        "transactions": [
+          {
+            "tx_id": "tx_0001",
+            "operation_id": "op_265a3ef6cf624f13",
+            "from_account": "acc_alice",
+            "to_account": "acc_bob",
+            "amount": 1500.0,
+            "currency": "USD"
+          },
+          {
+            "tx_id": "tx_0002",
+            "operation_id": "op_f69247a90d804327",
+            "from_account": "acc_alice",
+            "to_account": "acc_bob",
+            "amount": 1200.0,
+            "currency": "USD"
+          }
+        ],
+        "runs": [
+          {
+            "run_id": "9a1dc4d7-1771-4fa1-8553-f98701104075",
+            "status": "COMPLETED",
+            "approved_hash": "9248542172f7a2d43fe5aacbaa059f1f88cca65a24e1e93f0cca27031e156dfc",
+            "approved_canonical": {
+              "goal_title": "Transfer 1200 USD",
+              "version": 1,
+              "steps": [
+                {
+                  "step_id": "v1-step-1",
+                  "tool_name": "get_balance",
+                  "intent_id": "",
+                  "operation_id": "",
+                  "args": {
+                    "account_id": "acc_alice"
+                  }
+                },
+                {
+                  "step_id": "v1-step-2",
+                  "tool_name": "fx_quote",
+                  "intent_id": "",
+                  "operation_id": "",
+                  "args": {
+                    "from_currency": "USD",
+                    "to_currency": "USD",
+                    "amount": 1200.0
+                  }
+                },
+                {
+                  "step_id": "v1-step-3",
+                  "tool_name": "simulate_transfer",
+                  "intent_id": "op_f69247a90d804327",
+                  "operation_id": "op_f69247a90d804327",
+                  "args": {
+                    "from_account": "acc_alice",
+                    "to_account": "acc_bob",
+                    "amount": 1200.0,
+                    "currency": "USD"
+                  }
+                }
+              ]
+            },
+            "plan_hash": "9248542172f7a2d43fe5aacbaa059f1f88cca65a24e1e93f0cca27031e156dfc",
+            "approvals": [
+              {
+                "plan_version": 1,
+                "plan_hash": "9248542172f7a2d43fe5aacbaa059f1f88cca65a24e1e93f0cca27031e156dfc",
+                "decision": "APPROVED"
+              }
+            ]
+          },
+          {
+            "run_id": "d5e09e89-0cd1-4c1a-9f30-4ccdd0eea556",
+            "status": "COMPLETED",
+            "approved_hash": "",
+            "approved_canonical": null,
+            "plan_hash": "318f978913b8e70a5c521d004c03c5bc1c33bded0e75dbc0ff5f083d342ef421",
+            "approvals": []
+          },
+          {
+            "run_id": "f3ebdc5d-3783-48d3-bfc5-dc0e3eee9856",
+            "status": "COMPLETED",
+            "approved_hash": "0083d69177eac9f907237f137b26647816174bfdd28142a60362a675ac3360fd",
+            "approved_canonical": {
+              "goal_title": "Transfer 1500 USD",
+              "version": 1,
+              "steps": [
+                {
+                  "step_id": "v1-step-1",
+                  "tool_name": "get_balance",
+                  "intent_id": "",
+                  "operation_id": "",
+                  "args": {
+                    "account_id": "acc_alice"
+                  }
+                },
+                {
+                  "step_id": "v1-step-2",
+                  "tool_name": "list_transactions",
+                  "intent_id": "",
+                  "operation_id": "",
+                  "args": {
+                    "account_id": "acc_alice",
+                    "limit": 10
+                  }
+                },
+                {
+                  "step_id": "v1-step-3",
+                  "tool_name": "simulate_transfer",
+                  "intent_id": "op_265a3ef6cf624f13",
+                  "operation_id": "op_265a3ef6cf624f13",
+                  "args": {
+                    "from_account": "acc_alice",
+                    "to_account": "acc_bob",
+                    "amount": 1500.0,
+                    "currency": "USD"
+                  }
+                }
+              ]
+            },
+            "plan_hash": "0083d69177eac9f907237f137b26647816174bfdd28142a60362a675ac3360fd",
+            "approvals": [
+              {
+                "plan_version": 1,
+                "plan_hash": "0083d69177eac9f907237f137b26647816174bfdd28142a60362a675ac3360fd",
+                "decision": "APPROVED"
+              }
+            ]
+          },
+          {
+            "run_id": "fef70052-9c7e-46a4-b6e7-ade87b6b84fe",
+            "status": "REJECTED",
+            "approved_hash": "",
+            "approved_canonical": null,
+            "plan_hash": "96fc9803ca9007333a8d2033232810b780b23fafc93a23670263486874fa6160",
+            "approvals": [
+              {
+                "plan_version": 1,
+                "plan_hash": "96fc9803ca9007333a8d2033232810b780b23fafc93a23670263486874fa6160",
+                "decision": "REJECTED"
+              }
+            ]
+          }
+        ]
+      },
+      "cases": [
+        {
+          "case": "read",
+          "workflow_id": "d5e09e89-0cd1-4c1a-9f30-4ccdd0eea556",
+          "status": "COMPLETED",
+          "plan_hash": "318f978913b8e70a5c521d004c03c5bc1c33bded0e75dbc0ff5f083d342ef421",
+          "approved_hash": "",
+          "semantic_verdict": "PASS",
+          "passed": true,
+          "ledger_before": {
+            "integrity": "ok",
+            "total_balance": 16200.0,
+            "transactions": []
+          },
+          "ledger_after": {
+            "integrity": "ok",
+            "total_balance": 16200.0,
+            "transactions": []
+          }
+        },
+        {
+          "case": "approve",
+          "workflow_id": "f3ebdc5d-3783-48d3-bfc5-dc0e3eee9856",
+          "status": "COMPLETED",
+          "plan_hash": "0083d69177eac9f907237f137b26647816174bfdd28142a60362a675ac3360fd",
+          "approved_hash": "0083d69177eac9f907237f137b26647816174bfdd28142a60362a675ac3360fd",
+          "semantic_verdict": "PASS",
+          "passed": true,
+          "ledger_before": {
+            "integrity": "ok",
+            "total_balance": 16200.0,
+            "transactions": []
+          },
+          "ledger_after": {
+            "integrity": "ok",
+            "total_balance": 16200.0,
+            "transactions": [
+              {
+                "tx_id": "tx_0001",
+                "operation_id": "op_265a3ef6cf624f13",
+                "from_account": "acc_alice",
+                "to_account": "acc_bob",
+                "amount": 1500.0,
+                "currency": "USD"
+              }
+            ]
+          }
+        },
+        {
+          "case": "reject",
+          "workflow_id": "fef70052-9c7e-46a4-b6e7-ade87b6b84fe",
+          "status": "REJECTED",
+          "plan_hash": "96fc9803ca9007333a8d2033232810b780b23fafc93a23670263486874fa6160",
+          "approved_hash": "",
+          "semantic_verdict": null,
+          "passed": true,
+          "ledger_before": {
+            "integrity": "ok",
+            "total_balance": 16200.0,
+            "transactions": [
+              {
+                "tx_id": "tx_0001",
+                "operation_id": "op_265a3ef6cf624f13",
+                "from_account": "acc_alice",
+                "to_account": "acc_bob",
+                "amount": 1500.0,
+                "currency": "USD"
+              }
+            ]
+          },
+          "ledger_after": {
+            "integrity": "ok",
+            "total_balance": 16200.0,
+            "transactions": [
+              {
+                "tx_id": "tx_0001",
+                "operation_id": "op_265a3ef6cf624f13",
+                "from_account": "acc_alice",
+                "to_account": "acc_bob",
+                "amount": 1500.0,
+                "currency": "USD"
+              }
+            ]
+          }
+        },
+        {
+          "case": "recovery",
+          "workflow_id": "9a1dc4d7-1771-4fa1-8553-f98701104075",
+          "status": "COMPLETED",
+          "plan_hash": "9248542172f7a2d43fe5aacbaa059f1f88cca65a24e1e93f0cca27031e156dfc",
+          "approved_hash": "9248542172f7a2d43fe5aacbaa059f1f88cca65a24e1e93f0cca27031e156dfc",
+          "semantic_verdict": "PASS",
+          "passed": true,
+          "injected_fault": "first semantic result replaced after inference",
+          "ledger_before": {
+            "integrity": "ok",
+            "total_balance": 16200.0,
+            "transactions": [
+              {
+                "tx_id": "tx_0001",
+                "operation_id": "op_265a3ef6cf624f13",
+                "from_account": "acc_alice",
+                "to_account": "acc_bob",
+                "amount": 1500.0,
+                "currency": "USD"
+              }
+            ]
+          },
+          "ledger_after": {
+            "integrity": "ok",
+            "total_balance": 16200.0,
+            "transactions": [
+              {
+                "tx_id": "tx_0001",
+                "operation_id": "op_265a3ef6cf624f13",
+                "from_account": "acc_alice",
+                "to_account": "acc_bob",
+                "amount": 1500.0,
+                "currency": "USD"
+              },
+              {
+                "tx_id": "tx_0002",
+                "operation_id": "op_f69247a90d804327",
+                "from_account": "acc_alice",
+                "to_account": "acc_bob",
+                "amount": 1200.0,
+                "currency": "USD"
+              }
+            ]
+          }
+        },
+        {
+          "case": "semantic_negative",
+          "semantic_verdict": "FAIL",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "stage": "spark-recovery",
+      "calls": [
+        {
+          "model": "muse-spark-1.3",
+          "purpose": "semantic_review",
+          "workflow_id": "43e9cfa3-7c60-4a63-8db7-a5aafec48131",
+          "attempt": 1,
+          "transport_attempt": 1,
+          "http_status": 200,
+          "input_tokens": 1600,
+          "output_tokens": 330,
+          "estimated_cost_usd": 0.0034025,
+          "budget_charge_usd": 0.0034025,
+          "usage_unknown": false,
+          "over_budget": false,
+          "validation_outcome": "typed_review_valid",
+          "failure_reason": null,
+          "response_status": "completed",
+          "request_id_sha256": "ace7d95ae773f7d1d98fa255c3430dda4702509409985624e0590fd23e96ac29",
+          "response_id_sha256": "0dfce7a54f7ad8b947afd4ab69becb430bd8f90f6761cec38456aa0ff5f939e7",
+          "wire": {
+            "requested_model": "muse-spark-1.3",
+            "response_model": "muse-spark-1.3",
+            "response_model_matches": true,
+            "http_status": 200,
+            "transport": "HTTPTransport",
+            "started_utc": "2026-11-04T02:24:11.626255+00:00",
+            "finished_utc": "2026-11-04T02:24:16.227144+00:00"
+          }
+        }
+      ],
+      "sqlite": {
+        "integrity": "ok",
+        "accounts": [
+          {
+            "account_id": "acc_alice",
+            "balance": 3800.0,
+            "currency": "USD"
+          },
+          {
+            "account_id": "acc_bob",
+            "balance": 2400.0,
+            "currency": "USD"
+          },
+          {
+            "account_id": "acc_ops",
+            "balance": 10000.0,
+            "currency": "USD"
+          }
+        ],
+        "transactions": [
+          {
+            "tx_id": "tx_0001",
+            "operation_id": "op_c7c5655e161547f1",
+            "from_account": "acc_alice",
+            "to_account": "acc_bob",
+            "amount": 1200.0,
+            "currency": "USD"
+          }
+        ],
+        "runs": [
+          {
+            "run_id": "43e9cfa3-7c60-4a63-8db7-a5aafec48131",
+            "status": "COMPLETED",
+            "approved_hash": "13fdff07359d050ee0b7ce0d5756f88b5391bf7abc69fc91cd44ae70acb1aab0",
+            "approved_canonical": {
+              "goal_title": "Transfer 1200 USD",
+              "version": 1,
+              "steps": [
+                {
+                  "step_id": "v1-step-1",
+                  "tool_name": "get_balance",
+                  "intent_id": "",
+                  "operation_id": "",
+                  "args": {
+                    "account_id": "acc_alice"
+                  }
+                },
+                {
+                  "step_id": "v1-step-2",
+                  "tool_name": "list_transactions",
+                  "intent_id": "",
+                  "operation_id": "",
+                  "args": {
+                    "account_id": "acc_alice",
+                    "limit": 20
+                  }
+                },
+                {
+                  "step_id": "v1-step-3",
+                  "tool_name": "simulate_transfer",
+                  "intent_id": "op_c7c5655e161547f1",
+                  "operation_id": "op_c7c5655e161547f1",
+                  "args": {
+                    "from_account": "acc_alice",
+                    "to_account": "acc_bob",
+                    "amount": 1200.0,
+                    "currency": "USD"
+                  }
+                }
+              ]
+            },
+            "plan_hash": "13fdff07359d050ee0b7ce0d5756f88b5391bf7abc69fc91cd44ae70acb1aab0",
+            "approvals": [
+              {
+                "plan_version": 1,
+                "plan_hash": "13fdff07359d050ee0b7ce0d5756f88b5391bf7abc69fc91cd44ae70acb1aab0",
+                "decision": "APPROVED"
+              }
+            ]
+          }
+        ]
+      },
+      "planning": "fixed offline fixture; no real planning inference",
+      "initial_review": "local pre-inference outage; no real first review",
+      "status": "COMPLETED",
+      "semantic_verdict": "PASS",
+      "ledger_before": {
+        "integrity": "ok",
+        "total_balance": 16200.0,
+        "transactions": [
+          {
+            "tx_id": "tx_0001",
+            "operation_id": "op_c7c5655e161547f1",
+            "from_account": "acc_alice",
+            "to_account": "acc_bob",
+            "amount": 1200.0,
+            "currency": "USD"
+          }
+        ]
+      },
+      "ledger_after": {
+        "integrity": "ok",
+        "total_balance": 16200.0,
+        "transactions": [
+          {
+            "tx_id": "tx_0001",
+            "operation_id": "op_c7c5655e161547f1",
+            "from_account": "acc_alice",
+            "to_account": "acc_bob",
+            "amount": 1200.0,
+            "currency": "USD"
+          }
+        ]
+      }
+    },
+    {
+      "stage": "wonder-recovery",
+      "calls": [
+        {
+          "model": "muse-wonder-1.0",
+          "purpose": "semantic_review",
+          "workflow_id": "5e440046-04c3-4d7a-97e1-22d06e71dbd0",
+          "attempt": 1,
+          "transport_attempt": 1,
+          "http_status": 200,
+          "input_tokens": 1583,
+          "output_tokens": 446,
+          "estimated_cost_usd": 0.015252,
+          "budget_charge_usd": 0.015252,
+          "usage_unknown": false,
+          "over_budget": false,
+          "validation_outcome": "typed_review_valid",
+          "failure_reason": null,
+          "response_status": "completed",
+          "request_id_sha256": "e40b5cf08f4e973386effdeb27ec605ad6f611d99efedd7fc78f951516a747e1",
+          "response_id_sha256": "59914dc54bfe64f3a592a943e66e363507cb011edec9865f41e2e3a1256e5b94",
+          "wire": {
+            "requested_model": "muse-wonder-1.0",
+            "response_model": "muse-wonder-1.0",
+            "response_model_matches": true,
+            "http_status": 200,
+            "transport": "HTTPTransport",
+            "started_utc": "2026-11-04T02:25:58.674149+00:00",
+            "finished_utc": "2026-11-04T02:26:03.695268+00:00"
+          }
+        }
+      ],
+      "sqlite": {
+        "integrity": "ok",
+        "accounts": [
+          {
+            "account_id": "acc_alice",
+            "balance": 3800.0,
+            "currency": "USD"
+          },
+          {
+            "account_id": "acc_bob",
+            "balance": 2400.0,
+            "currency": "USD"
+          },
+          {
+            "account_id": "acc_ops",
+            "balance": 10000.0,
+            "currency": "USD"
+          }
+        ],
+        "transactions": [
+          {
+            "tx_id": "tx_0001",
+            "operation_id": "op_c900298914fc4f1a",
+            "from_account": "acc_alice",
+            "to_account": "acc_bob",
+            "amount": 1200.0,
+            "currency": "USD"
+          }
+        ],
+        "runs": [
+          {
+            "run_id": "5e440046-04c3-4d7a-97e1-22d06e71dbd0",
+            "status": "COMPLETED",
+            "approved_hash": "82e8b708e7935ac32baec6c5d408d8389926468874653e6d6e9bc8856c1f3e01",
+            "approved_canonical": {
+              "goal_title": "Transfer 1200 USD",
+              "version": 1,
+              "steps": [
+                {
+                  "step_id": "v1-step-1",
+                  "tool_name": "get_balance",
+                  "intent_id": "",
+                  "operation_id": "",
+                  "args": {
+                    "account_id": "acc_alice"
+                  }
+                },
+                {
+                  "step_id": "v1-step-2",
+                  "tool_name": "list_transactions",
+                  "intent_id": "",
+                  "operation_id": "",
+                  "args": {
+                    "account_id": "acc_alice",
+                    "limit": 20
+                  }
+                },
+                {
+                  "step_id": "v1-step-3",
+                  "tool_name": "simulate_transfer",
+                  "intent_id": "op_c900298914fc4f1a",
+                  "operation_id": "op_c900298914fc4f1a",
+                  "args": {
+                    "from_account": "acc_alice",
+                    "to_account": "acc_bob",
+                    "amount": 1200.0,
+                    "currency": "USD"
+                  }
+                }
+              ]
+            },
+            "plan_hash": "82e8b708e7935ac32baec6c5d408d8389926468874653e6d6e9bc8856c1f3e01",
+            "approvals": [
+              {
+                "plan_version": 1,
+                "plan_hash": "82e8b708e7935ac32baec6c5d408d8389926468874653e6d6e9bc8856c1f3e01",
+                "decision": "APPROVED"
+              }
+            ]
+          }
+        ]
+      },
+      "planning": "fixed offline fixture; no real planning inference",
+      "initial_review": "local pre-inference outage; no real first review",
+      "status": "COMPLETED",
+      "semantic_verdict": "PASS",
+      "ledger_before": {
+        "integrity": "ok",
+        "total_balance": 16200.0,
+        "transactions": [
+          {
+            "tx_id": "tx_0001",
+            "operation_id": "op_c900298914fc4f1a",
+            "from_account": "acc_alice",
+            "to_account": "acc_bob",
+            "amount": 1200.0,
+            "currency": "USD"
+          }
+        ]
+      },
+      "ledger_after": {
+        "integrity": "ok",
+        "total_balance": 16200.0,
+        "transactions": [
+          {
+            "tx_id": "tx_0001",
+            "operation_id": "op_c900298914fc4f1a",
+            "from_account": "acc_alice",
+            "to_account": "acc_bob",
+            "amount": 1200.0,
+            "currency": "USD"
+          }
+        ]
+      }
+    }
+  ]
+}

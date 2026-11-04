@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "public_files_sha256": {
+    "evidence.json": "62870bf2f2221fb238536b4cd61cc0a4ce488e2fee3828b1aed5f9967d44ca75",
+    "README.md": "ccda2de8eb9abfb8755b24c86068e13b0f4cc22dfce0aaff46e2413be66a81c0",
+    "../../../../scripts/m55_public_evidence.py": "e2f1586fa308138aea9a400c2e9b21edacf711b6c651f286a70bc134023d391f"
+  }
+}
