@@ -10,7 +10,7 @@ TrustFlow is an open-source, local research-and-engineering prototype for **audi
 
 **Scope:** all balances and transfers are synthetic. This is **not** a production banking system, a payment integration, or a general distributed exactly-once guarantee.
 
-[Architecture](#architecture) · [Meta integration](#built-with-meta-powered-by-meta) · [Development usage](#ai-assisted-development-usage) · [Measured results](#measured-results-and-evidence) · [Quickstart](#reproduce-the-offline-demo) · [Safety boundaries](#security-and-limitations) · [Archived demo](docs/submission/video/trustflow-demo.mp4)
+[Watch the demo on YouTube](https://www.youtube.com/watch?v=QnLXbL9yXHM) · [Architecture](#architecture) · [Meta integration](#built-with-meta-powered-by-meta) · [Development usage](#ai-assisted-development-usage) · [Measured results](#measured-results-and-evidence) · [Quickstart](#reproduce-the-offline-demo) · [Safety boundaries](#security-and-limitations) · [Archived demo](docs/submission/video/trustflow-demo.mp4)
 
 ## The problem
 
@@ -140,7 +140,7 @@ The M5.5 production also completed Ruff/mypy checks, external runner assertions,
 
 ## Demo and provenance
 
-**Current hackathon submission video (M5.5 Cinematic v3):** 175 seconds, 1920×1080, 30 FPS, English Frank AI narration, captions, quiet background music and two decorative cinematic inserts. A direct YouTube URL could not be verified from the available materials, so no YouTube link or confirmed upload status is claimed here. The linked [120-second GitHub MP4](docs/submission/video/trustflow-demo.mp4) is the **older M5.2 screenshot montage**, not the current demo.
+**Current hackathon submission video (M5.5 Cinematic v3):** 175 seconds, 1920×1080, 30 FPS, English Frank AI narration, captions, quiet background music and two decorative cinematic inserts. [Watch the final demo on YouTube](https://www.youtube.com/watch?v=QnLXbL9yXHM). The project owner supplied this as the final demo link; YouTube metadata confirms the TrustFlow hackathon video title. The linked [120-second GitHub MP4](docs/submission/video/trustflow-demo.mp4) is the **older M5.2 screenshot montage**, not the current demo.
 
 The M5.5 video explicitly distinguishes:
 
@@ -197,6 +197,12 @@ TrustFlow operates with synthetic data and trusted, single-instance local deploy
 
 A model's semantic PASS cannot overturn a deterministic failure, and a successful test run cannot establish unrestricted reliability. Meta usage estimates are advisory, not a hard provider billing limit. No claim is made that Muse Wonder autonomously authored the whole repository or that its full planning/mixed-profile behavior is accepted.
 
+## Project links
+
+- [YouTube demo](https://www.youtube.com/watch?v=QnLXbL9yXHM)
+- [Project post on X](https://x.com/IvanRomanteev/status/2117893292650344452?s=20)
+- [Developer on LinkedIn](https://www.linkedin.com/in/ivan-romanteev)
+
 ## Documentation
 
 - [Architecture/source map](docs/submission/architecture.md) and [detailed safety mechanisms](docs/submission/safety.md)
@@ -206,7 +212,7 @@ A model's semantic PASS cannot overturn a deterministic failure, and a successfu
 - [Historical 120-second offline demo and source captures](docs/submission/video/README.md)
 - [Earlier pitch](docs/submission/pitch.md), [archived presentation PDF](docs/submission/presentation.pdf), [archived submission fields](docs/submission/submission-text.md), and [development worklog](docs/worklog.md)
 
-**Historical-document note:** some linked submission documents were produced before M5.5 and retain accurate *historical* `PENDING` labels. They should not be interpreted as the current end-to-end live status of this README. The current M5.5 evidence bundle and Meta usage screenshot are not committed to this repository as part of this README rewrite; a verified final YouTube URL remains unavailable.
+**Historical-document note:** some linked submission documents were produced before M5.5 and retain accurate *historical* `PENDING` labels. They should not be interpreted as the current end-to-end live status of this README. The current M5.5 evidence bundle and Meta usage screenshot are not committed to this repository as part of this README rewrite. The final demo is linked above on YouTube.
 
 ---
 
