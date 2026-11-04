@@ -1,0 +1,2 @@
+# The public M5.5 manifest hashes the verifier's exact bytes on every platform.
+scripts/m55_public_evidence.py text eol=lf
